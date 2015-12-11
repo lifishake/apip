@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('../fonts/fontawesome-webfont.eot?v=4.3.0');
+  src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('../fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('../fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+#sharebar{
+	clear:both;
+	background: none repeat scroll 0 0 #EEFAF6;
+	line-height: 2em ;
+}
+
+#sharebar span{
+	padding: 0 15px;
+	margin:4px 0 ;
+	color: #5a5a5a;
+}
+
+#sharebar a {
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
+    display: inline;
+    font-size: 1.3em;
+    height: inherit;
+    line-height: inherit;
+    margin: 0;
+    opacity: 0.8;
+    padding-right: 13px;
+    position: relative;
+    text-decoration: none;
+    top: 2px;
+    vertical-align: inherit;
+    width: inherit;
+	cursor:pointer;
+}
+
+#sharebar a:before {
+    font-family: 'FontAwesome' ;
+    font-variant: normal;
+    font-weight: 400;
+    line-height: 1;
+    text-transform: none;
+}
+
+.sharebar-twitter:before{
+    content: "\f099" ;
+}
+.sharebar-weibo:before {
+  content: "\f18a";
+}
+.sharebar-tencent-weibo:before {
+  content: "\f1d5";
+}
+.sharebar-googleplus:before {
+  content: "\f0d5";
+}
+.sharebar-facebook:before {
+  content: "\f230";
+}
