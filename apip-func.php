@@ -130,3 +130,53 @@ function apip_related_post()
     $ret = $ret.'</ul>' ;
     return $ret; 
 } 
+
+function apip_related_post_2(){
+	global $apip_options;
+    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
+    global $wpdb ;
+    $object_ids = array();
+    $post_id = get_the_ID() ;
+    $tags = array();
+	$tag_points = array();
+	$object_points = array();
+    $tags = get_the_terms( $post_id, 'post_tag') ;
+    if( count($tags) != 0 ){
+		foreach ( $tags as $tag ){
+			if ( $tag->count >= 169 ) {
+				$point = 1;
+			}
+			else if ( $tag->count >= 143 ) {
+				$point = 3;
+			}
+			else if ( $tag->count >= 104 ) {
+				$point = 7;
+			}
+			else if ( $tag->count >= 39 ) {
+				$point = 13;
+			}
+			else if ( $tag->count >= 13 ) {
+				$point = 27;
+			}
+			else if ( $tag->count >= 7 ) {
+				$point = 51;
+			}
+			else if ( $tag->count >= 3 ) {
+				$point = 99;
+			}
+			else {
+				$point = 189;
+			}
+			$tag_points[$tag->term_taxonomy_id] = $point;
+		}
+		$term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
+        $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
+        $object_ids = $wpdb->get_col( "SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id IN ( {$term_taxonomy_ids_str} ) AND object_id != '$post_id' " );
+		$object_ids = array_count_values( $object_ids );
+        $object_ids = array_keys($object_ids) ;
+		foreach ($object_ids as $object_id){
+			$tags = get_the_terms( $post_id, 'post_tag') ;
+			if( count($tags) != 0 ){
+		}
+	}
+}

@@ -83,6 +83,11 @@ function apip_init()
         //2.7搜索结果只有一条时直接跳入
         add_action('template_redirect', 'redirect_single_post');
     }
+    if ( $apip_options['protect_comment_php'] == 1 )
+    {
+        //2.8禁止直接访问wp_comments.php
+        add_action('check_comment_flood', 'check_referrer_comment');
+    }
 	/** 03 */
     if ( $apip_options['header_description'] == 1 )
     {
@@ -550,6 +555,17 @@ function redirect_single_post() {
     }
 }
 
+//2.8
+/**
+ * 作用: 禁止直接访问wp_comments.php
+ * 来源: 小赖子
+ * URL:  https://justyy.com/archives/2465
+ */
+function check_referrer_comment() {
+    if (!isset($_SERVER['HTTP_REFERER']) || $_SERVER['HTTP_REFERER'] == '') {
+		wp_die('spammer狗带。');
+	}
+}
 /*                                          02终了                             */
 
 /******************************************************************************/
