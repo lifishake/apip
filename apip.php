@@ -44,6 +44,8 @@ function apip_init()
 	add_action( 'admin_enqueue_scripts', 'apip_remove_open_sans' );
 	//0.7 自带的TagCloud格式调整
 	add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
+    //0.8 移除后台的“作者”列
+    add_filter( 'manage_posts_columns', 'apip_posts_columns' );
 	/** 01 */
 	if( $apip_options['better_excerpt'] == 1 )
     {
@@ -116,6 +118,10 @@ function apip_init()
 	{
 		add_shortcode('mytagcloud', 'apip_tagcloud_page'); 
 	}
+    if ( $apip_options['apip_link_enable']== 1 )
+	{
+		add_shortcode('mylink', 'apip_link_page'); 
+	}
 
 	/** 09 */
 	//头部动作，一般用于附加css的加载
@@ -183,6 +189,7 @@ $options
 0.5                            追加的快捷按钮
 0.6                            屏蔽后台的OpenSans
 0.7                            调整默认的TagCloud Widget
+0.8                            移除后台的作者列
 01.    better_excerpt          更好的中文摘要
 1.1    excerpt_length          摘要长度
 1.2    excerpt_ellipsis        摘要结尾字符
@@ -205,6 +212,7 @@ $options
 07.    social_share_enable     社会化分享使能
 08.    自定义的shortcode
 8.1    apip_tagcloud_enable    更好看的标签云
+8.2    apip_link_page          自定义友情链接
 09.    比较复杂的设定
 9.1    apip_codehighlight_enable  代码高亮
 9.2    apip_lazyload_enable    LazyLoad
@@ -239,6 +247,11 @@ function apip_scripts()
 	if ( is_page('my-tag-cloud') && $apip_options['apip_tagcloud_enable']== 1 )
 	{
 		wp_enqueue_style( 'apip_tagcloud_style', APIP_PLUGIN_URL . 'css/apip-tagcloud.css' );
+	}
+    //8.2
+    if ( is_page('my_links') && $apip_options['apip_link_enable']== 1 )
+	{
+		wp_enqueue_style( 'apip_link_style', APIP_PLUGIN_URL . 'css/apip-links.css' );
 	}
 	//9.1
 	if ( in_category('code_share') && $apip_options['apip_codehighlight_enable'] == 1 )
@@ -383,6 +396,12 @@ function apip_resort_tagcloud( $arg )
     $arg['number'] = '39' ;
     $arg['order'] = 'RAND' ;
     return $arg ;
+}
+
+//0.8 移除后台的作者列
+function apip_posts_columns( $columns ) {
+    unset( $columns['author'] );
+    return $columns;
 }
 
 /*                                          00终了                             */
@@ -852,6 +871,25 @@ function apip_tagcloud_page($params = array()) {
     $ret = str_replace(get_bloginfo('url'), '', $ret);
     $ret .= '</ul>' ;
     return $ret ;
+}
+//8.2自定义友情链接页
+/**
+ * 作用: 取出一定时间内被博主回复最多的留言者
+ * 来源: 自产
+ * URL:  
+ */
+function apip_link_page(){
+    $links = apip_get_links();
+    $ret = '<ul class = "apip-links">' ;
+    foreach ( $links as $link ){
+        $parm = sprintf( '<li><div class="commenter-link vcard">%1$s</div><a href="%2$s" target="_blank" class="url">%3$s</a></li>',
+                            get_avatar( $link->comment_author_email, 64),
+                            $link->comment_author_url,
+                            $link->comment_author) ;
+        $ret.= $parm;
+    }
+    $ret.='</ul>';
+    echo $ret;
 }
 /*                                          08终了                             */
 

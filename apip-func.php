@@ -130,3 +130,34 @@ function apip_related_post()
     $ret = $ret.'</ul>' ;
     return $ret; 
 } 
+
+
+/*
+ * 作用: 显示作者最愿意回复的n个留言者的链接
+ * 来源: 自产
+ * URL:  
+*/
+function apip_get_links()
+{
+    global $wpdb;
+    $limit = 13; //取多少条，可以自己改
+    $scope = "6 MONTH"; //可以使用的时间关键字:SECOND,MINUTE,HOUR,DAY,WEEK,MONTH,QUARTER,YEAR...
+    $sql = "SELECT comment_author_email, comment_author_url, comment_author, SUM(comment_length) as words_sum
+            FROM $wpdb->comments aa
+            INNER JOIN
+            (
+            SELECT comment_parent, char_length(comment_content) as comment_length
+            FROM $wpdb->comments
+            WHERE  user_id <> 0
+            AND DATE_SUB( CURDATE( ) , INTERVAL $scope ) <= comment_date_gmt
+            ORDER BY comment_date_gmt DESC
+            )
+            AS bb
+            WHERE aa.comment_ID = bb.comment_parent 
+            AND aa.comment_author_url <>''
+            GROUP BY comment_author_email
+            ORDER BY words_sum DESC
+            LIMIT $limit";
+    $result = $wpdb->get_results($sql);
+    return $result;
+}

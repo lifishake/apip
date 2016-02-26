@@ -273,6 +273,8 @@ function apip_shortcodes_render()
 	?>
 	<span>    激活自定义TagCloud页（css）：</span>
 	<input type='checkbox' name='apip_settings[apip_tagcloud_enable]' <?php checked( $options['apip_tagcloud_enable'], 1 ); ?> value='1'>
+    <span>    激活自定义Link页（css）：</span>
+	<input type='checkbox' name='apip_settings[apip_link_enable]' <?php checked( $options['apip_link_enable'], 1 ); ?> value='1'>
 	<?php
 }
 
