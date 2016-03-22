@@ -161,3 +161,52 @@ function apip_get_links()
     $result = $wpdb->get_results($sql);
     return $result;
 }
+
+/*
+ * 作用: 取得上一篇/下一篇.如果在归档/搜索的情况下,在范围内查找.
+ * 来源: 自产
+ * URL:  
+*/
+function apip_get_post_navagation($args=array()){
+    $args = wp_parse_args( $args, array(
+        'prev_text'          => '%title',
+        'next_text'          => '%title',
+        'screen_reader_text' => '文章导航',
+    ) );
+    //只在singlular的时候有效，因为只有singlular的时候能取到get_the_ID()。
+    if ( !is_singular() ){
+        return;
+    }
+    if ( !class_exists('Apip_Query') ){
+        the_post_navigation($args);
+        return;
+    }
+    $key = 'apip_aq_'.COOKIEHASH;
+    $apip_aq = get_transient($key);
+    if ( false === $apip_aq ){
+        the_post_navigation($args);
+        return;
+    }
+    $ID = get_the_ID();
+    $result = $apip_aq->get_neighbor($ID);
+    if ( !$result || !$result['got'] ){
+        the_post_navigation($args);
+        return;
+    }
+
+    //仿照the_post_navigation的格式显示
+    if ( $result['prev'] > 0 ) {
+         $previous = '<a href="'.get_permalink( $result['prev'] ).'" rel="prev">'.get_the_title( $result['prev'] ).'</a>';
+         $previous = str_replace( '%title', $previous, $args['prev_text'] );
+         $previous = '<div class="nav-previous">'.$previous.'</div>';
+    }
+    if ( $result['next'] > 0 ) {
+        $next = '<a href="'.get_permalink( $result['next'] ).'" rel="next">'.get_the_title( $result['next'] ).'</a>';
+        $next = str_replace( '%title', $next, $args['next_text'] );
+        $next = '<div class="nav-next">'.$next.'</div>';
+    }
+    if ( "" === $desc = $apip_aq->get_title() ) $desc = args['screen_reader_text'];
+    $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
+    echo $navigation;
+}
+

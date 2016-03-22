@@ -136,6 +136,25 @@ function apip_init()
 		add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
 	}
 	
+    //9.3 结果集内跳转
+    if ( $apip_options['range_jump_enable']== 1 )
+    {
+        if ( !class_exists('Apip_Query') ) {
+            //包跳转类含头文件
+            require_once ( APIP_PLUGIN_DIR.'/class/apip-query.php') ;
+        }
+        $key = 'apip_aq_'.COOKIEHASH;//根据cookie生成标识
+        $apip_aq = get_transient($key);
+        if ( false === $apip_aq ){
+            $apip_aq = new Apip_Query();
+        }
+        if ( !$apip_aq->isloaded() ){
+            $apip_aq->init();
+        }
+        set_transient( $key, $apip_aq, 360);//保留6分钟
+        add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
+    }
+    
     //0A    移除没用的过滤项
     remove_action('wp_head','feed_links_extra',3);
     remove_action('wp_head','rsd_link' );
@@ -279,6 +298,7 @@ function apip_remove_scripts()
     global $wp_scripts;
     foreach ($wp_scripts->registered as $libs){
         $libs->src = str_replace('//ajax.googleapis.com', '//ajax.useso.com', $libs->src);
+        //fonts.gmirror.org
         }
     if ( !is_admin() )
     {
@@ -309,6 +329,7 @@ function apip_remove_styles()
     foreach ($wp_styles->registered as $libs){
 		//替换google字体
         $libs->src = str_replace('//fonts.googleapis.com', '//fonts.useso.com', $libs->src);
+        //fonts.gmirror.org
         }
     if ( !is_admin() )
     {
@@ -697,6 +718,7 @@ function apip_get_cavatar($source) {
     {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
+        //gravatar.eqoe.cn
 		$source = str_replace(array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com'), 'cn.gravatar.com', $source);
         return $source ;
     }
@@ -957,6 +979,21 @@ function apip_lazyload_filter( $content )
     return $newHtml;
 }
 
+//9.3 范围内跳转
+/**
+ * 作用: 范围内查找的动作追加.
+ * 来源: 自产
+ * URL:  
+ */
+function apip_keep_quary(){
+    $key = 'apip_aq_'.COOKIEHASH;
+    $apip_aq = get_transient($key);
+    if ( false === $apip_aq || !$apip_aq->isloaded() ){
+        return;
+    }
+    $apip_aq->keep_query();
+    set_transient($key, $apip_aq, 360);
+} 
 /*                                          09终了                             */
 
  /**

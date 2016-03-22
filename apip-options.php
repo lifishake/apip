@@ -287,6 +287,8 @@ function apip_heavy_tools_render()
 	<input type='checkbox' name='apip_settings[apip_codehighlight_enable]' <?php checked( $options['apip_codehighlight_enable'], 1 ); ?> value='1'></br>
 	<span>    使用lazy_load(js+content_filter)：</span>
 	<input type='checkbox' name='apip_settings[apip_lazyload_enable]' <?php checked( $options['apip_lazyload_enable'], 1 ); ?> value='1'></br>
+    <span>    查询，归档页进入单页后，“上一页”、“下一页”在该范围内跳转(js)：</span>
+	<input type='checkbox' name='apip_settings[range_jump_enable]' <?php checked( $options['range_jump_enable'], 1 ); ?> value='1'></br>
 	<?php
 }
 
