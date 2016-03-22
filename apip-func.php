@@ -196,14 +196,10 @@ function apip_get_post_navagation($args=array()){
 
     //仿照the_post_navigation的格式显示
     if ( $result['prev'] > 0 ) {
-         $previous = '<a href="'.get_permalink( $result['prev'] ).'" rel="prev">'.get_the_title( $result['prev'] ).'</a>';
-         $previous = str_replace( '%title', $previous, $args['prev_text'] );
+         $previous = str_replace( '%title', get_the_title( $result['prev'] ), $args['prev_text'] );		 		 $previous = '<a href="'.get_permalink( $result['prev'] ).'" rel="prev">'.$previous.'</a>';
          $previous = '<div class="nav-previous">'.$previous.'</div>';
     }
-    if ( $result['next'] > 0 ) {
-        $next = '<a href="'.get_permalink( $result['next'] ).'" rel="next">'.get_the_title( $result['next'] ).'</a>';
-        $next = str_replace( '%title', $next, $args['next_text'] );
-        $next = '<div class="nav-next">'.$next.'</div>';
+    if ( $result['next'] > 0 ) {			$next = str_replace( '%title', get_the_title( $result['next'] ), $args['next_text'] );		 		$next = '<a href="'.get_permalink( $result['next'] ).'" rel="next">'.$next.'</a>';        $next = '<div class="nav-next">'.$next.'</div>';
     }
     if ( "" === $desc = $apip_aq->get_title() ) $desc = $args['screen_reader_text'];
     $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
