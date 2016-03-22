@@ -168,11 +168,11 @@ function apip_get_links()
  * URL:  
 */
 function apip_get_post_navagation($args=array()){
-    $args = wp_parse_args( $args, array(
+   $args = wp_parse_args( $args, array(
         'prev_text'          => '%title',
         'next_text'          => '%title',
         'screen_reader_text' => '文章导航',
-    ) );
+    ) ); 
     //只在singlular的时候有效，因为只有singlular的时候能取到get_the_ID()。
     if ( !is_singular() ){
         return;
@@ -205,7 +205,7 @@ function apip_get_post_navagation($args=array()){
         $next = str_replace( '%title', $next, $args['next_text'] );
         $next = '<div class="nav-next">'.$next.'</div>';
     }
-    if ( "" === $desc = $apip_aq->get_title() ) $desc = args['screen_reader_text'];
+    if ( "" === $desc = $apip_aq->get_title() ) $desc = $args['screen_reader_text'];
     $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
     echo $navigation;
 }
