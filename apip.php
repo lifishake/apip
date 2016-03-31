@@ -993,7 +993,8 @@ function apip_keep_quary(){
     }
     $apip_aq->keep_query();
     set_transient($key, $apip_aq, 360);
-} 
+}
+
 /*                                          09终了                             */
 
  /**

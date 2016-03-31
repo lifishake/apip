@@ -32,30 +32,42 @@ class Apip_Query{
     public function keep_query() {
         if (is_search()||is_archive()) {
             global $wp_query;
-            if ($wp_query->post_count == 1 && $wp_query->max_num_pages == 1)
-                return;
-            $this->post_ids = wp_list_pluck( $wp_query->posts, 'ID' );
+            //if ($wp_query->post_count == 1 && $wp_query->max_num_pages == 1)
+            //    return;
+            $desc = "";
+            //$this->post_ids = wp_list_pluck( $wp_query->posts, 'ID' );
             if ( is_search() ){
-                $this->desc = "搜索结果:" . the_search_query() ;
+                $desc = "搜索结果:" . the_search_query() ;
             }
             else if ( is_category() ){
-                $cat = single_cat_title( '', false );
-                $this->desc = "分类:" . single_cat_title( '', false );
+                $desc = "分类:" . single_cat_title( '', false );
             }
             else if ( is_tag() ){
-                $this->desc = "标签:" . single_tag_title( '', false );
+                $desc = "标签:" . single_tag_title( '', false );
             }
             else if ( is_year() ) {
-                $this->desc = "年:" . get_the_date('Y') ;
+                $desc = "年:" . get_the_date('Y') ;
             }
             else if ( is_month() ) {
-                $this->desc = "月:" . get_the_date('F Y');
+                $desc = "月:" . get_the_date('F Y');
             }
             else if ( is_day() ) {
-                $this->desc = "日:" . get_the_date(get_option('date_format'));
+                $desc = "日:" . get_the_date(get_option('date_format'));
             }
             else{
-                $this->desc = "归档";
+                $desc = "";
+            }
+            if ( "" === $desc ){
+                $this->reset();
+            }
+            if ( $desc != $this->desc ){
+                $this->desc = $desc;
+                $vars = $wp_query->query_vars;
+                $vars['posts_per_page'] = 9999;
+                $myquery = new WP_Query( $vars );
+                if ($myquery->post_count == 1 && $myquery->max_num_pages == 1)
+                    return;
+                $this->post_ids = wp_list_pluck( $myquery->posts, 'ID' );
             }
         }
         //非查询页面时重置
