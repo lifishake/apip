@@ -3,10 +3,11 @@
 /**
  * Plugin Name: All plugins in pewae
  * Plugin URI:  http://pewae.com
+ * GitHub Plugin URI: lifishake/apip
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.05
+ * Version:     1.06
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -340,15 +341,15 @@ function apip_remove_styles()
         wp_dequeue_style( 'nextgen_pagination_style' ); 
 
     }
-    if ( is_singular() )
+    if ( is_singular() && in_category('appreciations') )
     {
-        if ( !in_category('appreciations') )
-        {
-			//豆瓣插件的style,仅限评论类别
-            wp_dequeue_style( 'wpd-css' );
-        }
+        ;
     }
-    
+    else
+    {
+        //豆瓣插件的style,仅限评论类别
+        wp_dequeue_style( 'wpd-css' );
+    }
     if ( !is_page('gallery') )
     {
         wp_dequeue_style( 'jquery-plugins-slider-style' );

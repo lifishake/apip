@@ -37,7 +37,7 @@ class Apip_Query{
             $desc = "";
             //$this->post_ids = wp_list_pluck( $wp_query->posts, 'ID' );
             if ( is_search() ){
-                $desc = "搜索结果:" . the_search_query() ;
+                $desc = "搜索结果:" . get_search_query( false ) ;
             }
             else if ( is_category() ){
                 $desc = "分类:" . single_cat_title( '', false );
