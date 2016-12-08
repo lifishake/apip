@@ -391,7 +391,7 @@ function apip_quicktags()
 ?>
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_163music', '网易云音乐', '<iframe src="http://music.163.com/outchain/player?type=2&amp;id=', '&amp;auto=0&amp;height=66" width="330" height="86" frameborder="no" marginwidth="0" marginheight="0"></iframe>' );
+        QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
     </script>
 <?php
 }
@@ -678,8 +678,9 @@ function apip_comment_inserted($comment_id, $comment_object) {
     if ($comment_object->comment_parent > 0) {
 
         $comment_parent = get_comment($comment_object->comment_parent);
-        $bg_head = '<div style="background:transparent; color: inherit; font-size:12px;"><div style="max-width: 520px; margin:0 auto;background:rgba(220,220,220,0.6); padding:25px 70px;margin: 15px;color: #333; border-top: 3px solid #85FF3F; border-bottom: 3px solid #85FF3F; box-shadow: 0px 15px 25px -17px #E7797A;">' ;
-        $content_border_head = '<p style="border: 3px double #E7797A;padding: 20px; margin: 15px 0; width: 60% ; background:rgba(220,220,220,0.6); ">' ;
+        $bg_head = '<div style="background:transparent; color: inherit; font-size:14px;"><div style=" margin:0 auto;background:rgba(250,240,190,0.6); padding: 15px;margin: 15px;color: #333; box-shadow: 0px 15px 25px -17px #E7797A;">' ;
+        $content_border_head = '<p style="padding: 20px; margin: 15px; background:rgba(255,245,195,0.8); ">' ;
+        $a_style = 'color: #908040; text-decoration: none;';
         $random_posts = apip_random_post( get_the_ID(), 1 ) ;
         foreach ( $random_posts as $random_post ) :
             $random_link = get_permalink( $random_post->ID ) ;
@@ -688,7 +689,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
         $mailcontent = '<p>亲爱的 <b style="color:#222; font-weight:800; padding:0 5px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
         $mailcontent = $mailcontent.$content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
         $mailcontent = $mailcontent.$content_border_head.$comment_object->comment_content.'</p>';
-        $mailcontent = $mailcontent.sprintf( '<p>欢迎<a href="%1$s">继续参与讨论</a>或者<a href="%2$s">随便逛逛</a>。<a href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url') ) ;
+        $mailcontent = $mailcontent.sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
         $mailcontent = $bg_head.$mailcontent.'</div></div>' ;
 
         $headers  = 'MIME-Version: 1.0' . "\r\n";
@@ -720,7 +721,7 @@ function apip_get_cavatar($source) {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
         //gravatar.eqoe.cn
-		$source = str_replace(array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com'), 'fdn.geekzu.org/avatar', $source);
+		$source = str_replace(array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com'), 'fdn.geekzu.org', $source);
         return $source ;
     }
     $time = 1209600; //The time of cache(seconds)
