@@ -3,11 +3,11 @@
 /**
  * Plugin Name: All plugins in pewae
  * Plugin URI:  http://pewae.com
- * GitHub Plugin URI: lifishake/apip
+ * GitHub Plugin URI: https://github.com/lifishake/apip
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.07
+ * Version:     1.09
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
