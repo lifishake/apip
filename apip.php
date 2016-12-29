@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.09
+ * Version:     1.10
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -47,6 +47,8 @@ function apip_init()
 	add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
     //0.8 移除后台的“作者”列
     add_filter( 'manage_posts_columns', 'apip_posts_columns' );
+    //0.9 升级后替换高危文件
+    add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
 	/** 01 */
 	if( $apip_options['better_excerpt'] == 1 )
     {
@@ -210,6 +212,7 @@ $options
 0.6                            屏蔽后台的OpenSans
 0.7                            调整默认的TagCloud Widget
 0.8                            移除后台的作者列
+0.9                            版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
 01.    better_excerpt          更好的中文摘要
 1.1    excerpt_length          摘要长度
 1.2    excerpt_ellipsis        摘要结尾字符
@@ -424,6 +427,18 @@ function apip_resort_tagcloud( $arg )
 function apip_posts_columns( $columns ) {
     unset( $columns['author'] );
     return $columns;
+}
+
+//0.9 升级后替换高危文件
+function apip_remove_default_risk_files( $upgrader_object, $options )
+{
+    if( 'update' === $options['action'] && 'core' === $options['type'] )
+    {
+        global $wp_filesystem;
+        $wp_dir = trailingslashit($wp_filesystem->abspath());
+        $wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'wp-comments-post.php', true );
+        $wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'xmlrpc.php', true );
+    }
 }
 
 /*                                          00终了                             */
