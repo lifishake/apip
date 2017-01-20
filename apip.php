@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.10
+ * Version:     1.11
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -20,13 +20,28 @@ if (is_admin())
 {
     require_once( APIP_PLUGIN_DIR . '/apip-options.php');
 }
+//包含自定义的函数
+require ( APIP_PLUGIN_DIR.'/apip-func.php') ;
 
-/*变量初期化*/
-add_action('plugins_loaded', 'apip_init');
-function apip_init()
+function apip_option_check( $key, $val = 1 )
 {
     global $apip_options;
-    $apip_options = get_option('apip_settings');
+    if ( empty($apip_options) )
+    {
+        $apip_options = get_option('apip_settings');
+    }
+    //array_key_exists
+    if ( isset( $apip_options[$key] ) && $apip_options[$key] == $val )
+    {
+        return true;
+    }
+    return false;
+}
+
+/*变量初期化*/
+add_action('plugins_loaded', 'apip_init', 99);
+function apip_init()
+{
 	/** 00 */
 	//0.1 插件自带脚本控制
     add_action( 'wp_enqueue_scripts', 'apip_scripts' );
@@ -50,58 +65,58 @@ function apip_init()
     //0.9 升级后替换高危文件
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
 	/** 01 */
-	if( $apip_options['better_excerpt'] == 1 )
+	if( apip_option_check('better_excerpt') )
     {
         //更好的中文摘要
         add_filter('the_excerpt', 'apip_excerpt', 100);
     }
 	
 	/** 02 */
-    if( $apip_options['save_revisions_disable'] == 1 )
+    if( apip_option_check('save_revisions_disable') )
     {
         //2.1停止自动版本更新
         apip_auto_rev_settings();
     }
-    if( $apip_options['auto_save_disabled'] == 1 )
+    if( apip_option_check('auto_save_disabled') )
     {
 		//2.2停止自动保存
         add_action( 'wp_print_scripts', 'apip_auto_save_setting' );
     }
 	//2.3是否显示adminbar
     add_filter( 'show_admin_bar', 'apip_admin_bar_setting' );
-    if ( $apip_options['forground_chinese']== 1 ) {
+    if ( apip_option_check('forground_chinese') ) {
 		//2.4后台英文前台中文
         add_filter( 'locale', 'apip_locale', 99 );
     }
-	if ( $apip_options['block_open_sans'] == 1 )
+	if ( apip_option_check('block_open_sans') )
     {
         //2.5屏蔽已经注册的open sans
         add_action( 'wp_default_styles', 'apip_block_open_sans', 100); 
     }
-	if ( $apip_options['show_author_comment'] == 1 )
+	if ( apip_option_check('show_author_comment') )
     {
         //2.6默认留言widget里屏蔽作者
         add_filter( 'widget_comments_args', 'before_get_comments' );
     }
-	if ( $apip_options['redirect_if_single'] == 1 )
+	if ( apip_option_check('redirect_if_single') )
     {
         //2.7搜索结果只有一条时直接跳入
         add_action('template_redirect', 'redirect_single_post');
     }
-    if ( $apip_options['protect_comment_php'] == 1 )
+    if ( apip_option_check('protect_comment_php') )
     {
         //2.8禁止直接访问wp_comments.php
         add_action('check_comment_flood', 'check_referrer_comment');
     }
 	/** 03 */
-    if ( $apip_options['header_description'] == 1 )
+    if ( apip_option_check('header_description') )
     {
         //网站描述和关键字
         add_action( 'wp_head', 'apip_desc_tag' ); 
     }
     
     /** 04 */
-    if ( $apip_options['notify_comment_reply']== 1 )
+    if ( apip_option_check('notify_comment_reply') )
     {       
 		//邮件回复
         add_action('wp_insert_comment','apip_comment_inserted',99,2);
@@ -117,11 +132,11 @@ function apip_init()
 	//social没有添加项,需要外部手动调用
 	/** 08 */
 	//8.1 TAGcloud 注册
-	if ( $apip_options['apip_tagcloud_enable']== 1 )
+	if ( apip_option_check('apip_tagcloud_enable') )
 	{
 		add_shortcode('mytagcloud', 'apip_tagcloud_page'); 
 	}
-    if ( $apip_options['apip_link_enable']== 1 )
+    if ( apip_option_check('apip_link_enable') )
 	{
 		add_shortcode('mylink', 'apip_link_page'); 
 	}
@@ -133,14 +148,14 @@ function apip_init()
     add_action('get_footer','apip_footer_actions') ;
 	
 	//9.2 lazyload
-	if ( $apip_options['apip_lazyload_enable']== 1 )
+	if ( apip_option_check('apip_lazyload_enable') )
 	{
 		add_filter( 'the_content', 'apip_lazyload_filter',200 );
 		add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
 	}
 	
     //9.3 结果集内跳转
-    if ( $apip_options['range_jump_enable']== 1 )
+    if ( apip_option_check('range_jump_enable') )
     {
         if ( !class_exists('Apip_Query') ) {
             //包跳转类含头文件
@@ -154,11 +169,31 @@ function apip_init()
         if ( !$apip_aq->isloaded() ){
             $apip_aq->init();
         }
-        set_transient( $key, $apip_aq, 360);//保留6分钟
+        set_transient( $key, $apip_aq, 600);//保留10分钟
         add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
     }
     
-    //0A    移除没用的过滤项
+
+	//0X 暂时不用了
+	//三插件冲突
+    //add_action( 'wp_print_scripts', 'apip_filter_filter',2 );
+	//确认提交前的提示,未添加配置项
+    //add_filter('comment_form_defaults' , 'apip_replace_tag_note', 30);
+	
+	/** 99 */
+	if ( apip_option_check('local_widget_enable') ) {
+		require APIP_PLUGIN_DIR.'/apip-widgets.php';
+	}
+
+}
+
+register_activation_hook( __FILE__, 'apip_disable_embeds_remove_rewrite_rules' );
+register_deactivation_hook( __FILE__, 'apip_disable_embeds_flush_rewrite_rules' );
+
+add_action('init', 'apip_init_actions', 999);
+function apip_init_actions()
+{
+    //0.A    移除没用的过滤项
     remove_action('wp_head','feed_links_extra',3);
     remove_action('wp_head','rsd_link' );
     remove_action('wp_head','wlwmanifest_link' );
@@ -168,21 +203,81 @@ function apip_init()
     remove_filter('the_title','capital_P_dangit',11);
     remove_filter('wp_title','capital_P_dangit',11);
     remove_filter('comment_text','capital_P_dangit',31);    
-    add_filter( 'use_default_gallery_style', '__return_false' );
-    add_filter('xmlrpc_enabled', '__return_false');
-	
-	//0X 暂时不用了
-	//三插件冲突
-    //add_action( 'wp_print_scripts', 'apip_filter_filter',2 );
-	//确认提交前的提示,未添加配置项
-    //add_filter('comment_form_defaults' , 'apip_replace_tag_note', 30);
-	
-	/** 99 */
-	if ( $apip_options['local_widget_enable'] == 1 ) {
-		require APIP_PLUGIN_DIR.'/apip-widgets.php';
-	}
-	//包含自定义的函数
-	require ( APIP_PLUGIN_DIR.'/apip-func.php') ;
+    add_filter( 'use_default_gallery_style', '__return_false' );    //不使用默认gallery
+    add_filter('xmlrpc_enabled', '__return_false');     //不使用xmlrpc
+
+    ////0A.1屏蔽ngg带来的无用钩子
+    if( class_exists('M_Third_Party_Compat') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
+    }
+    if( class_exists('C_NextGen_Shortcode_Manager') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
+    }
+    if( class_exists('M_Gallery_Display') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
+        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
+    }
+    if( class_exists('M_NextGen_Basic_Singlepic') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_NextGen_Basic_Singlepic', 'enqueue_singlepic_css' );
+    }
+    //静态函数
+    remove_filter('the_content', 'NextGEN_shortcodes::convert_shortcode');
+    remove_action('wp_head', 'nggGallery::nextgen_version');
+    if( class_exists('C_NextGen_Shortcode_Manager') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'parse_content' );
+        apip_remove_anonymous_object_hook( 'widget_text', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
+    }
+    if( class_exists('M_Attach_To_Post') )
+    {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
+        apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
+    }
+    if( class_exists('C_NextGEN_Bootstrap') )
+    {
+        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+        apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+    }
+    if( class_exists('C_Lightbox_Library_Manager') )
+    {
+        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
+    }
+    if( class_exists('C_Photocrati_Resource_Manager') )
+    {
+        apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
+    }
+    //删除原来插入时的class
+    remove_action('media_upload_nextgen','media_upload_nextgen');
+    if (is_admin()){
+        add_action('media_upload_nextgen','apip_media_upload_nextgen');
+    }
+    
+    ////0A.2
+    ////禁用4.4以后的embed功能
+    ////来源:disable-embeds
+    global $wp;
+    if ( is_array($wp->public_query_vars) && !empty($wp->public_query_vars) )
+    {
+        $wp->public_query_vars = array_diff( $wp->public_query_vars, array(
+            'embed',
+        ) );
+    }
+	remove_action( 'rest_api_init', 'wp_oembed_register_route' );
+	add_filter( 'embed_oembed_discover', '__return_false' );
+	remove_filter( 'oembed_dataparse', 'wp_filter_oembed_result', 10 );
+	remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+	remove_action( 'wp_head', 'wp_oembed_add_host_js' );
+	add_filter( 'tiny_mce_plugins', 'apip_disable_embeds_tiny_mce_plugin' );
+	add_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
+	remove_filter( 'pre_oembed_result', 'wp_filter_pre_oembed_result', 10 );
+    if ( class_exists('WP_Embed')) {
+        apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'run_shortcode' );
+        apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'autoembed' );
+    }
 }
 
 function apip_header_actions()
@@ -203,44 +298,46 @@ function apip_header_actions()
 
 /*
 $options
-00.                            无选项，必须选中的内容
-0.1                            Ctrl+Enter提交
-0.2                            屏蔽不必要的js
-0.3                            屏蔽不必要的style
-0.4                            feed结尾的追加内容
-0.5                            追加的快捷按钮
-0.6                            屏蔽后台的OpenSans
-0.7                            调整默认的TagCloud Widget
-0.8                            移除后台的作者列
-0.9                            版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
-01.    better_excerpt          更好的中文摘要
-1.1    excerpt_length          摘要长度
-1.2    excerpt_ellipsis        摘要结尾字符
-02.    高级编辑选项
-2.1    save_revisions_disable  阻止自动版本
-2.2    auto_save_disabled      阻止自动保存
-2.3    show_admin_bar          显示登录用户的admin bar
-2.4    apip_locale             后台英文前台中文
-2.5    block_open_sans         屏蔽后台的open sans字体
-2.6    show_author_comment     屏蔽作者留言
-2.7    redirect_if_single      搜索结果只有一条时直接跳入
-03.    header_description      头部描述信息
-3.1    hd_home_text            首页描述文字
-3.2    hd_home_keyword         首页标签
-04.    notify_comment_reply    有回复时邮件提示
-05.    GFW选项
-5.1    local_gravatar          头像本地缓存
-5.2    replace_emoji           替换emoji地址
-06.    blocked_commenters      替换广告留言用户名和网址
-07.    social_share_enable     社会化分享使能
-08.    自定义的shortcode
-8.1    apip_tagcloud_enable    更好看的标签云
-8.2    apip_link_page          自定义友情链接
-09.    比较复杂的设定
-9.1    apip_codehighlight_enable  代码高亮
-9.2    apip_lazyload_enable    LazyLoad
-99.    local_widget_enable     自定义小工具
-99.1   local_definition_count  自定义widget条目数
+00.                                     无选项，必须选中的内容
+    0.1                                 Ctrl+Enter提交
+    0.2                                 屏蔽不必要的js
+    0.3                                 屏蔽不必要的style
+    0.4                                 feed结尾的追加内容
+    0.5                                 追加的快捷按钮
+    0.6                                 屏蔽后台的OpenSans
+    0.7                                 调整默认的TagCloud Widget
+    0.8                                 移除后台的作者列
+    0.9                                 版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
+    0.A                                 移除无用的钩子
+01.     better_excerpt                  更好的中文摘要
+    1.1     excerpt_length              摘要长度
+    1.2     excerpt_ellipsis            摘要结尾字符
+02.     高级编辑选项
+    2.1     save_revisions_disable      阻止自动版本
+    2.2     auto_save_disabled          阻止自动保存
+    2.3     show_admin_bar              显示登录用户的admin bar
+    2.4     apip_locale                 后台英文前台中文
+    2.5     block_open_sans             屏蔽后台的open sans字体
+    2.6     show_author_comment         屏蔽作者留言
+    2.7     redirect_if_single          搜索结果只有一条时直接跳入
+    2.8     protect_comment_php         禁止直接访问wp_comments.php
+03.     header_description              头部描述信息
+    3.1     hd_home_text                首页描述文字
+    3.2     hd_home_keyword             首页标签
+04.     notify_comment_reply            有回复时邮件提示
+05.     GFW选项
+    5.1     local_gravatar              头像本地缓存
+    5.2     replace_emoji               替换emoji地址
+06.     blocked_commenters              替换广告留言用户名和网址
+07.     social_share_enable             社会化分享使能
+08.     自定义的shortcode
+    8.1     apip_tagcloud_enable        更好看的标签云
+    8.2     apip_link_page              自定义友情链接
+09.     比较复杂的设定
+    9.1     apip_codehighlight_enable   代码高亮
+    9.2     apip_lazyload_enable        LazyLoad
+99.     local_widget_enable             自定义小工具
+    99.1    local_definition_count      自定义widget条目数
 */
 
 /******************************************************************************/
@@ -254,37 +351,36 @@ $options
  */
 function apip_scripts()
 {
-    global $apip_options ;
     wp_enqueue_style( 'apip_style_all', APIP_PLUGIN_URL . 'css/apip-all.css' );
 	//0.1 Ctrl+Enter 提交
 	if (comments_open() && is_singular() ) {
 		wp_enqueue_script('apip_js_singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
 	}
 	//07
-    if  ( $apip_options['social_share_enable'] == 1  && is_singular() )
+    if  ( is_singular() && apip_option_check('social_share_enable') )
     {
 		wp_enqueue_script('apip_js_social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
 		wp_enqueue_style( 'apip_style_social', APIP_PLUGIN_URL . 'css/apip-social.css' );
     }
 	//8.1
-	if ( is_page('my-tag-cloud') && $apip_options['apip_tagcloud_enable']== 1 )
+	if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
 	{
 		wp_enqueue_style( 'apip_tagcloud_style', APIP_PLUGIN_URL . 'css/apip-tagcloud.css' );
 	}
     //8.2
-    if ( is_page('my_links') && $apip_options['apip_link_enable']== 1 )
+    if ( is_page('my_links') && apip_option_check('apip_link_enable') )
 	{
 		wp_enqueue_style( 'apip_link_style', APIP_PLUGIN_URL . 'css/apip-links.css' );
 	}
 	//9.1
-	if ( in_category('code_share') && $apip_options['apip_codehighlight_enable'] == 1 )
+	if ( in_category('code_share') && apip_option_check('apip_codehighlight_enable') == 1 )
 	{
 		add_filter('the_content', 'apip_code_highlight') ;
         wp_enqueue_style( 'prettify_style', APIP_PLUGIN_URL . 'css/apip-prettify.css' );
 		wp_enqueue_script('apip_js_prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), false, true);
 	}
 	//9.2
-	if ( $apip_options['apip_lazyload_enable']== 1 )
+	if ( apip_option_check('apip_lazyload_enable') )
 	{
 		wp_enqueue_style( 'apip_style_lazyload', APIP_PLUGIN_URL . 'css/apip-lazyload.css' );
 		wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), false, true);
@@ -541,8 +637,7 @@ function apip_auto_save_setting()
 function apip_admin_bar_setting($showvar) 
 {
     global $show_admin_bar;
-    global $apip_options;
-    if( $apip_options['show_admin_bar'] == 1 )
+    if( apip_option_check('show_admin_bar') )
     {
         return $showvar ;
     }
@@ -622,6 +717,7 @@ function check_referrer_comment() {
 		wp_die('spammer狗带。');
 	}
 }
+
 /*                                          02终了                             */
 
 /******************************************************************************/
@@ -730,8 +826,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
  * URL:  http://www.imevlos.com/
  */
 function apip_get_cavatar($source) {
-    global $apip_options;
-    if( $apip_options['local_gravatar'] != 1 )
+    if( !apip_option_check('local_gravatar') )
     {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
@@ -758,7 +853,7 @@ function apip_get_cavatar($source) {
 function apip_rep_emoji_url( $url )
 {
 	global $apip_options;
-	if ( $apip_options['replace_emoji'] != 1)
+	if ( !apip_option_check('replace_emoji') )
 		return $url;
     return '//coding.net/u/MinonHeart/p/twemoji/git/raw/gh-pages/72x72/' ;
 }
@@ -816,31 +911,30 @@ function apip_get_social()
 {
     $ret = '' ;
     $count = 0 ;
-    global $apip_options ;
     $intro = '<span>分享到:</span>' ;
-    if ($apip_options['social_share_enable'] == 1 )
+    if ( apip_option_check('social_share_enable') )
     {
-        if ( $apip_options['social_share_twitter'] == 1 )
+        if ( apip_option_check('social_share_twitter') )
         {           
             $ret .= '<a class="sharebar-twitter" rel="nofollow" id="twitter-share" title="Twitter" ></a>' ;
             $count++;
         }
-        if ( $apip_options['social_share_sina'] == 1 )
+        if ( apip_option_check('social_share_sina') )
         {           
             $ret .= '<a class="sharebar-weibo" rel="nofollow" id="sina-share" title="sina" ></a>' ;
             $count++;
         }
-        if ( $apip_options['social_share_tencent'] == 1 )
+        if ( apip_option_check('social_share_tencent') )
         {           
             $ret .= '<a class="sharebar-tencent-weibo" rel="nofollow" id="tencent-share" title="tencent" ></a>' ;
             $count++;
         }
-        if ( $apip_options['social_share_googleplus'] == 1 )
+        if ( apip_option_check('social_share_googleplus') )
         {           
             $ret .= '<a class="sharebar-googleplus" rel="nofollow" id="googleplus-share" title="g+" ></a>' ;
             $count++;
         }
-        if ( $apip_options['social_share_facebook'] == 1 )
+        if ( apip_option_check('social_share_facebook') )
         {           
             $ret .= '<a class="sharebar-facebook" rel="nofollow" id="facebook-share" title="facebook" ></a>' ;
             $count++;
@@ -945,7 +1039,7 @@ function apip_footer_actions()
 {
 	global $apip_options ;
 	//9.1
-    if ( in_category('code_share') && $apip_options['apip_codehighlight_enable'] == 1 )
+    if ( in_category('code_share') && apip_option_check('apip_codehighlight_enable') )
     {
 ?>
         <script type="text/javascript">

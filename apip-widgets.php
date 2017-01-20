@@ -1,21 +1,18 @@
 <?php
-class SimplyRelatedPosts extends WP_Widget {               
+class APIP_Widget_Related extends WP_Widget {               
 
 
-  function SimplyRelatedPosts() {
-
+  public function __construct() {
        $widget_ops = array(
-            'classname' => 'SimplyRelatedPosts',
-            'description' => __( 'Shows up when is_single() is true and contains 
-                              posts with one or more matching terms.' , 'simply-related-posts')
+            'classname' => 'APIP_Widget_Related',
+            'description' => '在单独post页面显示相关文章'
        );
-       $this->WP_Widget( 'SimplyRelatedPosts', __( 'Simply Related Posts' , 'simply-related-posts'), $widget_ops );
-
+       parent::__construct( 'APIP_Widget_Related', 'APIP相关文章', $widget_ops );
   }
 
-  function form( $instance ) {
+  public function form( $instance ) {
 
-       $instance = wp_parse_args( (array) $instance, array( 'title' => __( 'Related Posts' , 'simply-related-posts'), 'exclude' => '', 'taxonomy' => 'post_tag', 'post_type' => 'post', 'related_count' => '5' ) );
+       $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP相关文章', 'exclude' => '', 'taxonomy' => 'post_tag', 'post_type' => 'post', 'related_count' => '5' ) );
        $title = $instance['title'];
        $post_type = $instance['post_type']; 
        $taxonomy = $instance['taxonomy']; 
@@ -60,7 +57,7 @@ class SimplyRelatedPosts extends WP_Widget {
   }
    
 
-  function update( $new_instance, $old_instance ) {
+  public function update( $new_instance, $old_instance ) {
 
        $instance = $old_instance;
        $instance['title'] = $new_instance['title'];
@@ -73,7 +70,7 @@ class SimplyRelatedPosts extends WP_Widget {
   }
    
 
-  function widget( $args, $instance ) {
+  public function widget( $args, $instance ) {
 
        if ( !is_singular() )
             return;
@@ -126,24 +123,24 @@ class SimplyRelatedPosts extends WP_Widget {
   }
 
 }
-add_action( 'widgets_init', create_function( '', 'return register_widget( "SimplyRelatedPosts" );' ) );
+add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Related" );' ) );
      
 
- class HistoryPostOnTheDay extends WP_Widget {               
+ class APIP_Widget_Sameday_Post extends WP_Widget {               
 
 
-          function HistoryPostOnTheDay() {
+          public function __construct() {
 
                $widget_ops = array(
-                    'classname' => 'HistoryPostOnTheDay',
-                    'description' => __( 'Shows what were written in the same DAY and MONTH of other years.' , 'history-post-on-the-day')
+                    'classname' => 'APIP_Widget_Sameday_Post',
+                    'description' =>'显示历史同日文章'
                );
-               $this->WP_Widget( 'HistoryPostOnTheDay', __( 'History post' , 'history-post-on-the-day'), $widget_ops );   
+               parent::__construct( 'APIP_Widget_Sameday_Post', 'APIP历史文章', $widget_ops );   
           }
 
-          function form( $instance ) {
+          public function form( $instance ) {
 
-               $instance = wp_parse_args( (array) $instance, array( 'title' => __( 'History post' , 'history-post-on-the-day'), 'numbers' => '5', 'padtonum' => 'false' ) );
+               $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP历史文章', 'numbers' => '5', 'padtonum' => 'false' ) );
                $title = $instance['title'];
                $numbers = $instance['numbers']; 
                $padtonum = $instance['padtonum']; 
@@ -162,7 +159,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "Simpl
           }
            
 
-          function update( $new_instance, $old_instance ) {
+          public function update( $new_instance, $old_instance ) {
 
                $instance = $old_instance;
                $instance['title'] = $new_instance['title'];
@@ -173,7 +170,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "Simpl
           }
            
 
-          function widget( $args, $instance ) {
+          public function widget( $args, $instance ) {
 
                if ( !is_singular() )
                     return;
@@ -204,7 +201,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "Simpl
                     foreach ( $history_post as $related_post ) : ?>
                          <li>
                               <?php echo $related_post->h_year; echo ':&nbsp;&nbsp'; ?><a class="history-post" href="<?php echo get_permalink( $related_post->ID ); ?>">
-                                   <?php echo apply_filters( 'history-post-on-the-day', $related_post->post_title, $related_post, $instance ); ?>
+                                   <?php echo ( $related_post->post_title ); ?>
                               </a>
                          </li><?php
                     endforeach; ?>
@@ -216,21 +213,21 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "Simpl
       
      }
 
-     add_action( 'widgets_init', create_function( '', 'return register_widget( "HistoryPostOnTheDay" );' ) );
+     add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Sameday_Post" );' ) );
 
-class RecentModifyed extends WP_Widget {               
+class APIP_Widget_Recent extends WP_Widget {
 
 
-          function RecentModifyed() {
+          public function __construct() {
 
                $widget_ops = array(
-                    'classname' => 'RecentModifyed',
-                    'description' => __( 'Shows what were recent modified.' , 'prokuso')
+                    'classname' => 'APIP_Widget_Recent',
+                    'description' => '显示最近更新的文章'
                );
-               $this->WP_Widget( 'RecentModifyed', __( 'Recent Modify' , 'prokuso'), $widget_ops );   
+               parent::__construct( 'APIP_Widget_Recent', '最近更新', $widget_ops );
           }
 
-          function form( $instance ) {
+          public function form( $instance ) {
 
                $instance = wp_parse_args( (array) $instance, array( 'title' => __( 'Recent Modify' , 'prokuso'), 'numbers' => '5' ) );
                $title = $instance['title'];
@@ -250,7 +247,7 @@ class RecentModifyed extends WP_Widget {
           }
            
 
-          function update( $new_instance, $old_instance ) {
+          public function update( $new_instance, $old_instance ) {
                $instance = $old_instance;
                $instance['title'] = $new_instance['title'];
                $instance['numbers'] = $new_instance['numbers'];
@@ -258,7 +255,7 @@ class RecentModifyed extends WP_Widget {
           }
            
 
-          function widget( $args, $instance ) {
+          public function widget( $args, $instance ) {
                 extract( $args, EXTR_SKIP );
                 $number = $instance['numbers'] ? : 5 ;
                 $related_posts = get_posts( array(
@@ -293,7 +290,7 @@ class RecentModifyed extends WP_Widget {
       
      }
 
- add_action( 'widgets_init', create_function( '', 'return register_widget( "RecentModifyed" );' ) );    
+ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Recent" );' ) );    
 
 /**
  * Custom Meta class
@@ -302,11 +299,11 @@ class RecentModifyed extends WP_Widget {
  *
  * @since 2.8.0
  */
-class APIP_Meta extends WP_Widget {
+class APIP_Widget_Meta extends WP_Widget {
 
     public function __construct() {
-        $widget_ops = array('classname' => 'APIP_Meta', 'description' => __( "Some basic info.") );
-        parent::__construct('APIP_Meta', __('BasicInfo'), $widget_ops);
+        $widget_ops = array('classname' => 'APIP_Widget_Meta', 'description' => __( "Some basic info.") );
+        parent::__construct('APIP_Widget_Meta', __('BasicInfo'), $widget_ops);
     }
 
     public function widget( $args, $instance ) {
@@ -361,4 +358,87 @@ class APIP_Meta extends WP_Widget {
     }
 }
 
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Meta" );' ) ); 
+add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Meta" );' ) ); 
+
+/**
+ * 自定义显示当前页面上filter用class
+ *
+ * 显示指定的自定义filter列表
+ *
+ * @since APIP 1.11
+ */
+class APIP_Widget_Hook_List extends WP_Widget {
+
+	public function __construct() {
+		$widget_ops = array(
+			'classname' => 'APIP_Widget_Hook_List',
+			'description' => '显示当前页面的钩子列表',
+			'customize_selective_refresh' => true,
+		);
+		parent::__construct( 'APIP_Widget_Hook_List', '钩子列表', $widget_ops );
+	}
+
+	public function widget( $args, $instance ) {
+		$title =  empty($instance['title']) ? '钩子列表' : $instance['title'];
+        $filters = explode(',',$instance['hooks']);
+        if ( !is_super_admin() )
+            return;
+        if ( empty( $filters ) )
+            return;
+		echo $args['before_widget'];
+		if ( $title ) {
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
+        $content = '<ul>';
+        $session = '';
+        $line = '';
+        foreach ($filters as $filter){
+            $tags = $GLOBALS['wp_filter'][ $filter ];
+            if (empty($tags))
+                continue;
+            $session = sprintf('<li><strong>%s</strong></li>', $filter );
+            foreach ( $tags as $priority => $tag )
+            {
+                foreach ( $tag as $identifier => $function )
+                {
+                    if ( is_string( $function['function'] ) )
+                    {
+                        $line = sprintf('<li>&nbsp;&nbsp;%1$s</li>', $function['function'] );
+                    }
+                    else
+                    {
+                        $cname = is_string($function['function'][0]) ? $function['function'][0] : get_class($function['function'][0]);
+                        $line = sprintf('<li>&nbsp;&nbsp;%1$s::%2$s</li>', $cname, $function['function'][1]);
+                    }
+                    $session .= $line;
+                }
+            }
+            $content .= $session;
+        };
+        $content .= '</ul>';
+        echo $content;
+
+		echo $args['after_widget'];
+	}
+
+	public function update( $new_instance, $old_instance ) {
+		$instance = $old_instance;
+		$instance['title'] = sanitize_text_field( $new_instance['title'] );
+        $instance['hooks'] = sanitize_text_field( $new_instance['hooks'] );
+
+		return $instance;
+	}
+
+
+	public function form( $instance ) {
+		$instance = wp_parse_args( (array) $instance, array( 'title' => '', 'hooks' => 'the_content,wp_enqueue_scripts,wp_head,wp_footer' ) );
+		$title = sanitize_text_field( $instance['title'] );
+        $hooks = sanitize_text_field( $instance['hooks'] );
+?>
+			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+            <p><label for="<?php echo $this->get_field_id('hooks'); ?>"><?php echo '要查看的hook,半角逗号分隔:'; ?></label> <input class="widefat" id="<?php echo $this->get_field_id('hooks'); ?>" name="<?php echo $this->get_field_name('hooks'); ?>" type="text" value="<?php echo esc_attr($hooks); ?>" /></p>
+<?php
+	}
+}
+
+add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) ); 

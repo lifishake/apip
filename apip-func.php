@@ -206,3 +206,121 @@ function apip_get_post_navagation($args=array()){
     echo $navigation;
 }
 
+/*
+ * 作用: 移除某个类的filter方法
+ * 来源: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
+ * URL: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object 
+*/
+function apip_remove_anonymous_object_hook( $tag, $class, $method )
+{
+    $filters = $GLOBALS['wp_filter'][ $tag ];
+
+    if ( empty ( $filters ) )
+    {
+        return;
+    }
+    foreach ( $filters as $priority => $filter )
+    {
+        foreach ( $filter as $identifier => $function )
+        {
+            if ( is_array( $function)
+                and is_a( $function['function'][0], $class )
+                and $method === $function['function'][1]
+            )
+            {
+                //action也可以用remove_filter删除。
+                remove_filter(
+                    $tag,
+                    array ( $function['function'][0], $method ),
+                    $priority
+                );
+            }
+        }
+    }
+}
+
+/*
+ * 作用: 移除wpembed相关的内部插件
+ * 来源: Disable Embeds
+ * URL: https://pascalbirchler.com 
+*/
+function apip_disable_embeds_tiny_mce_plugin( $plugins ) {
+	return array_diff( $plugins, array( 'wpembed' ) );
+}
+/* 同上 */
+function apip_disable_embeds_rewrites( $rules ) {
+	foreach ( $rules as $rule => $rewrite ) {
+		if ( false !== strpos( $rewrite, 'embed=true' ) ) {
+			unset( $rules[ $rule ] );
+		}
+	}
+
+	return $rules;
+}
+/* 同上 */
+function apip_disable_embeds_remove_rewrite_rules() {
+	add_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
+	flush_rewrite_rules();
+}
+/* 同上 */
+function apip_disable_embeds_flush_rewrite_rules() {
+	remove_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
+	flush_rewrite_rules();
+}
+
+function apip_media_upload_nextgen() {
+	
+    // Not in use
+    $errors = false;
+
+	// Generate TinyMCE HTML output
+	if ( isset($_POST['send']) ) {
+		$keys = array_keys($_POST['send']);
+		$send_id = (int) array_shift($keys);
+		$image = $_POST['image'][$send_id];
+		$alttext = stripslashes( htmlspecialchars ($image['alttext'], ENT_QUOTES));
+		$description = stripslashes (htmlspecialchars($image['description'], ENT_QUOTES));
+		
+		// here is no new line allowed
+		$clean_description = preg_replace("/\n|\r\n|\r$/", " ", $description);
+		$img = nggdb::find_image($send_id);
+		$thumbcode = $img->get_thumbcode();
+
+        // Create a shell displayed-gallery so we can inspect its settings
+        $registry = C_Component_Registry::get_instance();
+        $mapper   = $registry->get_utility('I_Displayed_Gallery_Mapper');
+        $factory  = $registry->get_utility('I_Component_Factory');
+        $args = array(
+            'display_type' => NGG_BASIC_SINGLEPIC
+        );
+        $displayed_gallery = $factory->create('displayed_gallery', $args, $mapper);
+
+        $image['thumb'] = str_replace(get_bloginfo('url'), '', $image['thumb']);
+        $image['url'] = str_replace(get_bloginfo('url'), '', $image['url']);
+		// Build output
+		if ($image['size'] == "thumbnail")
+			$html = "<img src='{$image['thumb']}' alt='{$alttext}' />";
+        else
+            $html = '';
+
+		// Wrap the link to the fullsize image around
+		$html = "<a {$thumbcode} href='{$image['url']}' title='{$clean_description}'>{$html}</a>";
+
+		if ($image['size'] == "full" || $image['size'] == "singlepic")
+			$html = "<img src='{$image['url']}' alt='{$alttext}' />";
+		
+			
+		media_upload_nextgen_save_image();
+		
+		// Return it to TinyMCE
+		return media_send_to_editor($html);
+	}
+	
+	// Save button
+	if ( isset($_POST['save']) ) {
+		media_upload_nextgen_save_image();
+	}
+		
+	return wp_iframe( 'media_upload_nextgen_form', $errors );
+}
+
