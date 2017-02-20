@@ -108,6 +108,26 @@ function apip_init()
         //2.8禁止直接访问wp_comments.php
         add_action('check_comment_flood', 'check_referrer_comment');
     }
+    if ( apip_option_check('search_without_page') )
+    {
+        //2.9搜索结果不包括page页面
+        add_filter('pre_get_posts','remove_page_search');
+    }
+    if ( is_admin() )
+    {
+        define('NGG_DISABLE_RESOURCE_MANAGER', FALSE);
+    }
+    else
+    {
+        define('NGG_DISABLE_RESOURCE_MANAGER', TRUE);
+    }
+    if ( is_page('gallery') )
+    {
+        define('NGG_DISABLE_FILTER_THE_CONTENT', FALSE);
+    }
+    else{
+        define('NGG_DISABLE_FILTER_THE_CONTENT', TRUE);
+    }
 	/** 03 */
     if ( apip_option_check('header_description') )
     {
@@ -205,6 +225,7 @@ function apip_init_actions()
     remove_filter('comment_text','capital_P_dangit',31);    
     add_filter( 'use_default_gallery_style', '__return_false' );    //不使用默认gallery
     add_filter('xmlrpc_enabled', '__return_false');     //不使用xmlrpc
+    add_filter( 'feed_links_show_comments_feed', '__return_false' ); //不输出comments的rss,4.4以上
 
     ////0A.1屏蔽ngg带来的无用钩子
     if( class_exists('M_Third_Party_Compat') )
@@ -246,10 +267,11 @@ function apip_init_actions()
     {
         apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
     }
+    /*
     if( class_exists('C_Photocrati_Resource_Manager') )
     {
         apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
-    }
+    }*/
     //删除原来插入时的class
     remove_action('media_upload_nextgen','media_upload_nextgen');
     if (is_admin()){
@@ -321,6 +343,7 @@ $options
     2.6     show_author_comment         屏蔽作者留言
     2.7     redirect_if_single          搜索结果只有一条时直接跳入
     2.8     protect_comment_php         禁止直接访问wp_comments.php
+    2.9     search_without_page         搜索结果中屏蔽page
 03.     header_description              头部描述信息
     3.1     hd_home_text                首页描述文字
     3.2     hd_home_keyword             首页标签
@@ -396,6 +419,8 @@ function apip_scripts()
 function apip_remove_scripts()
 {
     global $wp_scripts;
+    if ( !is_array($wp_scripts) || empty($wp_scripts) || empty($wp_scripts->registered) )
+        return;
     foreach ($wp_scripts->registered as $libs){
         $libs->src = str_replace('//ajax.googleapis.com', '//sdn.geekzu.org/ajax', $libs->src);
         //fonts.gmirror.org
@@ -716,6 +741,19 @@ function check_referrer_comment() {
     if (!isset($_SERVER['HTTP_REFERER']) || $_SERVER['HTTP_REFERER'] == '') {
 		wp_die('spammer狗带。');
 	}
+}
+
+//2.9
+/**
+ * 作用: 在搜索结果中屏蔽page页面
+ * 来源: Editorial Staff
+ * URL: http://www.wpbeginner.com/wp-tutorials/how-to-exclude-pages-from-wordpress-search-results/
+ */
+function remove_page_search($query) {
+    if ($query->is_search) {
+        $query->set('post_type', 'post');
+	}
+	return $query;
 }
 
 /*                                          02终了                             */
