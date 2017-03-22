@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.12
+ * Version:     1.13
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -64,6 +64,8 @@ function apip_init()
     add_filter( 'manage_posts_columns', 'apip_posts_columns' );
     //0.9 升级后替换高危文件
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
+    //0.10 作者页跳转到404
+    add_action('template_redirect', 'apip_redirect_author');
 	/** 01 */
 	if( apip_option_check('better_excerpt') )
     {
@@ -562,6 +564,16 @@ function apip_remove_default_risk_files( $upgrader_object, $options )
     }
 }
 
+//0.10 author页跳转到404
+function apip_redirect_author() {
+    if (is_author()) {
+        global $wp_query;
+        $wp_query->set404();
+        wp_redirect( network_site_url( '404.php' ) );
+        exit;
+    }
+}
+
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -827,15 +839,15 @@ function apip_comment_inserted($comment_id, $comment_object) {
     if ($comment_object->comment_parent > 0) {
 
         $comment_parent = get_comment($comment_object->comment_parent);
-        $bg_head = '<div style="background:transparent; color: inherit; font-size:14px;"><div style=" margin:0 auto;background:rgba(250,240,190,0.6); padding: 15px;margin: 15px;color: #333; box-shadow: 0px 15px 25px -17px #E7797A;">' ;
-        $content_border_head = '<p style="padding: 20px; margin: 15px; background:rgba(255,245,195,0.8); ">' ;
-        $a_style = 'color: #908040; text-decoration: none;';
+        $bg_head = '<div style="border:3px solid hsl(277,36%,7%); border-radius: 5px; margin: 1em 2em; background:#e5e5e5; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: #333; box-shadow: 0px 15px 25px -17px #E7797A;">' ;
+        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed hsl(277,36%,27%); border-radius: 5px;">' ;
+        $a_style = 'color: hsl(277,50%,50%); text-decoration: none;';
         $random_posts = apip_random_post( get_the_ID(), 1 ) ;
         foreach ( $random_posts as $random_post ) :
             $random_link = get_permalink( $random_post->ID ) ;
         endforeach;
         
-        $mailcontent = '<p>亲爱的 <b style="color:#222; font-weight:800; padding:0 5px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
+        $mailcontent = '<p>亲爱的 <b style="color:hsl(277,36%,7%); font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
         $mailcontent = $mailcontent.$content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
         $mailcontent = $mailcontent.$content_border_head.$comment_object->comment_content.'</p>';
         $mailcontent = $mailcontent.sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
