@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.13
+ * Version:     1.14
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -66,6 +66,8 @@ function apip_init()
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
     //0.10 作者页跳转到404
     add_action('template_redirect', 'apip_redirect_author');
+    //0.11 屏蔽留言class中的作者名
+    add_filter('comment_class', 'apip_remove_author_class', 10, 5);
 	/** 01 */
 	if( apip_option_check('better_excerpt') )
     {
@@ -572,6 +574,16 @@ function apip_redirect_author() {
         wp_redirect( network_site_url( '404.php' ) );
         exit;
     }
+}
+
+//0.11 屏蔽留言中的作者名class
+function apip_remove_author_class( $classes, $class, $comment_ID, $comment, $post_id ) {
+    $c_rm = array();
+    if ( $comment->user_id > 0 && $user = get_userdata( $comment->user_id ) ) {
+        $c_rm[] = 'comment-author-' . sanitize_html_class( $user->user_nicename, $comment->user_id );
+    }
+    $classes = array_diff( $classes, $c_rm );
+    return $classes;
 }
 
 /*                                          00终了                             */
