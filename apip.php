@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.16
+ * Version:     1.17
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -426,7 +426,7 @@ function apip_remove_scripts()
     if ( !is_array($wp_scripts) || empty($wp_scripts) || empty($wp_scripts->registered) )
         return;
     foreach ($wp_scripts->registered as $libs){
-        $libs->src = str_replace('//ajax.googleapis.com', '//sdn.geekzu.org/ajax', $libs->src);
+        $libs->src = str_replace('//ajax.googleapis.com', '//gapis.geekzu.org/ajax', $libs->src);
         //fonts.gmirror.org
         }
     if ( !is_admin() )
@@ -457,7 +457,7 @@ function apip_remove_styles()
     global $wp_styles;
     foreach ($wp_styles->registered as $libs){
 		//替换google字体
-        $libs->src = str_replace('//fonts.googleapis.com', '//fonts.geekzu.org', $libs->src);
+        $libs->src = str_replace('//fonts.googleapis.com', '//gapis.geekzu.org/g-fonts', $libs->src);
         //fonts.gmirror.org
         }
     if ( !is_admin() )
@@ -893,7 +893,14 @@ function apip_get_cavatar($source) {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
         //gravatar.eqoe.cn
-		$source = str_replace(array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com','secure.gravatar.com'), /*'fdn.geekzu.org'*/'gravatar.css.network', $source);
+        $src = array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com','secure.gravatar.com');
+        if( is_ssl() ){
+            $replace = 'sdn.geekzu.org';
+        }
+        else{
+            $replace = 'fdn.geekzu.org';/*'gravatar.css.network'*/
+        }
+		$source = str_replace( $src, $replace, $source);
         return $source ;
     }
     $time = 1209600; //The time of cache(seconds)
