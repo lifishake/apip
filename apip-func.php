@@ -294,9 +294,12 @@ function apip_media_upload_nextgen() {
             'display_type' => NGG_BASIC_SINGLEPIC
         );
         $displayed_gallery = $factory->create('displayed_gallery', $args, $mapper);
-
-        $image['thumb'] = str_replace(get_bloginfo('url'), '', $image['thumb']);
-        $image['url'] = str_replace(get_bloginfo('url'), '', $image['url']);
+        $domain = str_replace(array('http://','https://'), '', get_bloginfo('url'));
+        $urls = array();
+        $urls[] = 'http://'.$domain;
+        $urls[] = 'https://'.$domain;
+        $image['thumb'] = str_replace($urls, '', $image['thumb']);
+        $image['url'] = str_replace($urls, '', $image['url']);
 		// Build output
 		if ($image['size'] == "thumbnail")
 			$html = "<img src='{$image['thumb']}' alt='{$alttext}' />";

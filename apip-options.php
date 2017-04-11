@@ -11,7 +11,7 @@ add_action( 'admin_init', 'apip_settings_init' );
 
 function apip_add_admin_menu(  ) { 
 
-	add_menu_page( 'APIP设置', 'APIP设置', 'manage_options', __FILE__, 'apip_options_page' );
+	add_menu_page( 'APIP设置', 'APIP设置', 'manage_options', __FILE__, 'apip_options_page', plugin_dir_url( __FILE__ ).'img/apip-ico.png' );
 
 }
 
@@ -26,7 +26,7 @@ function apip_settings_init(  ) {
 
 	add_settings_section(
 		'apip_pluginPage_section', 
-		__( 'APIP设置', 'apip' ), 
+		'APIP设置', 
 		'apip_settings_section_callback', 
 		'apip_option_group'
 	);
@@ -34,7 +34,7 @@ function apip_settings_init(  ) {
 	//01
 	add_settings_field( 
 		'better_excerpt', 
-		__( '改进版中文摘要', 'apip' ), 
+		'改进版中文摘要', 
 		'apip_better_excerpt_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -43,7 +43,7 @@ function apip_settings_init(  ) {
 	//02
 	add_settings_field( 
 		'advanced_writer_settings', 
-		__( '高级编辑选项', 'apip' ), 
+		'高级编辑选项', 
 		'apip_advanced_writer_settings_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -51,7 +51,7 @@ function apip_settings_init(  ) {
 	//03
 	add_settings_field( 
 		'header_description', 
-		__( '首页和头部追加描述和关键字', 'apip' ), 
+		'首页和头部追加描述和关键字', 
 		'apip_header_description_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -59,7 +59,7 @@ function apip_settings_init(  ) {
 	//04
 	add_settings_field( 
 		'notify_comment_reply', 
-		__( '新回复邮件提示', 'apip' ), 
+		'新回复邮件提示', 
 		'apip_notify_comment_reply_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -67,7 +67,7 @@ function apip_settings_init(  ) {
 	//05
 	add_settings_field( 
 		'local_gravatar', 
-		__( 'GFW相关', 'apip' ), 
+		'GFW相关', 
 		'apip_anti_gfw_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -75,7 +75,7 @@ function apip_settings_init(  ) {
 	//06
 	add_settings_field( 
 		'blocked_commenters', 
-		__( '要替换的留言者黑名单', 'apip' ), 
+		'要替换的留言者黑名单', 
 		'apip_blocked_commenters_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -83,7 +83,7 @@ function apip_settings_init(  ) {
 	//07
 	add_settings_field( 
 		'social_share_settings', 
-		__( '社会化分享', 'apip' ), 
+		'社会化分享', 
 		'apip_social_share_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
@@ -108,8 +108,16 @@ function apip_settings_init(  ) {
 	//99
 	add_settings_field( 
 		'local_definition_count', 
-		__( '自定义widget', 'apip' ), 
+		'自定义widget', 
 		'apip_local_widgets_render', 
+		'apip_option_group', 
+		'apip_pluginPage_section' 
+	);
+    //-1
+    add_settings_field( 
+		'test_field_settings', 
+		'保留功能', 
+		'apip_test_field_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
 	);
@@ -168,11 +176,11 @@ function apip_better_excerpt_render(  ) {
 	//01
 	$options = get_option( 'apip_settings' );
 	?>
-	<input type='checkbox' name='apip_settings[better_excerpt]' <?php checked( $options['better_excerpt'], 1 ); ?> value='1'>
+	<input type='checkbox' name='apip_settings[better_excerpt]' <?php checked( $options['better_excerpt'], 1 ); ?> value='1'/>
 	<span>    摘要长度：</span>
-	<input type='text' name='apip_settings[excerpt_length]' size='5' value='<?php echo $options['excerpt_length']; ?>'></br>
+	<input type='text' name='apip_settings[excerpt_length]' size='5' value='<?php echo $options['excerpt_length']; ?>'/></br>
 	<span>    结尾字符：</span>
-	<input type='text' name='apip_settings[excerpt_ellipsis]' size='10' value='<?php echo $options['excerpt_ellipsis']; ?>'>
+	<input type='text' name='apip_settings[excerpt_ellipsis]' size='10' value='<?php echo $options['excerpt_ellipsis']; ?>'/>
 	<?php
 }
 
@@ -182,23 +190,23 @@ function apip_advanced_writer_settings_render()
 	$options = get_option( 'apip_settings' );
 	?>
 	<span>    禁止自动保存：</span>
-	<input type='checkbox' name='apip_settings[auto_save_disabled]' <?php checked( $options['auto_save_disabled'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[auto_save_disabled]' <?php checked( $options['auto_save_disabled'], 1 ); ?> value='1'/></br>
 	<span>    禁止保存版本修订(autorevision)：</span>
-	<input type='checkbox' name='apip_settings[save_revisions_disable]' <?php checked( $options['save_revisions_disable'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[save_revisions_disable]' <?php checked( $options['save_revisions_disable'], 1 ); ?> value='1'/></br>
 	<span>    显示AdminBar：</span>
-	<input type='checkbox' name='apip_settings[show_admin_bar]' <?php checked( $options['show_admin_bar'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[show_admin_bar]' <?php checked( $options['show_admin_bar'], 1 ); ?> value='1'/></br>
 	<span>    前台显示中文：</span>
-	<input type='checkbox' name='apip_settings[forground_chinese]' <?php checked( $options['forground_chinese'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[forground_chinese]' <?php checked( $options['forground_chinese'], 1 ); ?> value='1'/></br>
 	<span>    屏蔽OpenSans字体：</span>
-	<input type='checkbox' name='apip_settings[block_open_sans]' <?php checked( $options['block_open_sans'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[block_open_sans]' <?php checked( $options['block_open_sans'], 1 ); ?> value='1'/></br>
 	<span>    默认留言widget中屏蔽作者：</span>
-	<input type='checkbox' name='apip_settings[show_author_comment]' <?php checked( $options['show_author_comment'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[show_author_comment]' <?php checked( $options['show_author_comment'], 1 ); ?> value='1'/></br>
 	<span>    搜索结果只有一条时直接跳转：</span>
-	<input type='checkbox' name='apip_settings[redirect_if_single]' <?php checked( $options['redirect_if_single'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[redirect_if_single]' <?php checked( $options['redirect_if_single'], 1 ); ?> value='1'/></br>
     <span>    保护wp_comments.php：</span>
-    <input type='checkbox' name='apip_settings[protect_comment_php]' <?php checked( $options['protect_comment_php'], 1 ); ?> value='1'></br>
+    <input type='checkbox' name='apip_settings[protect_comment_php]' <?php checked( $options['protect_comment_php'], 1 ); ?> value='1'/></br>
     <span>    搜索结果中屏蔽page：</span>
-    <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'></br>
+    <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'/></br>
 	<?php
 	
 }
@@ -207,11 +215,11 @@ function apip_header_description_render(  ) {
 	//03
 	$options = get_option( 'apip_settings' );
 	?>
-	<input type='checkbox' name='apip_settings[header_description]' <?php checked( $options['header_description'], 1 ); ?> value='1'>
+	<input type='checkbox' name='apip_settings[header_description]' <?php checked( $options['header_description'], 1 ); ?> value='1'/>
 	<span>    网站描述（留空则使用网站副标题）：</span>
-	<input type='text' name='apip_settings[hd_home_text]' value='<?php echo htmlspecialchars(stripslashes($options['hd_home_text'])); ?>' ></br>
+	<input type='text' name='apip_settings[hd_home_text]' value='<?php echo htmlspecialchars(stripslashes($options['hd_home_text'])); ?>' /></br>
 	<span>    网站标签（【,】分割（留空则使用10个最常用标签）：</span>
-	<input type='text' name='apip_settings[hd_home_keyword]' value='<?php echo htmlspecialchars(stripslashes($options['hd_home_keyword'])); ?>' >
+	<input type='text' name='apip_settings[hd_home_keyword]' value='<?php echo htmlspecialchars(stripslashes($options['hd_home_keyword'])); ?>' />
 	<?php
 }
 
@@ -219,7 +227,7 @@ function apip_notify_comment_reply_render(  ) {
 	//04
 	$options = get_option( 'apip_settings' );
 	?>
-	<input type='checkbox' name='apip_settings[notify_comment_reply]' <?php checked( $options['notify_comment_reply'], 1 ); ?> value='1'>
+	<input type='checkbox' name='apip_settings[notify_comment_reply]' <?php checked( $options['notify_comment_reply'], 1 ); ?> value='1'/>
 	<?php
 }
 
@@ -229,9 +237,9 @@ function apip_anti_gfw_render()
 	$options = get_option( 'apip_settings' );
 	?>
 	<span>    gravatar使用本地缓存(不使用则替换网址)：</span>
-	<input type='checkbox' name='apip_settings[local_gravatar]' <?php checked( $options['local_gravatar'], 1 ); ?> value='1'></br>
+	<input type='checkbox' name='apip_settings[local_gravatar]' <?php checked( $options['local_gravatar'], 1 ); ?> value='1'/></br>
 	<span>    替换emojie地址：</span>
-	<input type='checkbox' name='apip_settings[replace_emoji]' <?php checked( $options['replace_emoji'], 1 ); ?> value='1'>
+	<input type='checkbox' name='apip_settings[replace_emoji]' <?php checked( $options['replace_emoji'], 1 ); ?> value='1'/>
 	<?php
 }
 
@@ -240,7 +248,8 @@ function apip_blocked_commenters_render()
 	//06
 	$options = get_option( 'apip_settings' );
 	?>
-	<input type='text' size = '80' name='apip_settings[blocked_commenters]' value='<?php echo htmlspecialchars(stripslashes($options['blocked_commenters'])); ?>' >
+
+    <textarea rows='4' cols='40' name='apip_settings[blocked_commenters]' ><?php echo htmlspecialchars(stripslashes($options['blocked_commenters'])); ?></textarea>
 	<?php
 }
 
@@ -308,7 +317,7 @@ function apip_local_widgets_render()
 
 function apip_settings_section_callback(  ) { 
 
-	echo __( '一些基本设定项目，抄自多个插件', 'apip' );
+	echo '一些基本设定项目，抄自多个插件';
 
 }
 
@@ -331,5 +340,10 @@ function apip_options_page(  ) {
 
 }
 
+function apip_test_field_render() {
+    ?>
+    <span>WP->is_ssl = <?php echo is_ssl()? 'YES':'NO'; ?> WP_FS__IS_HTTPS = <?php echo WP_FS__IS_HTTPS?'YES':'NO'; ?> </span>
+    <?php
+}
 
 ?>
