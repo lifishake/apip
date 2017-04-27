@@ -15,6 +15,39 @@
 define('APIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define('APIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ) ;
 global $apip_options;
+
+register_activation_hook( __FILE__, 'apip_plugin_activation' );
+register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
+register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
+
+/*插件激活*/
+function apip_plugin_activation()
+{
+    global $wpdb;
+    /*因为是视图，所以每次都创建也无所谓*/
+    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_yearly`
+     AS SELECT DISTINCT YEAR(post_date) AS `year`, COUNT(ID) AS `count`
+    FROM `wp_posts` WHERE post_type = 'post' AND post_status = 'publish' 
+    GROUP BY year ORDER BY year DESC ; ";
+    $wpdb->query($sql);
+    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_monthly`
+     AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
+     FROM `wp_posts` WHERE post_type = 'post' AND post_status = 'publish' 
+     GROUP BY year, month ORDER BY year, month DESC ; ";
+    $wpdb->query($sql);
+}
+
+/*插件反激活*/
+function apip_plugin_deactivation()
+{
+    global $wpdb;
+    /*因为是视图，所以每次都删除也无所谓*/
+    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_yearly` ; ";
+    $wpdb->query($sql);
+    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_monthly` ; ";
+    $wpdb->query($sql);
+}
+
 /*配置画面*/
 if (is_admin())
 {
@@ -160,9 +193,15 @@ function apip_init()
 	{
 		add_shortcode('mytagcloud', 'apip_tagcloud_page'); 
 	}
+    //8.2 友链注册
     if ( apip_option_check('apip_link_enable') )
 	{
 		add_shortcode('mylink', 'apip_link_page'); 
+	}
+    //8.3 归档页注册
+    if ( apip_option_check('apip_archive_enable') )
+	{
+		add_shortcode('myarchive', 'apip_archive_page'); 
 	}
 
 	/** 09 */
@@ -360,6 +399,7 @@ $options
 08.     自定义的shortcode
     8.1     apip_tagcloud_enable        更好看的标签云
     8.2     apip_link_page              自定义友情链接
+    8.3     apip_achive_page            自定义归档页
 09.     比较复杂的设定
     9.1     apip_codehighlight_enable   代码高亮
     9.2     apip_lazyload_enable        LazyLoad
@@ -378,40 +418,288 @@ $options
  */
 function apip_scripts()
 {
-    wp_enqueue_style( 'apip_style_all', APIP_PLUGIN_URL . 'css/apip-all.css' );
+    wp_enqueue_style( 'apip-tyle-all', APIP_PLUGIN_URL . 'css/apip-all.css' );
+    $css = '';
+    //所有要加载fontAowsem的情况
+    if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
+         ( is_page('my_links') && apip_option_check('apip_link_enable') ) )
+    {
+        $css .= "   @font-face {
+                      font-family: 'FontAwesome';
+                      src: url('../fonts/fontawesome-webfont.eot?v=4.3.0');
+                      src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('../fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('../fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+                      font-weight: normal;
+                      font-style: normal;
+                    }
+        ";
+    }
+    
 	//0.1 Ctrl+Enter 提交
 	if (comments_open() && is_singular() ) {
-		wp_enqueue_script('apip_js_singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
+		wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
 	}
 	//07
     if  ( is_singular() && apip_option_check('social_share_enable') )
     {
-		wp_enqueue_script('apip_js_social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
-		wp_enqueue_style( 'apip_style_social', APIP_PLUGIN_URL . 'css/apip-social.css' );
+		wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
+		//wp_enqueue_style( 'apip-style-social', APIP_PLUGIN_URL . 'css/apip-social.css' );
+        $css .= '   #sharebar{
+                        clear:both;
+                        background: none repeat scroll 0 0 #EEFAF6;
+                        line-height: 2em ;
+                    }
+
+                    #sharebar span{
+                        padding: 0 15px;
+                        margin:4px 0 ;
+                        color: #5a5a5a;
+                    }
+
+                    #sharebar a {
+                        background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
+                        display: inline;
+                        font-size: 1.3em;
+                        height: inherit;
+                        line-height: inherit;
+                        margin: 0;
+                        opacity: 0.8;
+                        padding-right: 13px;
+                        position: relative;
+                        text-decoration: none;
+                        top: 2px;
+                        vertical-align: inherit;
+                        width: inherit;
+                        cursor:pointer;
+                    }
+
+                    #sharebar a:before {
+                        font-family: \'FontAwesome\' ;
+                        font-variant: normal;
+                        font-weight: 400;
+                        line-height: 1;
+                        text-transform: none;
+                    }
+
+                    .sharebar-twitter:before{
+                        content: "\f099" ;
+                    }
+                    .sharebar-weibo:before {
+                      content: "\f18a";
+                    }
+                    .sharebar-tencent-weibo:before {
+                      content: "\f1d5";
+                    }
+                    .sharebar-googleplus:before {
+                      content: "\f0d5";
+                    }
+                    .sharebar-facebook:before {
+                      content: "\f230";
+                    }';
     }
 	//8.1
 	if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
 	{
-		wp_enqueue_style( 'apip_tagcloud_style', APIP_PLUGIN_URL . 'css/apip-tagcloud.css' );
+        $css .= '   ul.tagcloud, ul.tagcloud li {
+                        font-size: 1em;
+                        list-style-type: none;
+                        padding: 0;
+                        margin: 0;
+                    }
+                    ul.tagcloud li {
+                        display: inline;
+                        line-height: 2.8em;
+                    }
+                    ul.tagcloud a {
+                        text-decoration: none;
+                        margin: 5px;
+                        border-radius: 3px;
+                    }
+                    ul.tagcloud a:hover {
+                        color:#BF52A9;
+                        border-radius: 3px;
+                    }
+                    a.tagged1 { 
+                        font-size: 1.00em; 
+                        color: #AF7E62;
+                        font-weight: 300;
+                        padding: 6px 11px;
+                        background: rgba(240,121,142,0.6);
+                        }
+                        
+                    a.tagged2 { 
+                        font-size: 1.20em;
+                        color: #B25E2A;
+                        font-weight: 400;
+                        padding: 9px 14px;
+                        background: rgba(129,240,127,0.6);
+                        }
+                    a.tagged3 { 
+                        font-size: 1.50em; 
+                        color:#995124;
+                        font-weight: 400;
+                        padding: 12px 17px;
+                        background: rgba(48,120,240,0.6);
+                    }
+                    a.tagged4 { 
+                        font-size: 1.80em; 
+                        color:#663718;
+                        font-weight: 500;
+                        padding: 15px 20px;
+                        background: rgba(231,170,240,0.6);
+                        }
+                    a.tagged5 {
+                        font-size: 2.20em; 
+                        color:#331C0C;
+                        font-weight: 700;
+                        padding: 18px 23px;
+                        background: rgba(240,76,73,0.6);
+                        }';
 	}
     //8.2
     if ( is_page('my_links') && apip_option_check('apip_link_enable') )
 	{
-		wp_enqueue_style( 'apip_link_style', APIP_PLUGIN_URL . 'css/apip-links.css' );
+		//wp_enqueue_style( 'apip-link-style', APIP_PLUGIN_URL . 'css/apip-links.css' );
+        $css .= '   .apip-links {
+                        display:inline-block;
+                    }
+
+                    .apip-links > li {
+                        display: inline;
+                        float: left;
+                        line-height: 80px;
+                        text-align: center;
+                        width: 128px;
+                    }
+
+                    .commenter-link.vcard {
+                        padding: 5px 5px 0;
+                    }
+                    .url::after {
+                        color: #fb9292;
+                        content: "\f0c1";
+                        font-family: Fontawesome;
+                        font-size: 12px;
+                        left: -2px;
+                        margin: -5px 0 0 1px;
+                        position: relative;
+                        top: -7px;
+                    }
+
+                    .commenter-link img {
+                        border: 2px solid #fb9292;
+                        border-radius: 100%;
+                    }
+        ';
 	}
+    //8.3
+    if ( (is_page('archive')||is_page('archives')) && apip_option_check('apip_archive_enable') )
+    {
+        $css .= '   .apip-no-disp {
+                        display: none;
+                        -webkit-transition: display 0.2s;
+                        transition: display 0.2s;
+                    }
+                    .achp-expanded {
+                        font-weight:800;
+                    }
+                    a.achp-sig {
+                        box-shadow: none !important;
+                    }
+                    span.achp-symbol {
+                        font-family: monospace, monospace;
+                        text-align: center;
+                        font-size: 10px;
+                        font-weight: 800;
+                        line-height: inherit;
+                        margin: 0 10px 0;
+                    }
+                    .post-'.get_the_ID().' .entry-content ul,
+                    .post-'.get_the_ID().' .entry-content ol {
+                        border: none !important;
+                        font-weight: normal !important;
+                        text-shadow: none !important;
+                    }
+                    .post-'.get_the_ID().' .entry-content ul:not(.apip-no-disp),
+                    .post-'.get_the_ID().' .entry-content ol:not(.apip-no-disp) {
+                        display: inherit;
+                    }';
+                    
+        wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), false, true);
+    }
 	//9.1
-	if ( in_category('code_share') && apip_option_check('apip_codehighlight_enable') == 1 )
+	if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
 	{
 		add_filter('the_content', 'apip_code_highlight') ;
-        wp_enqueue_style( 'prettify_style', APIP_PLUGIN_URL . 'css/apip-prettify.css' );
-		wp_enqueue_script('apip_js_prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), false, true);
+        $css .= '   pre.prettyprint {
+                        display: block;
+                        background-color: #333;
+                        text-shadow: none;
+                        }
+                    pre .nocode {
+                        background-color:none;
+                        color: #000;
+                        }
+                    pre .str {
+                        color: #ffa0a0;
+                        }
+                    pre .kwd {
+                        color: #f0e68c;
+                        font-weight: 700;
+                        }
+                    pre .com {
+                        color: #87ceeb;
+                        }
+                    pre .typ {
+                        color: #98fb98;
+                        }
+                    pre .lit {
+                        color: #cd5c5c;
+                        }
+                    pre .pun {
+                        color: #fff;
+                        }
+                    pre .pln {
+                        color: #fff;
+                        }
+                    pre .tag {
+                        color: #f0e68c;
+                        font-weight: 700;
+                        }
+                    pre .atn {
+                        color: #bdb76b;
+                        font-weight: 700;
+                        }
+                    pre .atv {
+                        color: #ffa0a0;
+                        }
+                    pre.dec {
+                        color: #98fb98;
+                        }
+                    ol.linenums {
+                        margin-top: 0;
+                        margin-bottom: 0;
+                        color: #AEAEAE;
+                        }
+                    li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
+                        list-style-type: none;
+                        }';
+		wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), false, true);
 	}
 	//9.2
 	if ( apip_option_check('apip_lazyload_enable') )
 	{
-		wp_enqueue_style( 'apip_style_lazyload', APIP_PLUGIN_URL . 'css/apip-lazyload.css' );
+        $css .= '   img[data-unveil="true"] {
+                        opacity: 0;
+                        -webkit-transition: opacity .3s ease-in;
+                        -moz-transition: opacity .3s ease-in;
+                        -o-transition: opacity .3s ease-in;
+                        transition: opacity .3s ease-in; 
+                        }';
 		wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), false, true);
 	}
+    if ( $css !== '' ) {
+        wp_add_inline_style('apip-tyle-all', $css);
+    }
 }
 
 //0.2
@@ -858,11 +1146,11 @@ function apip_comment_inserted($comment_id, $comment_object) {
         foreach ( $random_posts as $random_post ) :
             $random_link = get_permalink( $random_post->ID ) ;
         endforeach;
-        
-        $mailcontent = '<p>亲爱的 <b style="color:hsl(277,36%,7%); font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
-        $mailcontent = $mailcontent.$content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
-        $mailcontent = $mailcontent.$content_border_head.$comment_object->comment_content.'</p>';
-        $mailcontent = $mailcontent.sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
+        $mailcontent = "<p style=\"display:none\">{$comment_object->comment_content}</p>";
+        $mailcontent .= '<p>亲爱的 <b style="color:hsl(277,36%,7%); font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
+        $mailcontent .= $content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
+        $mailcontent .= $content_border_head.$comment_object->comment_content.'</p>';
+        $mailcontent .= sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
         $mailcontent = $bg_head.$mailcontent.'</div></div>' ;
 
         $headers  = 'MIME-Version: 1.0' . "\r\n";
@@ -1093,6 +1381,130 @@ function apip_link_page(){
     $ret.='</ul>';
     echo $ret;
 }
+//8.3自定义归档页
+/**
+ * 作用: JQuery效果的归档页
+ * 来源: http://skatox.com/blog/
+ * URL: http://skatox.com/blog/jquery-archive-list-widget/ 
+ */
+function apip_build_cat_html( $cat, $is_child = 0 ) {
+    global $cat_relation;
+    $child_html = '';
+    $exlude = array();
+    if ( array_key_exists($cat->term_id, $cat_relation) ) {
+        $child_html .= '<ul class="achp-child apip-no-disp">';
+        foreach ( $cat_relation[$cat->term_id] as $child ) {
+            $child_html .= apip_build_cat_html( $child, 1 );
+        }
+        $child_html .= '</ul>';
+        $exlude = $cat_relation[$cat->term_id];
+        unset($cat_relation[$cat->term_id]);
+    }
+
+    $post_html = '';
+    $getpostsargs = array();
+    $getpostsargs['posts_per_page'] = -1;
+    $getpostsargs['orderby'] = 'date';
+    $getpostsargs['order'] = 'ASC';
+    $getpostsargs['category__in'] = array($cat->term_id);
+    $posts = get_posts($getpostsargs);
+    if ( !empty($posts) ) {
+        $post_html .= '<ul class="achp-child apip-no-disp">';
+        foreach( $posts as $post ) {
+            $post_html.= "<li class=\"achp-parent apip-no-disp\">";
+            $post_html.= sprintf( "<a href=\"%s\" title=\"%s\">%s</a>",
+                get_permalink($post->ID),
+                htmlspecialchars($post->post_title),
+                $post->post_title
+            );
+            $post_html.='</li>';//achp-child
+        }
+        $post_html .= '</ul>';
+    }
+    $html .= sprintf("<li class = \"achp-parent %s \"><a class=\"achp-sig\" href=\"#\" title=\"%s\"><span class=\"achp-symbol\">[+]</span></a><a href=\"%s\" title=\"%s\">%s<span class=\"achp_count\">(%s)</span></a>%s%s</li>",
+                    $is_child ? 'apip-no-disp' : '',
+                    $cat->cat_name,
+                    get_category_link($cat->term_id),
+                    $cat->cat_name,
+                    $cat->cat_name,
+                    $cat->count,
+                    $child_html,
+                    $post_html
+                    );
+
+    return $html;
+}
+function apip_archive_page() {
+    global $wpdb;
+
+    //
+    /* 日期归档 */
+    $ret = '<h2 class="apip-h2">日期归档</h2><ul class="achp-widget">';
+    $years = $wpdb->get_results("SELECT `year`, `count` FROM `{$wpdb->prefix}v_posts_count_yearly`");
+    foreach( $years as $year ){
+        $yearLink = get_year_link($year->year);
+        $ret .= "<li class=\"achp-parent\">".
+                "<a class=\"achp-sig\" title=\"{$year->year}\" href=\"#\">".
+                "<span class=\"achp-symbol\">[+]</span>".
+                "</a><a href=\"{$yearLink}\" title=\"{$year->year}\">".
+                "{$year->year} ({$year->count})".
+                "</a><ul class=\"achp-child apip-no-disp\">";
+        $months = $wpdb->get_results("SELECT `year`, `month`, `count`, `posts` FROM `{$wpdb->prefix}v_posts_count_monthly` WHERE `year` = '{$year->year}'");
+        foreach ($months as $month) {
+            $monthLink = get_month_link($month->year, $month->month);
+            $monthFormat = $month->month < 10 ? '0'.$month->month : $month->month;
+            $ret .= "<li class=\"achp-parent apip-no-disp\" >" .
+                    "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol\">[+]</span></a>".
+                    "<a href=\"{$monthLink}\" title=\"{$monthFormat}\">{$monthFormat}({$month->count})</a>";
+            $ret .= "<ul class = \"achp-child apip-no-disp\">";
+            $includes = explode(",",$month->posts);
+            $getpostsargs = array();
+            $getpostsargs['posts_per_page'] = -1;
+            $getpostsargs['orderby'] = 'date';
+            $getpostsargs['order'] = 'ASC';
+            $getpostsargs['include'] = $includes;
+            $posts = get_posts($getpostsargs);
+            foreach( $posts as $post ) {
+                $ret.= "<li class=\"achp-child apip-no-disp\">";
+                $ret.= sprintf( "<a href=\"%s\" title=\"%s\">%s</a>",
+                    get_permalink($post->ID),
+                    htmlspecialchars($post->post_title),
+                    $post->post_title
+                );
+                $ret.='</li>';//achp-child
+            }
+            $ret .= "</ul>";
+            $ret .= "</li>";//achp_months
+        }
+        $ret .= "</ul></li>";//achp_years
+    }//for years
+    $ret .= '</ul>';//ul achp-widget
+    /* 时间归档 */
+    $all_cats = get_categories(
+            array(
+                'type' => 'post',
+                'orderby' => 'term_id',
+                'order' => 'ASC',
+                'hide_empty' => 1,
+                'hierarchical' => 1,
+                'pad_counts' => true,
+            )
+        );
+    global $cat_relation;
+    $cat_relation = array();
+    foreach ( $all_cats as $cat ) {
+        if ( $cat->parent !== 0 ) {
+            $cat_relation[$cat->parent][] = $cat;
+        }
+    }
+    $ret .= '<h2 class="apip-h2">分类归档</h2><ul class="achp-widget">';
+    foreach ( $all_cats as $cat ) {
+        if ( $cat->parent === 0 )
+            $ret .= apip_build_cat_html($cat, 0 );
+    }
+    $ret .= '</ul>';//ul achp-widget
+    echo $ret;
+}
 /*                                          08终了                             */
 
 /******************************************************************************/
@@ -1108,7 +1520,7 @@ function apip_footer_actions()
 {
 	global $apip_options ;
 	//9.1
-    if ( in_category('code_share') && apip_option_check('apip_codehighlight_enable') )
+    if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') )
     {
 ?>
         <script type="text/javascript">

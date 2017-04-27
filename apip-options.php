@@ -114,13 +114,13 @@ function apip_settings_init(  ) {
 		'apip_pluginPage_section' 
 	);
     //-1
-    add_settings_field( 
+    /*add_settings_field( 
 		'test_field_settings', 
 		'保留功能', 
 		'apip_test_field_render', 
 		'apip_option_group', 
 		'apip_pluginPage_section' 
-	);
+	);*/
 	/*
 	add_settings_field( 
 		'apip_text_field_0', 
@@ -286,6 +286,8 @@ function apip_shortcodes_render()
 	<input type='checkbox' name='apip_settings[apip_tagcloud_enable]' <?php checked( $options['apip_tagcloud_enable'], 1 ); ?> value='1'>
     <span>    激活自定义Link页（css）：</span>
 	<input type='checkbox' name='apip_settings[apip_link_enable]' <?php checked( $options['apip_link_enable'], 1 ); ?> value='1'>
+    <span>    激活自定义归档页（css）：</span>
+	<input type='checkbox' name='apip_settings[apip_archive_enable]' <?php checked( $options['apip_archive_enable'], 1 ); ?> value='1'>
 	<?php
 }
 
