@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.21.4
+ * Version:     1.21.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -426,8 +426,8 @@ function apip_scripts()
     {
         $css .= "   @font-face {
                       font-family: 'FontAwesome';
-                      src: url('../fonts/fontawesome-webfont.eot?v=4.3.0');
-                      src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('../fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('../fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+                      src: url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.eot?v=4.3.0');
+                      src: url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
                       font-weight: normal;
                       font-style: normal;
                     }
@@ -595,7 +595,7 @@ function apip_scripts()
     if ( (is_page('archive')||is_page('archives')) && apip_option_check('apip_archive_enable') )
     {
         $css .= '   .apip-no-disp {
-                        display: none;
+                        display: none !important;
                         -webkit-transition: display 0.2s;
                         transition: display 0.2s;
                     }
