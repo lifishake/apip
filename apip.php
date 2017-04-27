@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.21.3
+ * Version:     1.21.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -27,12 +27,12 @@ function apip_plugin_activation()
     /*因为是视图，所以每次都创建也无所谓*/
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_yearly`
      AS SELECT DISTINCT YEAR(post_date) AS `year`, COUNT(ID) AS `count`
-    FROM `wp_posts` WHERE post_type = 'post' AND post_status = 'publish' 
+    FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
     GROUP BY year ORDER BY year DESC ; ";
     $wpdb->query($sql);
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_monthly`
      AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
-     FROM `wp_posts` WHERE post_type = 'post' AND post_status = 'publish' 
+     FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
      GROUP BY year, month ORDER BY year, month DESC ; ";
     $wpdb->query($sql);
 }
@@ -1385,7 +1385,8 @@ function apip_link_page(){
 /**
  * 作用: JQuery效果的归档页
  * 来源: http://skatox.com/blog/
- * URL: http://skatox.com/blog/jquery-archive-list-widget/ 
+ * URL: http://skatox.com/blog/jquery-archive-list-widget/
+        http://skatox.com/blog/jquery-categories-list-widget/
  */
 function apip_build_cat_html( $cat, $is_child = 0 ) {
     global $cat_relation;
@@ -1394,6 +1395,7 @@ function apip_build_cat_html( $cat, $is_child = 0 ) {
     if ( array_key_exists($cat->term_id, $cat_relation) ) {
         $child_html .= '<ul class="achp-child apip-no-disp">';
         foreach ( $cat_relation[$cat->term_id] as $child ) {
+            /*递归*/
             $child_html .= apip_build_cat_html( $child, 1 );
         }
         $child_html .= '</ul>';
