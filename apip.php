@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.21.5
+ * Version:     1.21.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -35,6 +35,20 @@ function apip_plugin_activation()
      FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
      GROUP BY year, month ORDER BY year, month DESC ; ";
     $wpdb->query($sql);
+    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_taxonomy_summary`
+     AS SELECT
+    rel.`term_taxonomy_id`,
+    COUNT(rel.`term_taxonomy_id`) AS `term_count`,
+    tax.`taxonomy`,
+    CASE tax.`taxonomy`
+    WHEN 'post_tag'
+    THEN FLOOR(4096/COUNT(rel.`term_taxonomy_id`))
+    ELSE CEIL(512/COUNT(rel.`term_taxonomy_id`)) END  AS `term_weight`
+    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax
+    WHERE rel.`term_taxonomy_id` = tax.`term_taxonomy_id` AND tax.`taxonomy` in ('category','post_tag')
+    GROUP BY rel.`term_taxonomy_id`
+    ORDER BY `term_count` DESC";
+    $wpdb->query($sql);
 }
 
 /*插件反激活*/
@@ -45,6 +59,8 @@ function apip_plugin_deactivation()
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_yearly` ; ";
     $wpdb->query($sql);
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_monthly` ; ";
+    $wpdb->query($sql);
+    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_taxonomy_summary` ; ";
     $wpdb->query($sql);
 }
 
@@ -602,13 +618,18 @@ function apip_scripts()
                     .achp-expanded {
                         font-weight:800;
                     }
+                    li.achp-child {
+                        position: relative;
+                        text-overflow: ellipsis;
+                        max-width: 100%;
+                        overflow: hidden;
+                        max-height: 1.25em;
+                    }
                     a.achp-sig {
                         box-shadow: none !important;
                     }
                     span.achp-symbol {
                         font-family: monospace, monospace;
-                        text-align: center;
-                        font-size: 10px;
                         font-weight: 800;
                         line-height: inherit;
                         margin: 0 10px 0;
@@ -1423,7 +1444,7 @@ function apip_build_cat_html( $cat, $is_child = 0 ) {
         }
         $post_html .= '</ul>';
     }
-    $html .= sprintf("<li class = \"achp-parent %s \"><a class=\"achp-sig\" href=\"#\" title=\"%s\"><span class=\"achp-symbol\">[+]</span></a><a href=\"%s\" title=\"%s\">%s<span class=\"achp_count\">(%s)</span></a>%s%s</li>",
+    $html .= sprintf("<li class = \"achp-parent %s \"><a class=\"achp-sig\" href=\"#\" title=\"%s\"><span class=\"achp-symbol suffix \">[+]</span></a><a href=\"%s\" title=\"%s\">%s<span class=\"achp_count\">(%s)</span></a>%s%s</li>",
                     $is_child ? 'apip-no-disp' : '',
                     $cat->cat_name,
                     get_category_link($cat->term_id),
@@ -1447,7 +1468,7 @@ function apip_archive_page() {
         $yearLink = get_year_link($year->year);
         $ret .= "<li class=\"achp-parent\">".
                 "<a class=\"achp-sig\" title=\"{$year->year}\" href=\"#\">".
-                "<span class=\"achp-symbol\">[+]</span>".
+                "<span class=\"achp-symbol suffix\">[+]</span>".
                 "</a><a href=\"{$yearLink}\" title=\"{$year->year}\">".
                 "{$year->year} ({$year->count})".
                 "</a><ul class=\"achp-child apip-no-disp\">";
@@ -1456,7 +1477,7 @@ function apip_archive_page() {
             $monthLink = get_month_link($month->year, $month->month);
             $monthFormat = $month->month < 10 ? '0'.$month->month : $month->month;
             $ret .= "<li class=\"achp-parent apip-no-disp\" >" .
-                    "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol\">[+]</span></a>".
+                    "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol suffix\">[+]</span></a>".
                     "<a href=\"{$monthLink}\" title=\"{$monthFormat}\">{$monthFormat}({$month->count})</a>";
             $ret .= "<ul class = \"achp-child apip-no-disp\">";
             $includes = explode(",",$month->posts);

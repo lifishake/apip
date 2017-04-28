@@ -49,17 +49,17 @@ function apip_sameday_post()
         $random_posts = apip_random_post( get_the_ID(), $rcount ) ;
     }
     foreach ( $history_posts as $history_post ) :
-    $ret = $ret.'<li><span>'.$history_post->h_year.':&nbsp;&nbsp;<span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
+    $ret = $ret.'<li><span class="func-before suffix">['.$history_post->h_year.']<span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
     $ret = $ret.$history_post->post_title.'</a></li>' ;
     endforeach; 
     if ( $rcount > 0 )
     {
         foreach ( $random_posts as $random_post ) :
-        $ret = $ret.'<li><span>RAND:&nbsp;&nbsp;</span><a class="sameday-post" href="'.get_permalink( $random_post->ID ).'">' ;
-        $ret = $ret.$random_post->post_title.'</a></li>' ;
+        $ret .= '<li><span class="func-before suffix">[RAND]</span><a class="sameday-post" href="'.get_permalink( $random_post->ID ).'">' ;
+        $ret .= $random_post->post_title.'</a></li>' ;
         endforeach;     
     }
-    $ret = $ret.'</ul>' ;
+    $ret .= '</ul>' ;
     return $ret; 
 } 
 
@@ -75,7 +75,7 @@ function apip_random_post( $exclude, $count = 5 )
     {
         return $ret ;
     }
-    $random_posts = get_posts( array( 'exclude' => $exclude, 'orderby' => 'rand', 'posts_per_page'=>$count ) ) ;
+    $random_posts = get_posts( array( 'exclude' => array($exclude,1), 'orderby' => 'rand', 'posts_per_page'=>$count ) ) ;
     return $random_posts ;
 }
 
@@ -87,20 +87,27 @@ function apip_random_post( $exclude, $count = 5 )
 function apip_related_post()
 {
     global $apip_options;
-    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
+    $limit = ($apip_options['local_definition_count'] > 0 )? $apip_options['local_definition_count'] : 5 ;
     global $wpdb ;
     $object_ids = array();
     $post_id = get_the_ID() ;
-    $tags = array();
     $tags = get_the_terms( $post_id, 'post_tag') ;
-    if( $tags != 0 )
+    $cats = get_the_terms( $post_id, 'category') ;
+    $tags = array_merge( $tags, $cats ) ;
+    if( count($tags) != 0 )
     {
         $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
         $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
-        $object_ids = $wpdb->get_col( "SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id IN ( {$term_taxonomy_ids_str} ) AND object_id != '$post_id' " );
-        $object_ids = array_count_values( $object_ids );
-        arsort( $object_ids );
-        $object_ids = array_keys($object_ids) ;
+        $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
+                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v
+                WHERE rel.`term_taxonomy_id` IN ({$term_taxonomy_ids_str})
+                AND rel.`term_taxonomy_id` = v.`term_taxonomy_id`
+                AND rel.`object_id` != '$post_id'
+                GROUP BY rel.`object_id`
+                ORDER BY `evaluate` DESC,
+                rel.`object_id` DESC";
+        $weights = $wpdb->get_results($query,OBJECT_K);
+        $object_ids = wp_list_pluck( $weights, 'object_id','object_id' );
     }   
     
     if ( count( $object_ids )< $limit )
@@ -108,7 +115,7 @@ function apip_related_post()
         $random_posts = apip_random_post( get_the_ID(), $limit - count( $object_ids ) + 1 ) ;
         if ( count($random_posts) > 0 )
         {
-            $random_ids = wp_list_pluck( $random_posts, 'ID' );
+            $random_ids = wp_list_pluck( $random_posts, 'ID','ID' );
             $object_ids = array_merge( $object_ids, $random_ids ) ;
         }
     }
@@ -118,16 +125,13 @@ function apip_related_post()
     }
 
     $ret = '<ul class = "apip-ralated-content">' ;
-    $terms = wp_get_post_terms( get_the_ID(), 'post_tag', array( 'fields' => 'ids' ));
-    $inc_str = implode( ",", $object_ids  );
-    $related_posts = get_posts( array(
-            'include' => $inc_str,
-            'posts_per_page'=>  $limit ) ) ;
-    foreach ( $related_posts as $related_post ) :
-    $ret = $ret.'<li> <a class="related-post" href="'.get_permalink( $related_post->ID ).'">' ;
-    $ret = $ret.$related_post->post_title.'</a></li>' ;
-    endforeach;     
-    $ret = $ret.'</ul>' ;
+    foreach ( $object_ids as $id ) :
+    $ret .= sprintf("<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37]</span></li>",
+            get_permalink( $id ),
+            get_the_title( $id ),
+            isset($weights[$id]) ? floor(100*$weights[$id]->evaluate/4096) : 0 );
+    endforeach;
+    $ret .= '</ul>' ;
     return $ret; 
 } 
 

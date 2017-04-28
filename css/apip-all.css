@@ -1,3 +1,15 @@
-.apip-no-use {
-    float:inherit;
-}
+span.func-after,
+span.func-before {
+                    font-family: monospace, monospace;
+                    line-height: inherit;
+                }
+span.func-before {
+                    margin: 0 10px 0 0;
+                }
+span.func-after {
+                    margin: 0 0 0 10px;
+                }
+span.suffix {
+            text-align: center;
+            font-size: 10px;
+        }
