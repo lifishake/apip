@@ -49,7 +49,7 @@ function apip_sameday_post()
         $random_posts = apip_random_post( get_the_ID(), $rcount ) ;
     }
     foreach ( $history_posts as $history_post ) :
-    $ret = $ret.'<li><span class="func-before suffix">['.$history_post->h_year.']<span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
+    $ret = $ret.'<li><span class="func-before suffix">['.$history_post->h_year.']</span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
     $ret = $ret.$history_post->post_title.'</a></li>' ;
     endforeach; 
     if ( $rcount > 0 )
