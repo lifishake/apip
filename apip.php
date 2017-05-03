@@ -43,10 +43,11 @@ function apip_plugin_activation()
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 2
     ELSE 3 END AS `term_level`,
     CASE WHEN tax.`taxonomy` = 'post_tag' THEN FLOOR(4096/COUNT(rel.`term_taxonomy_id`))
-    WHEN tax.`parent` = 0 THEN CEIL(512/COUNT(rel.`term_taxonomy_id`))
+    WHEN tax.`parent` = 0 THEN 10
+    WHEN tax.`parent` = 2599 THEN 1024
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN CEIL(1024/COUNT(rel.`term_taxonomy_id`))
-    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN CEIL(4096/COUNT(rel.`term_taxonomy_id`))
-    ELSE CEIL(5120/COUNT(rel.`term_taxonomy_id`)) END AS `term_weight`
+    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 1000
+    ELSE 1580 END AS `term_weight`
     FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, {$wpdb->prefix}terms WHERE rel.`term_taxonomy_id` = tax.`term_taxonomy_id` AND tax.`taxonomy` in ('category','post_tag') AND {$wpdb->prefix}terms.`term_id` = rel.`term_taxonomy_id` GROUP BY rel.`term_taxonomy_id` ORDER BY `term_count` DESC ";
     $wpdb->query($sql);
 }
