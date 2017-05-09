@@ -280,6 +280,8 @@ function apip_init()
         add_action( 'wp_ajax_set_boring_comment_rank', 'apip_set_boring_comment_rank' );
         //在comment模板的合适地方增加filter'apip_placeholder_text'后才有效。
         add_filter( 'apip_placeholder_text', 'apip_replace_placeholder_text');
+        //在comment模板的合适地方增加filter'apip_submit_status'后才有效。
+        add_filter( 'apip_submit_status', 'apip_check_submit_status');
         //如果使用传统comment_form,则下面一行生效。
         add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
         //针对废话的css惩罚
@@ -452,6 +454,8 @@ $options
 09.     比较复杂的设定
     9.1     apip_codehighlight_enable   代码高亮
     9.2     apip_lazyload_enable        LazyLoad
+    9.3                                 结果集内跳转
+    9.4     apip_show_commentator_rate  为留言评分
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -1677,16 +1681,33 @@ function apip_replace_placeholder_text( $text ) {
         return $text;
     }
     $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
-    $vals = $wpdb->get_results( $sql );
+    $vals = $wpdb->get_col( $sql );
     if ( count($vals) >= 1 ) {
-        if ( $vals[0]->boring_value > 12 ) {
+        if ( $vals[0] > 12 ) {
             $text = '你留下的废话太多，博主已经决定跟你断绝往来。';
         }
-        else if ( $vals[0]->boring_value >= 6 ) {
+        else if ( $vals[0] >= 6 ) {
             $text = '你最近六个月的回复已经惹得博主不高兴了。请用心回复，谨防友尽。';
         }
     }
     return $text;
+}
+
+function apip_check_submit_status( $type ) {
+    $commenter = wp_get_current_commenter();
+    global $wpdb;
+    if ( isset($commenter) ) {
+        $email = esc_attr($commenter['comment_author_email']);
+    }
+    if ( !$email || $email == '' ) {
+        return $type;
+    }
+    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
+    $vals = $wpdb->get_col( $sql );
+    if ( count($vals) >= 1 && $vals[0] > 12 ) {
+        $type = 'hidden';
+    }
+    return $type;
 }
 
 function apip_set_boring_comment_rank() {
