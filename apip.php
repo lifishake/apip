@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.21.7
+ * Version:     1.22.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -30,11 +30,13 @@ function apip_plugin_activation()
     FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
     GROUP BY year ORDER BY year DESC ; ";
     $wpdb->query($sql);
+    
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_monthly`
      AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
      FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
      GROUP BY year, month ORDER BY year, month DESC ; ";
     $wpdb->query($sql);
+    
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_taxonomy_summary`
      AS SELECT rel.`term_taxonomy_id`, COUNT(rel.`term_taxonomy_id`) AS `term_count`, tax.`taxonomy`, {$wpdb->prefix}terms.`name` AS `term_name`, 
     CASE WHEN tax.`taxonomy` = 'post_tag' THEN 10
@@ -50,6 +52,16 @@ function apip_plugin_activation()
     ELSE 1580 END AS `term_weight`
     FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, {$wpdb->prefix}terms WHERE rel.`term_taxonomy_id` = tax.`term_taxonomy_id` AND tax.`taxonomy` in ('category','post_tag') AND {$wpdb->prefix}terms.`term_id` = rel.`term_taxonomy_id` GROUP BY rel.`term_taxonomy_id` ORDER BY `term_count` DESC ";
     $wpdb->query($sql);
+    
+    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
+         AS SELECT `comment_author_email`, SUM(`meta_value`) AS `boring_value`
+    FROM `{$wpdb->prefix}comments`
+    LEFT JOIN `wp_commentmeta` ON `{$wpdb->prefix}comments`.`comment_ID` = `{$wpdb->prefix}commentmeta`.`comment_id`
+    WHERE `user_id` = 0 AND `meta_key` = '_boring_rank' 
+    AND DATE_SUB( CURDATE( ) , INTERVAL 6 MONTH ) <= `comment_date_gmt`
+    GROUP BY comment_author_email
+    ORDER BY comment_author_email ASC ";
+    $wpdb->query($sql);
 }
 
 /*插件反激活*/
@@ -62,6 +74,8 @@ function apip_plugin_deactivation()
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_monthly` ; ";
     $wpdb->query($sql);
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_taxonomy_summary` ; ";
+    $wpdb->query($sql);
+    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_boring_summary` ; ";
     $wpdb->query($sql);
 }
 
@@ -93,8 +107,14 @@ add_action('plugins_loaded', 'apip_init', 99);
 function apip_init()
 {
 	/** 00 */
+    global $wpdb;
+    //wpdb->apipvpcy = $wpdb->prefix.'v_posts_count_yearly';
+    //wpdb->apipvpcm = $wpdb->prefix.'v_posts_count_monthly';
+    //wpdb->apipvts = $wpdb->prefix.'v_taxonomy_summary';
+    
 	//0.1 插件自带脚本控制
     add_action( 'wp_enqueue_scripts', 'apip_scripts' );
+    add_action( 'admin_enqueue_scripts', 'apip_admin_scripts' );
 	//0.2 屏蔽不必要的js
 	add_filter( 'wp_print_scripts', 'apip_remove_scripts', 99 );
     add_filter( 'admin_print_scripts', 'apip_remove_scripts', 99 );
@@ -252,7 +272,19 @@ function apip_init()
         set_transient( $key, $apip_aq, 600);//保留10分钟
         add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
     }
-    
+    //9.4 用户留言等级评分
+    if ( apip_option_check('commentator_rating_enable') ) {
+        //后台动作增加
+        add_filter( 'comment_row_actions', 'apip_show_commentator_rate', 11, 2 );
+        //增加ajax回调函数
+        add_action( 'wp_ajax_set_boring_comment_rank', 'apip_set_boring_comment_rank' );
+        //在comment模板的合适地方增加filter'apip_placeholder_text'后才有效。
+        add_filter( 'apip_placeholder_text', 'apip_replace_placeholder_text');
+        //如果使用传统comment_form,则下面一行生效。
+        add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
+        //针对废话的css惩罚
+        add_filter('comment_class', 'apip_add_boring_comment_style');
+    }
 
 	//0X 暂时不用了
 	//三插件冲突
@@ -708,8 +740,7 @@ function apip_scripts()
 		wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), false, true);
 	}
 	//9.2
-	if ( apip_option_check('apip_lazyload_enable') )
-	{
+	if ( apip_option_check('apip_lazyload_enable') ) {
         $css .= '   img[data-unveil="true"] {
                         opacity: 0;
                         -webkit-transition: opacity .3s ease-in;
@@ -721,6 +752,13 @@ function apip_scripts()
 	}
     if ( $css !== '' ) {
         wp_add_inline_style('apip-tyle-all', $css);
+    }
+}
+
+function apip_admin_scripts() {
+    //9.4
+    if ( is_admin() /*&& "dashboard" === get_current_screen()->id */) {
+        wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array(), false, true);
     }
 }
 
@@ -1609,6 +1647,76 @@ function apip_keep_quary(){
     }
     $apip_aq->keep_query();
     set_transient($key, $apip_aq, 360);
+}
+
+//9.4 根据用户留言质量评定用户水平，并进行相应操作
+function apip_show_commentator_rate( $actions, $comment ) {
+    $desc = null;
+    $level = 0;
+    $n = 0;
+    $query = '';
+    //$comment->comment_author_email;
+    $n = intval(get_comment_meta($comment->comment_ID, '_boring_rank', true));
+    
+    $boring_nonce = wp_create_nonce( "boring-comment_".$comment->comment_ID );
+    $selector = '<select id="set-boring-rank" name="boring-rank">
+				<option value="0">正常</option><option value="2">哦</option><option value="3">呵呵</option><option value="6">SoWhat</option></select>';
+    $format = '<span data-comment-id="%d" data-post-id="%d" wp_nonce="%s" class="%s" ><span class="set-boring-rank-label">无聊等级&nbsp;(%d)&nbsp;</span>%s</span>';
+    $actions['boringrank'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $boring_nonce, 'boring-level', $n, $selector );
+    
+    return $actions;
+}
+
+function apip_replace_placeholder_text( $text ) {
+    $commenter = wp_get_current_commenter();
+    global $wpdb;
+    if ( isset($commenter) ) {
+        $email = esc_attr($commenter['comment_author_email']);
+    }
+    if ( !$email || $email == '' ) {
+        return $text;
+    }
+    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
+    $vals = $wpdb->get_results( $sql );
+    if ( count($vals) >= 1 ) {
+        if ( $vals[0]->boring_value > 12 ) {
+            $text = '你留下的废话太多，博主已经决定跟你断绝往来。';
+        }
+        else if ( $vals[0]->boring_value >= 6 ) {
+            $text = '你最近六个月的回复已经惹得博主不高兴了。请用心回复，谨防友尽。';
+        }
+    }
+    return $text;
+}
+
+function apip_set_boring_comment_rank() {
+    $comment_id = $_POST['id'];
+    if ( !wp_verify_nonce($_POST['nonce'],"boring-comment_".$comment_id))
+        die();
+    $old = get_comment_meta($comment_id, '_boring_rank', true);
+    if ( $_POST['level'] == 0 ) {
+        delete_comment_meta($comment_id, '_boring_rank');
+    }
+    else if ( is_null($old) || ""=== $old ) {
+        add_comment_meta($comment_id, '_boring_rank', $_POST['level'], true);
+    }
+    else {
+        update_comment_meta($comment_id, '_boring_rank', $_POST['level']);
+    }
+    
+}
+
+function apip_replace_triditional_comment_placeholder_text( $default ) {
+    $text = apip_replace_placeholder_text('请不要留下无趣的东西浪费大家时间。');
+    $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
+    return $default;
+}
+
+function apip_add_boring_comment_style( $class ) {
+    $comment_id = get_comment_ID();
+    
+    $sql = "";
+    return $class;
 }
 
 /*                                          09终了                             */

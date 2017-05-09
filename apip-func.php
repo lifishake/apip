@@ -126,7 +126,7 @@ function apip_related_post()
 
     $ret = '<ul class = "apip-ralated-content">' ;
     foreach ( $object_ids as $id ) :
-    $ret .= sprintf("<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37]</span></li>",
+    $ret .= sprintf("<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37;]</span></li>",
             get_permalink( $id ),
             get_the_title( $id ),
             isset($weights[$id]) ? floor(100*$weights[$id]->evaluate/4096) : 0 );
