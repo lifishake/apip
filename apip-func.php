@@ -1,8 +1,8 @@
-<?php 
+<?php
 /**
  * 作用: 显示最近更新文章
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_recent_post()
 {
@@ -19,15 +19,15 @@ function apip_recent_post()
     foreach ( $recent_posts as $recent_post ) :
     $ret = $ret.'<li> <a class="recent-post" href="'.get_permalink( $recent_post->ID ).'">' ;
     $ret = $ret.$recent_post->post_title.'</a></li>' ;
-    endforeach;     
+    endforeach;
     $ret = $ret.'</ul>' ;
-    return $ret; 
-} 
+    return $ret;
+}
 
 /**
  * 作用: 显示历史相同日文章
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_sameday_post()
 {
@@ -38,9 +38,9 @@ function apip_sameday_post()
     global $apip_options;
     $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
     $ret = '<ul class = "apip-history-content">' ;
-    $sql = "select ID, year(post_date) as h_year, post_title FROM 
-            $wpdb->posts WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish' 
-            AND month(post_date)='$month' AND day(post_date)='$day' AND ID != '$id' 
+    $sql = "select ID, year(post_date) as h_year, post_title FROM
+            $wpdb->posts WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish'
+            AND month(post_date)='$month' AND day(post_date)='$day' AND ID != '$id'
             order by post_date LIMIT $limit";
     $history_posts = $wpdb->get_results($sql);
     $rcount = $limit - count( $history_posts ) ;
@@ -51,22 +51,22 @@ function apip_sameday_post()
     foreach ( $history_posts as $history_post ) :
     $ret = $ret.'<li><span class="func-before suffix">['.$history_post->h_year.']</span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
     $ret = $ret.$history_post->post_title.'</a></li>' ;
-    endforeach; 
+    endforeach;
     if ( $rcount > 0 )
     {
         foreach ( $random_posts as $random_post ) :
         $ret .= '<li><span class="func-before suffix">[RAND]</span><a class="sameday-post" href="'.get_permalink( $random_post->ID ).'">' ;
         $ret .= $random_post->post_title.'</a></li>' ;
-        endforeach;     
+        endforeach;
     }
     $ret .= '</ul>' ;
-    return $ret; 
-} 
+    return $ret;
+}
 
 /**
  * 作用: 显示随机文章
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_random_post( $exclude, $count = 5 )
 {
@@ -82,7 +82,7 @@ function apip_random_post( $exclude, $count = 5 )
 /**
  * 作用: 显示相关
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_related_post()
 {
@@ -108,8 +108,8 @@ function apip_related_post()
                 rel.`object_id` DESC";
         $weights = $wpdb->get_results($query,OBJECT_K);
         $object_ids = wp_list_pluck( $weights, 'object_id','object_id' );
-    }   
-    
+    }
+
     if ( count( $object_ids )< $limit )
     {
         $random_posts = apip_random_post( get_the_ID(), $limit - count( $object_ids ) + 1 ) ;
@@ -132,14 +132,22 @@ function apip_related_post()
             isset($weights[$id]) ? floor(100*$weights[$id]->evaluate/4096) : 0 );
     endforeach;
     $ret .= '</ul>' ;
-    return $ret; 
-} 
+    return $ret;
+}
 
-
+function apip_is_important_taxonomy( $id ) {
+  global $wpdb ;
+  $query = "SELECT `term_taxonomy_id`
+                  FROM `{$wpdb->prefix}v_taxonomy_summary`
+                  WHERE  `term_taxonomy_id` = $id
+                  AND  `term_weight` > 1000 ";
+  $val = $wpdb->get_col($query);
+  return !empty($val);
+}
 /*
  * 作用: 显示作者最愿意回复的n个留言者的链接
  * 来源: 自产
- * URL:  
+ * URL:
 */
 function apip_get_links()
 {
@@ -157,7 +165,7 @@ function apip_get_links()
             ORDER BY comment_date_gmt DESC
             )
             AS bb
-            WHERE aa.comment_ID = bb.comment_parent 
+            WHERE aa.comment_ID = bb.comment_parent
             AND aa.comment_author_url <>''
             GROUP BY comment_author_email
             ORDER BY words_sum DESC
@@ -169,14 +177,14 @@ function apip_get_links()
 /*
  * 作用: 取得上一篇/下一篇.如果在归档/搜索的情况下,在范围内查找.
  * 来源: 自产
- * URL:  
+ * URL:
 */
 function apip_get_post_navagation($args=array()){
    $args = wp_parse_args( $args, array(
         'prev_text'          => '%title',
         'next_text'          => '%title',
         'screen_reader_text' => '文章导航',
-    ) ); 
+    ) );
     //只在singlular的时候有效，因为只有singlular的时候能取到get_the_ID()。
     if ( !is_singular() ){
         return;
@@ -213,7 +221,7 @@ function apip_get_post_navagation($args=array()){
 /*
  * 作用: 移除某个类的filter方法
  * 来源: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
- * URL: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object 
+ * URL: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
 */
 function apip_remove_anonymous_object_hook( $tag, $class, $method )
 {
@@ -246,7 +254,7 @@ function apip_remove_anonymous_object_hook( $tag, $class, $method )
 /*
  * 作用: 移除wpembed相关的内部插件
  * 来源: Disable Embeds
- * URL: https://pascalbirchler.com 
+ * URL: https://pascalbirchler.com
 */
 function apip_disable_embeds_tiny_mce_plugin( $plugins ) {
 	return array_diff( $plugins, array( 'wpembed' ) );
@@ -273,7 +281,7 @@ function apip_disable_embeds_flush_rewrite_rules() {
 }
 
 function apip_media_upload_nextgen() {
-	
+
     // Not in use
     $errors = false;
 
@@ -284,7 +292,7 @@ function apip_media_upload_nextgen() {
 		$image = $_POST['image'][$send_id];
 		$alttext = stripslashes( htmlspecialchars ($image['alttext'], ENT_QUOTES));
 		$description = stripslashes (htmlspecialchars($image['description'], ENT_QUOTES));
-		
+
 		// here is no new line allowed
 		$clean_description = preg_replace("/\n|\r\n|\r$/", " ", $description);
 		$img = nggdb::find_image($send_id);
@@ -315,19 +323,18 @@ function apip_media_upload_nextgen() {
 
 		if ($image['size'] == "full" || $image['size'] == "singlepic")
 			$html = "<img src='{$image['url']}' alt='{$alttext}' />";
-		
-			
+
+
 		media_upload_nextgen_save_image();
-		
+
 		// Return it to TinyMCE
 		return media_send_to_editor($html);
 	}
-	
+
 	// Save button
 	if ( isset($_POST['save']) ) {
 		media_upload_nextgen_save_image();
 	}
-		
+
 	return wp_iframe( 'media_upload_nextgen_form', $errors );
 }
-

@@ -1,5 +1,9 @@
 jQuery(document).ready(function($) {
     //var thisLabel = document.getElementById('set-boring-rank-label');
+    $('#link-color').wpColorPicker();
+    $('#border-color').wpColorPicker();
+    $('#font-color').wpColorPicker();
+    $('#bg-color').wpColorPicker();
     $( 'select[name="boring-rank"]' ).change( function() {
         var parent = $(this).parent();
         var thisLevel = $(this).val();

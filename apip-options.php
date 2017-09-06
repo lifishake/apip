@@ -9,140 +9,137 @@ add_action( 'admin_menu', 'apip_add_admin_menu' );
 add_action( 'admin_init', 'apip_settings_init' );
 
 
-function apip_add_admin_menu(  ) { 
-
+function apip_add_admin_menu(  ) {
 	add_menu_page( 'APIP设置', 'APIP设置', 'manage_options', __FILE__, 'apip_options_page', plugin_dir_url( __FILE__ ).'img/apip-ico.png' );
-
 }
-
 /*
 支持的功能列表
 01. 改进的功能摘要
 
 */
-function apip_settings_init(  ) { 
+function apip_settings_init(  ) {
 
 	register_setting( 'apip_option_group', 'apip_settings' );
 
 	add_settings_section(
-		'apip_pluginPage_section', 
-		'APIP设置', 
-		'apip_settings_section_callback', 
+		'apip_pluginPage_section',
+		'APIP设置',
+		'apip_settings_section_callback',
 		'apip_option_group'
 	);
 
 	//01
-	add_settings_field( 
-		'better_excerpt', 
-		'改进版中文摘要', 
-		'apip_better_excerpt_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	
-	//02
-	add_settings_field( 
-		'advanced_writer_settings', 
-		'高级编辑选项', 
-		'apip_advanced_writer_settings_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//03
-	add_settings_field( 
-		'header_description', 
-		'首页和头部追加描述和关键字', 
-		'apip_header_description_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//04
-	add_settings_field( 
-		'notify_comment_reply', 
-		'新回复邮件提示', 
-		'apip_notify_comment_reply_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//05
-	add_settings_field( 
-		'local_gravatar', 
-		'GFW相关', 
-		'apip_anti_gfw_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//06
-	add_settings_field( 
-		'blocked_commenters', 
-		'要替换的留言者黑名单', 
-		'apip_blocked_commenters_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//07
-	add_settings_field( 
-		'social_share_settings', 
-		'社会化分享', 
-		'apip_social_share_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	
-	//08
-	add_settings_field( 
-		'shortcode_settings', 
-		'自定义的SHORTCODE', 
-		'apip_shortcodes_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//09
-	add_settings_field( 
-		'heavy_tools_settings', 
-		'比较复杂的功能', 
-		'apip_heavy_tools_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-	//99
-	add_settings_field( 
-		'local_definition_count', 
-		'自定义widget', 
-		'apip_local_widgets_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);
-    //-1
-    /*add_settings_field( 
-		'test_field_settings', 
-		'保留功能', 
-		'apip_test_field_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
-	);*/
-	/*
-	add_settings_field( 
-		'apip_text_field_0', 
-		__( 'Settings field description', 'pewae.com' ), 
-		'apip_text_field_0_render', 
-		'pluginPage', 
-		'apip_pluginPage_section' 
+	add_settings_field(
+		'better_excerpt',
+		'改进版中文摘要',
+		'apip_better_excerpt_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
 	);
 
-	add_settings_field( 
-		'apip_radio_field_1', 
-		__( 'Settings field description', 'pewae.com' ), 
-		'apip_radio_field_1_render', 
-		'pluginPage', 
-		'apip_pluginPage_section' 
+	//02
+	add_settings_field(
+		'advanced_writer_settings',
+		'高级编辑选项',
+		'apip_advanced_writer_settings_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//03
+	add_settings_field(
+		'header_description',
+		'首页和头部追加描述和关键字',
+		'apip_header_description_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//04
+	add_settings_field(
+		'notify_comment_reply',
+		'新回复邮件提示',
+		'apip_notify_comment_reply_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//05
+	add_settings_field(
+		'local_gravatar',
+		'GFW相关',
+		'apip_anti_gfw_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//06
+	add_settings_field(
+		'blocked_commenters',
+		'要替换的留言者黑名单',
+		'apip_blocked_commenters_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//07
+	add_settings_field(
+		'social_share_settings',
+		'社会化分享',
+		'apip_social_share_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+
+	//08
+	add_settings_field(
+		'shortcode_settings',
+		'自定义的SHORTCODE',
+		'apip_shortcodes_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//09
+	add_settings_field(
+		'heavy_tools_settings',
+		'比较复杂的功能',
+		'apip_heavy_tools_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+	//99
+	add_settings_field(
+		'local_definition_count',
+		'自定义widget',
+		'apip_local_widgets_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);
+    //-1
+    /*add_settings_field(
+		'test_field_settings',
+		'保留功能',
+		'apip_test_field_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
+	);*/
+	/*
+	add_settings_field(
+		'apip_text_field_0',
+		__( 'Settings field description', 'pewae.com' ),
+		'apip_text_field_0_render',
+		'pluginPage',
+		'apip_pluginPage_section'
+	);
+
+	add_settings_field(
+		'apip_radio_field_1',
+		__( 'Settings field description', 'pewae.com' ),
+		'apip_radio_field_1_render',
+		'pluginPage',
+		'apip_pluginPage_section'
 	);
 
 
 }
 
 
-function apip_text_field_0_render(  ) { 
+function apip_text_field_0_render(  ) {
 
 	$options = get_option( 'apip_settings' );
 	?>
@@ -152,27 +149,27 @@ function apip_text_field_0_render(  ) {
 }
 
 
-	
-	add_settings_field( 
-		'apip_radio_field_1', 
-		__( 'Settings field description', 'apip' ), 
-		'apip_radio_field_1_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
+
+	add_settings_field(
+		'apip_radio_field_1',
+		__( 'Settings field description', 'apip' ),
+		'apip_radio_field_1_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
 	);
 
-	add_settings_field( 
-		'apip_textarea_field_2', 
-		__( 'Settings field description', 'apip' ), 
-		'apip_textarea_field_2_render', 
-		'apip_option_group', 
-		'apip_pluginPage_section' 
+	add_settings_field(
+		'apip_textarea_field_2',
+		__( 'Settings field description', 'apip' ),
+		'apip_textarea_field_2_render',
+		'apip_option_group',
+		'apip_pluginPage_section'
 	);*/
 
 
 }
 
-function apip_better_excerpt_render(  ) { 
+function apip_better_excerpt_render(  ) {
 	//01
 	$options = get_option( 'apip_settings' );
 	?>
@@ -207,11 +204,19 @@ function apip_advanced_writer_settings_render()
     <input type='checkbox' name='apip_settings[protect_comment_php]' <?php checked( $options['protect_comment_php'], 1 ); ?> value='1'/></br>
     <span>    搜索结果中屏蔽page：</span>
     <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'/></br>
+    <span> 自定义链接颜色：</span>
+    <input type= 'text' name='apip_settings[link_color]' id='link-color'  value='<?php if ( isset( $options['link_color'] ) ) echo $options['link_color']; else echo " #1A5F99"; ?>' /></br>
+    <span> 自定义文字颜色：</span>
+    <input type= 'text' name='apip_settings[font_color]' id='font-color'  value='<?php if ( isset( $options['font_color'] ) ) echo $options['font_color']; else echo " #0A161F"; ?>' /></br>
+    <span> 自定义边框颜色：</span>
+    <input type= 'text' name='apip_settings[border_color]' id='border-color'  value='<?php if ( isset( $options['border_color'] ) ) echo $options['border_color']; else echo " #8A8988"; ?>' /></br>
+    <span> 自定义背景颜色：</span>
+    <input type= 'text' name='apip_settings[bg_color]' id='bg-color'  value='<?php if ( isset( $options['bg_color'] ) ) echo $options['bg_color']; else echo " #ECE5DF"; ?>' /></br>
 	<?php
-	
+
 }
 
-function apip_header_description_render(  ) { 
+function apip_header_description_render(  ) {
 	//03
 	$options = get_option( 'apip_settings' );
 	?>
@@ -223,7 +228,7 @@ function apip_header_description_render(  ) {
 	<?php
 }
 
-function apip_notify_comment_reply_render(  ) { 
+function apip_notify_comment_reply_render(  ) {
 	//04
 	$options = get_option( 'apip_settings' );
 	?>
@@ -319,26 +324,26 @@ function apip_local_widgets_render()
 	<?php
 }
 
-function apip_settings_section_callback(  ) { 
+function apip_settings_section_callback(  ) {
 
 	echo '一些基本设定项目，抄自多个插件';
 
 }
 
 
-function apip_options_page(  ) { 
+function apip_options_page(  ) {
 
 	?>
 	<form action='options.php' method='post'>
-		
+
 		<h2>All plugins in pewae</h2>
-		
+
 		<?php
 		settings_fields( 'apip_option_group' );
 		do_settings_sections( 'apip_option_group' );
 		submit_button();
 		?>
-		
+
 	</form>
 	<?php
 

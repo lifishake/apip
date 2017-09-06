@@ -7,11 +7,11 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.22.0
+ * Version:     1.22.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
-/*宏定义*/ 
+/*宏定义*/
 define('APIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define('APIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ) ;
 global $apip_options;
@@ -27,18 +27,18 @@ function apip_plugin_activation()
     /*因为是视图，所以每次都创建也无所谓*/
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_yearly`
      AS SELECT DISTINCT YEAR(post_date) AS `year`, COUNT(ID) AS `count`
-    FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
+    FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'
     GROUP BY year ORDER BY year DESC ; ";
     $wpdb->query($sql);
-    
+
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_monthly`
      AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
-     FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' 
+     FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'
      GROUP BY year, month ORDER BY year, month DESC ; ";
     $wpdb->query($sql);
-    
+
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_taxonomy_summary`
-     AS SELECT rel.`term_taxonomy_id`, COUNT(rel.`term_taxonomy_id`) AS `term_count`, tax.`taxonomy`, {$wpdb->prefix}terms.`name` AS `term_name`, 
+     AS SELECT rel.`term_taxonomy_id`, COUNT(rel.`term_taxonomy_id`) AS `term_count`, tax.`taxonomy`, {$wpdb->prefix}terms.`name` AS `term_name`,
     CASE WHEN tax.`taxonomy` = 'post_tag' THEN 10
     WHEN tax.`parent` = 0 THEN 0
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN 1
@@ -52,12 +52,12 @@ function apip_plugin_activation()
     ELSE 1580 END AS `term_weight`
     FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, {$wpdb->prefix}terms WHERE rel.`term_taxonomy_id` = tax.`term_taxonomy_id` AND tax.`taxonomy` in ('category','post_tag') AND {$wpdb->prefix}terms.`term_id` = rel.`term_taxonomy_id` GROUP BY rel.`term_taxonomy_id` ORDER BY `term_count` DESC ";
     $wpdb->query($sql);
-    
+
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
          AS SELECT `comment_author_email`, SUM(`meta_value`) AS `boring_value`
     FROM `{$wpdb->prefix}comments`
     LEFT JOIN `wp_commentmeta` ON `{$wpdb->prefix}comments`.`comment_ID` = `{$wpdb->prefix}commentmeta`.`comment_id`
-    WHERE `user_id` = 0 AND `meta_key` = '_boring_rank' 
+    WHERE `user_id` = 0 AND `meta_key` = '_boring_rank'
     AND DATE_SUB( CURDATE( ) , INTERVAL 6 MONTH ) <= `comment_date_gmt`
     GROUP BY comment_author_email
     ORDER BY comment_author_email ASC ";
@@ -111,7 +111,7 @@ function apip_init()
     //wpdb->apipvpcy = $wpdb->prefix.'v_posts_count_yearly';
     //wpdb->apipvpcm = $wpdb->prefix.'v_posts_count_monthly';
     //wpdb->apipvts = $wpdb->prefix.'v_taxonomy_summary';
-    
+
 	//0.1 插件自带脚本控制
     add_action( 'wp_enqueue_scripts', 'apip_scripts' );
     add_action( 'admin_enqueue_scripts', 'apip_admin_scripts' );
@@ -144,12 +144,12 @@ function apip_init()
         //更好的中文摘要
         add_filter('the_excerpt', 'apip_excerpt', 100);
     }
-	
+
 	/** 02 */
     if( apip_option_check('save_revisions_disable') )
     {
         //2.1停止自动版本更新
-        apip_auto_rev_settings();
+        //apip_auto_rev_settings();
     }
     if( apip_option_check('auto_save_disabled') )
     {
@@ -165,7 +165,7 @@ function apip_init()
 	if ( apip_option_check('block_open_sans') )
     {
         //2.5屏蔽已经注册的open sans
-        add_action( 'wp_default_styles', 'apip_block_open_sans', 100); 
+        add_action( 'wp_default_styles', 'apip_block_open_sans', 100);
     }
 	if ( apip_option_check('show_author_comment') )
     {
@@ -206,16 +206,16 @@ function apip_init()
     if ( apip_option_check('header_description') )
     {
         //网站描述和关键字
-        add_action( 'wp_head', 'apip_desc_tag' ); 
+        add_action( 'wp_head', 'apip_desc_tag' );
     }
-    
+
     /** 04 */
     if ( apip_option_check('notify_comment_reply') )
-    {       
+    {
 		//邮件回复
         add_action('wp_insert_comment','apip_comment_inserted',99,2);
     }
-	
+
 	/** 05 */
     add_filter('get_avatar','apip_get_cavatar');
 	add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
@@ -228,17 +228,17 @@ function apip_init()
 	//8.1 TAGcloud 注册
 	if ( apip_option_check('apip_tagcloud_enable') )
 	{
-		add_shortcode('mytagcloud', 'apip_tagcloud_page'); 
+		add_shortcode('mytagcloud', 'apip_tagcloud_page');
 	}
     //8.2 友链注册
     if ( apip_option_check('apip_link_enable') )
 	{
-		add_shortcode('mylink', 'apip_link_page'); 
+		add_shortcode('mylink', 'apip_link_page');
 	}
     //8.3 归档页注册
     if ( apip_option_check('apip_archive_enable') )
 	{
-		add_shortcode('myarchive', 'apip_archive_page'); 
+		add_shortcode('myarchive', 'apip_archive_page');
 	}
 
 	/** 09 */
@@ -246,14 +246,14 @@ function apip_init()
     //add_action('get_header','apip_header_actions') ;
 	//9.1 prettyprint脚本激活
     add_action('get_footer','apip_footer_actions') ;
-	
+
 	//9.2 lazyload
 	if ( apip_option_check('apip_lazyload_enable') )
 	{
 		add_filter( 'the_content', 'apip_lazyload_filter',200 );
 		add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
 	}
-	
+
     //9.3 结果集内跳转
     if ( apip_option_check('range_jump_enable') )
     {
@@ -293,7 +293,7 @@ function apip_init()
     //add_action( 'wp_print_scripts', 'apip_filter_filter',2 );
 	//确认提交前的提示,未添加配置项
     //add_filter('comment_form_defaults' , 'apip_replace_tag_note', 30);
-	
+
 	/** 99 */
 	if ( apip_option_check('local_widget_enable') ) {
 		require APIP_PLUGIN_DIR.'/apip-widgets.php';
@@ -316,7 +316,7 @@ function apip_init_actions()
     remove_filter('the_content','capital_P_dangit',11);
     remove_filter('the_title','capital_P_dangit',11);
     remove_filter('wp_title','capital_P_dangit',11);
-    remove_filter('comment_text','capital_P_dangit',31);    
+    remove_filter('comment_text','capital_P_dangit',31);
     add_filter( 'use_default_gallery_style', '__return_false' );    //不使用默认gallery
     add_filter('xmlrpc_enabled', '__return_false');     //不使用xmlrpc
     add_filter( 'feed_links_show_comments_feed', '__return_false' ); //不输出comments的rss,4.4以上
@@ -371,7 +371,7 @@ function apip_init_actions()
     if (is_admin()){
         add_action('media_upload_nextgen','apip_media_upload_nextgen');
     }
-    
+
     ////0A.2
     ////禁用4.4以后的embed功能
     ////来源:disable-embeds
@@ -467,10 +467,12 @@ $options
  /**
  * 作用: 插件自带脚本
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_scripts()
 {
+    global $apip_options;
+    $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#FF0080";
     wp_enqueue_style( 'apip-tyle-all', APIP_PLUGIN_URL . 'css/apip-all.css' );
     $css = '';
     //所有要加载fontAowsem的情况
@@ -486,7 +488,7 @@ function apip_scripts()
                     }
         ";
     }
-    
+
 	//0.1 Ctrl+Enter 提交
 	if (comments_open() && is_singular() ) {
 		wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
@@ -571,37 +573,37 @@ function apip_scripts()
                         color:#BF52A9;
                         border-radius: 3px;
                     }
-                    a.tagged1 { 
-                        font-size: 1.00em; 
+                    a.tagged1 {
+                        font-size: 1.00em;
                         color: #AF7E62;
                         font-weight: 300;
                         padding: 6px 11px;
                         background: rgba(240,121,142,0.6);
                         }
-                        
-                    a.tagged2 { 
+
+                    a.tagged2 {
                         font-size: 1.20em;
                         color: #B25E2A;
                         font-weight: 400;
                         padding: 9px 14px;
                         background: rgba(129,240,127,0.6);
                         }
-                    a.tagged3 { 
-                        font-size: 1.50em; 
+                    a.tagged3 {
+                        font-size: 1.50em;
                         color:#995124;
                         font-weight: 400;
                         padding: 12px 17px;
                         background: rgba(48,120,240,0.6);
                     }
-                    a.tagged4 { 
-                        font-size: 1.80em; 
+                    a.tagged4 {
+                        font-size: 1.80em;
                         color:#663718;
                         font-weight: 500;
                         padding: 15px 20px;
                         background: rgba(231,170,240,0.6);
                         }
                     a.tagged5 {
-                        font-size: 2.20em; 
+                        font-size: 2.20em;
                         color:#331C0C;
                         font-weight: 700;
                         padding: 18px 23px;
@@ -628,7 +630,7 @@ function apip_scripts()
                         padding: 5px 5px 0;
                     }
                     .url::after {
-                        color: #fb9292;
+                        color: '.$color_link.';
                         content: "\f0c1";
                         font-family: Fontawesome;
                         font-size: 12px;
@@ -639,7 +641,7 @@ function apip_scripts()
                     }
 
                     .commenter-link img {
-                        border: 2px solid #fb9292;
+                        border: 2px solid '.$color_link.';
                         border-radius: 100%;
                     }
         ';
@@ -681,7 +683,7 @@ function apip_scripts()
                     .post-'.get_the_ID().' .entry-content ol:not(.apip-no-disp) {
                         display: inherit;
                     }';
-                    
+
         wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), false, true);
     }
 	//9.1
@@ -750,7 +752,7 @@ function apip_scripts()
                         -webkit-transition: opacity .3s ease-in;
                         -moz-transition: opacity .3s ease-in;
                         -o-transition: opacity .3s ease-in;
-                        transition: opacity .3s ease-in; 
+                        transition: opacity .3s ease-in;
                         }';
 		wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), false, true);
 	}
@@ -760,17 +762,16 @@ function apip_scripts()
 }
 
 function apip_admin_scripts() {
-    //9.4
-    if ( is_admin() /*&& "dashboard" === get_current_screen()->id */) {
-        wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array(), false, true);
-    }
+    wp_enqueue_style( 'wp-color-picker' );
+    wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array(), false, true);
 }
 
 //0.2
 /**
  * 作用: 屏蔽已装载插件的不必要的js
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_remove_scripts()
 {
@@ -787,7 +788,7 @@ function apip_remove_scripts()
         wp_dequeue_script( 'lazy_resources' );
         wp_dequeue_script( 'frame_event_publisher' );
         wp_dequeue_script( 'ngg-store-js' );
-        wp_dequeue_script( 'nextgen_lightbox_context' );    
+        wp_dequeue_script( 'nextgen_lightbox_context' );
         wp_dequeue_script( 'ngg_common' );
         wp_dequeue_script( 'photocrati-nextgen_basic_thumbnails' );
     }
@@ -802,7 +803,7 @@ function apip_remove_scripts()
 /**
  * 作用: 屏蔽不必要的style
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_remove_styles()
 {
@@ -818,7 +819,7 @@ function apip_remove_styles()
         wp_dequeue_style( 'ngg_trigger_buttons' );
         wp_dequeue_style( 'nextgen_basic_singlepic_style' ) ;
         wp_dequeue_style( 'nextgen_pagination_style' );
-        wp_dequeue_style( 'nextgen_pagination_style' ); 
+        wp_dequeue_style( 'nextgen_pagination_style' );
 
     }
     if ( is_singular() && in_category('appreciations') )
@@ -841,7 +842,7 @@ function apip_remove_styles()
 /**
  * 作用: 在feed中增加相关内容
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_addi_feed($content)
 {
@@ -849,13 +850,13 @@ function apip_addi_feed($content)
     {
         return $content ;
     }
-    $addi = sprintf( '<div style="max-width: 520px; margin:0 auto; padding:5px 30px;margin: 15px; border-top: 1px solid #CCC;"><span style="margin-left: 2px; display:block;">《%1$s》采用<a rel="license" href="//creativecommons.org/licenses/by-nc-nd/3.0/cn/deed.zh">署名-非商业性使用-禁止演绎</a>许可协议进行许可。 『%2$s』期待与您交流。</span><div style="display:table;">%3$s %4$s</div></div>', 
+    $addi = sprintf( '<div style="max-width: 520px; margin:0 auto; padding:5px 30px;margin: 15px; border-top: 1px solid #CCC;"><span style="margin-left: 2px; display:block;">《%1$s》采用<a rel="license" href="//creativecommons.org/licenses/by-nc-nd/3.0/cn/deed.zh">署名-非商业性使用-禁止演绎</a>许可协议进行许可。 『%2$s』期待与您交流。</span><div style="display:table;">%3$s %4$s</div></div>',
                         sprintf( '<a href="%1$s">%2$s</a>' , get_permalink(get_the_ID()), get_the_title() ),
                         sprintf( '<a href="%1$s">%2$s</a>' , get_bloginfo('url'), get_bloginfo('name') ),
                         sprintf('<div style="margin: 5px 25px; display:table-cell; max-width:300px; "><h3 style="font-size:16px; font-weight:800;" >相关推荐:</h3>%s</div>', apip_related_post() ),
                         sprintf('<div style="margin: 5px 25px; display:table-cell; max-width:300px; "><h3 style="font-size:16px; font-weight:800;" >历史同日文章:</h3>%s</div>', apip_sameday_post() )
                         );
-                        
+
     $content.=$addi ;
     return $content ;
 }
@@ -864,7 +865,7 @@ function apip_addi_feed($content)
 /**
  * 作用: 追加代码和网易云的快捷按钮
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_quicktags()
 {
@@ -880,7 +881,7 @@ function apip_quicktags()
 /**
  * 作用: 去掉后台的Open Sans
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_remove_open_sans() {
     wp_deregister_style( 'open-sans' );
@@ -891,7 +892,7 @@ function apip_remove_open_sans() {
  /**
  * 作用: 调整TagCloud Widget输出的顺序及显示数量
  * 来源: 原创
- * Author URI: 
+ * Author URI:
  */
 function apip_resort_tagcloud( $arg )
 {
@@ -974,7 +975,7 @@ function apip_excerpt( $text )
     $text = strip_shortcodes($text);
     $text = str_replace(']]>', ']]&gt;', $text);
     $text = strip_tags($text );
-    
+
     //return and spaces
     $search = array(
 
@@ -987,7 +988,7 @@ function apip_excerpt( $text )
                   );
 
     $text = preg_replace(array_keys($search), $search, $text);
-    
+
     if( $apip_options['excerpt_length'] > 0 )
     {
         $len = $apip_options['excerpt_length'] ;
@@ -997,7 +998,7 @@ function apip_excerpt( $text )
         $len = 180 ;
     }
     $text = mb_substr($text,0,$len,'utf-8');
-    
+
     $text = utf8_trim( $text ).$apip_options['excerpt_ellipsis'] ;
     return $text;
 }
@@ -1013,7 +1014,7 @@ function apip_excerpt( $text )
  * URL:  http://www.aspatti.com
  */
 function apip_auto_rev_settings()
-{       
+{
     define('WP_POST_REVISIONS', false);
 }
 
@@ -1023,7 +1024,7 @@ function apip_auto_rev_settings()
  * 来源: Amandeep S. Patti
  * URL:  http://www.aspatti.com
  */
-function apip_auto_save_setting() 
+function apip_auto_save_setting()
 {
     wp_deregister_script('autosave');
 }
@@ -1035,7 +1036,7 @@ function apip_auto_save_setting()
  */
 
 //2.3
-function apip_admin_bar_setting($showvar) 
+function apip_admin_bar_setting($showvar)
 {
     global $show_admin_bar;
     if( apip_option_check('show_admin_bar') )
@@ -1053,7 +1054,7 @@ function apip_admin_bar_setting($showvar)
 /**
  * 作用: 后台显示英文,前台显示中文
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_locale( $locale )
 {
@@ -1071,7 +1072,7 @@ function apip_locale( $locale )
  * URL:  http://pewae.com
  */
 
-function apip_block_open_sans ($styles) 
+function apip_block_open_sans ($styles)
 {
     $open_sans = $styles->registered{'open-sans'};
     $open_sans->src = null;
@@ -1086,7 +1087,7 @@ function apip_block_open_sans ($styles)
  */
 
  function before_get_comments($args)
-{   
+{
     $args['user_id'] = 0 ;
     return $args ;
 }
@@ -1095,7 +1096,7 @@ function apip_block_open_sans ($styles)
 /**
  * 作用: 搜索结果只有一条记录时直接显示内容
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function redirect_single_post() {
     if (is_search()||is_archive()) {
@@ -1145,7 +1146,7 @@ function remove_page_search($query) {
 function apip_desc_tag(){
     global $apip_options;
     if (is_home())
-    { 
+    {
         $description = trim($apip_options['hd_home_text']) ;
         if ( '' == $description )
         {
@@ -1159,18 +1160,18 @@ function apip_desc_tag(){
                 $keywords .= $tag->name.',';
             endforeach;
         }
-        
-    } 
+
+    }
     else if (is_single())
-    {    
+    {
         global $post ;
         $description = substr(strip_tags($post->post_content),0,240)."...";
-        $keywords = "";        
+        $keywords = "";
         $tags = wp_get_post_tags($post->ID);
         foreach ( $tags as $tag ) :
             $keywords .= $tag->name.',';
         endforeach;
-    } 
+    }
     elseif (is_category())
     {
         $description = category_description();
@@ -1201,17 +1202,21 @@ function apip_desc_tag(){
  */
 function apip_comment_inserted($comment_id, $comment_object) {
     if ($comment_object->comment_parent > 0) {
-
+        global $apip_options;
+        $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
+        $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
+        $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
+        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
         $comment_parent = get_comment($comment_object->comment_parent);
-        $bg_head = '<div style="border:3px solid hsl(277,36%,7%); border-radius: 5px; margin: 1em 2em; background:#e5e5e5; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: #333; box-shadow: 0px 15px 25px -17px #E7797A;">' ;
-        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed hsl(277,36%,27%); border-radius: 5px;">' ;
-        $a_style = 'color: hsl(277,50%,50%); text-decoration: none;';
+        $bg_head = '<div style="border:3px solid '.$color_border.'; border-radius: 5px; margin: 1em 2em; background:'.$color_bg.'; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: '.$color_font.'; ">' ;
+        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed '.$color_border.'; border-radius: 5px;">' ;
+        $a_style = 'color:'.$color_link.'; text-decoration: none;';
         $random_posts = apip_random_post( get_the_ID(), 1 ) ;
         foreach ( $random_posts as $random_post ) :
             $random_link = get_permalink( $random_post->ID ) ;
         endforeach;
         $mailcontent = "<p style=\"display:none\">{$comment_object->comment_content}</p>";
-        $mailcontent .= '<p>亲爱的 <b style="color:hsl(277,36%,7%); font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
+        $mailcontent .= '<p>亲爱的 <b style=" font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
         $mailcontent .= $content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
         $mailcontent .= $content_border_head.$comment_object->comment_content.'</p>';
         $mailcontent .= sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
@@ -1222,7 +1227,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
         $headers .= 'Content-type: text/html; charset=UTF-8' . "\r\n";
 
         $headers .= 'From: 破襪子站长 <webmaster@pewae.com>'. "\r\n";
-        
+
         //$headers .= 'Bcc: lifishake@gmail.com'. "\r\n";
 
         wp_mail($comment_parent->comment_author_email,'您在『'.get_option('blogname').'』 的留言有了新回复。',$mailcontent,$headers);
@@ -1278,7 +1283,7 @@ function apip_rep_emoji_url( $url )
 		return $url;
     return '//coding.net/u/MinonHeart/p/twemoji/git/raw/gh-pages/72x72/' ;
 }
-/*                                          05终了                             */ 
+/*                                          05终了                             */
 
 /******************************************************************************/
 /*        06.屏蔽垃圾留言                                                        */
@@ -1286,7 +1291,7 @@ function apip_rep_emoji_url( $url )
 /**
  * 作用: 替换广告留言
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function hm_check_user ( $comment ) {
     global $apip_options;
@@ -1300,7 +1305,7 @@ function hm_check_user ( $comment ) {
     $f = 0 ;
     foreach ( $forbiddens as $forbidden ) {
         if ( $forbidden && false != strstr($str_author,$forbidden) ) {
-            $f = 1;     
+            $f = 1;
             break;
         }
     }
@@ -1317,7 +1322,7 @@ function hm_check_user ( $comment ) {
      }
     return $comment;
 }
-/*                                          06终了                             */ 
+/*                                          06终了                             */
 
 /******************************************************************************/
 /*        07.社会化分享                                                         */
@@ -1326,7 +1331,7 @@ function hm_check_user ( $comment ) {
 /**
  * 作用: 取得社会化链接（外部接口）
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_get_social()
 {
@@ -1336,27 +1341,27 @@ function apip_get_social()
     if ( apip_option_check('social_share_enable') )
     {
         if ( apip_option_check('social_share_twitter') )
-        {           
+        {
             $ret .= '<a class="sharebar-twitter" rel="nofollow" id="twitter-share" title="Twitter" ></a>' ;
             $count++;
         }
         if ( apip_option_check('social_share_sina') )
-        {           
+        {
             $ret .= '<a class="sharebar-weibo" rel="nofollow" id="sina-share" title="sina" ></a>' ;
             $count++;
         }
         if ( apip_option_check('social_share_tencent') )
-        {           
+        {
             $ret .= '<a class="sharebar-tencent-weibo" rel="nofollow" id="tencent-share" title="tencent" ></a>' ;
             $count++;
         }
         if ( apip_option_check('social_share_googleplus') )
-        {           
+        {
             $ret .= '<a class="sharebar-googleplus" rel="nofollow" id="googleplus-share" title="g+" ></a>' ;
             $count++;
         }
         if ( apip_option_check('social_share_facebook') )
-        {           
+        {
             $ret .= '<a class="sharebar-facebook" rel="nofollow" id="facebook-share" title="facebook" ></a>' ;
             $count++;
         }
@@ -1376,7 +1381,7 @@ function apip_get_social()
 /**
  * 作用: 更好看的标签云
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_tagcloud_page($params = array()) {
 
@@ -1410,15 +1415,15 @@ function apip_tagcloud_page($params = array()) {
         }
         $index++ ;
     }
-    
-    shuffle($tags) ;    
+
+    shuffle($tags) ;
     // generate tag list
     foreach ($tags as $tag) {
         $url = get_tag_link($tag->term_id);
         $title = $tag->count . ' article' . ($tag->count == 1 ? '' : 's');
         $class = $sizeclass . $tag->parent ;
         $ret .= ($wrapper ? "<$wrapper>" : '') ;
-        $ret .= "<a href='{$url}' rel='external nofollow' class='{$class}' title='{$title}'>";      
+        $ret .= "<a href='{$url}' rel='external nofollow' class='{$class}' title='{$title}'>";
         $ret .= "{$tag->name}</a>" ;
         $ret .= ($wrapper ? "</$wrapper>" : '');
     }
@@ -1430,7 +1435,7 @@ function apip_tagcloud_page($params = array()) {
 /**
  * 作用: 取出一定时间内被博主回复最多的留言者
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_link_page(){
     $links = apip_get_links();
@@ -1449,8 +1454,7 @@ function apip_link_page(){
 /**
  * 作用: JQuery效果的归档页
  * 来源: http://skatox.com/blog/
- * URL: http://skatox.com/blog/jquery-archive-list-widget/
-        http://skatox.com/blog/jquery-categories-list-widget/
+ * URL: http://skatox.com/blog/jquery-archive-list-widget
  */
 function apip_build_cat_html( $cat, $is_child = 0 ) {
     global $cat_relation;
@@ -1580,7 +1584,7 @@ function apip_archive_page() {
 /**
  * 作用: 在页脚激活JS
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_footer_actions()
 {
@@ -1598,7 +1602,7 @@ function apip_footer_actions()
 /**
  * 作用: 过滤引号
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function wch_stripslashes($code){
     $code=str_replace('\\"', '"',$code);
@@ -1608,17 +1612,17 @@ function wch_stripslashes($code){
 /**
  * 作用: 追加prettyprint风格
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_code_highlight($content) {
-    return preg_replace("/<pre(.*?)>(.*?)<\/pre>/ise", 
+    return preg_replace("/<pre(.*?)>(.*?)<\/pre>/ise",
         "'<pre class=\" prettyprint \">'.wch_stripslashes('$2').'</pre>'", $content);
 }
 //9.2 Lazyload相关
 /**
  * 作用: lazyload过滤,替换src为data-src
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_lazyload_filter( $content )
 {
@@ -1626,7 +1630,7 @@ function apip_lazyload_filter( $content )
     $dom = new DOMDocument();
     @$dom->loadHTML($content);
 
-    foreach ($dom->getElementsByTagName('img') as $node) {  
+    foreach ($dom->getElementsByTagName('img') as $node) {
         $oldsrc = $node->getAttribute('src');
         $node->setAttribute("data-src", $oldsrc );
         $node->setAttribute("data-unveil", "true" );
@@ -1641,7 +1645,7 @@ function apip_lazyload_filter( $content )
 /**
  * 作用: 范围内查找的动作追加.
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_keep_quary(){
     $key = 'apip_aq_'.COOKIEHASH;
@@ -1661,13 +1665,13 @@ function apip_show_commentator_rate( $actions, $comment ) {
     $query = '';
     //$comment->comment_author_email;
     $n = intval(get_comment_meta($comment->comment_ID, '_boring_rank', true));
-    
+
     $boring_nonce = wp_create_nonce( "boring-comment_".$comment->comment_ID );
     $selector = '<select id="set-boring-rank" name="boring-rank">
 				<option value="0">正常</option><option value="2">哦</option><option value="3">呵呵</option><option value="6">SoWhat</option></select>';
     $format = '<span data-comment-id="%d" data-post-id="%d" wp_nonce="%s" class="%s" ><span class="set-boring-rank-label">无聊等级&nbsp;(%d)&nbsp;</span>%s</span>';
     $actions['boringrank'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $boring_nonce, 'boring-level', $n, $selector );
-    
+
     return $actions;
 }
 
@@ -1724,7 +1728,7 @@ function apip_set_boring_comment_rank() {
     else {
         update_comment_meta($comment_id, '_boring_rank', $_POST['level']);
     }
-    
+
 }
 
 function apip_replace_triditional_comment_placeholder_text( $default ) {
@@ -1735,7 +1739,7 @@ function apip_replace_triditional_comment_placeholder_text( $default ) {
 
 function apip_add_boring_comment_style( $class ) {
     $comment_id = get_comment_ID();
-    
+
     $sql = "";
     return $class;
 }
@@ -1745,7 +1749,7 @@ function apip_add_boring_comment_style( $class ) {
  /**
  * 作用: 解决bjlazyload，ngg-gallery之间的冲突问题，暂时废弃
  * 来源: 自产
- * URL:  
+ * URL:
  */
 function apip_filter_filter()
 {   global $wp_filter ;
@@ -1768,7 +1772,7 @@ function apip_filter_filter()
 /**
  * 作用: 替换留言框下方的提示，暂时废弃
  * 来源: customizr论坛
- * URL:  
+ * URL:
  */
 function apip_replace_tag_note( $defaults )
 {
