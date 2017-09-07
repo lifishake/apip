@@ -1,3 +1,43 @@
+body {
+  font-family: STHeitiTC-Light,"PingFang TC", "Helvetica Neue", 'Microsoft YaHei', 'Hiragino Sans GB','Microsoft JhengHei';
+}
+
+textarea{
+  margin: auto;
+  width: 100%;
+}
+.apip-option {
+  width: 75%;
+}
+.apip-option h1 {
+  font-family:  "Lucida Grande", Helvetica, Arial,Verdana, sans-serif;
+  text-transform: uppercase;
+  border-bottom: 2px double #CCC;
+
+}
+
+.form-table {
+  border: 1px solid #E6E8EA;
+}
+
+.form-table tr {
+    /*border-bottom: 1px solid #E6E8EA;*/
+    margin-bottom: 2px;
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.1) inset;
+}
+
+.form-table tr:nth-child(odd) {
+  background-color: #F9F9F9;
+}
+
+.form-table th {
+    padding:15px 10px;
+    text-align: right;
+    /*border-bottom: 1px solid #444;*/
+}
+
 .form-table td {
     line-height: 2;
+    padding:5px 10px;
+    /*border-left: 1px solid #E6E8EA;*/
 }

@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.22.1
+ * Version:     1.23.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -139,11 +139,7 @@ function apip_init()
     //0.11 屏蔽留言class中的作者名
     add_filter('comment_class', 'apip_remove_author_class', 10, 5);
 	/** 01 */
-	if( apip_option_check('better_excerpt') )
-    {
-        //更好的中文摘要
-        add_filter('the_excerpt', 'apip_excerpt', 100);
-    }
+  //颜色目前没有函数
 
 	/** 02 */
     if( apip_option_check('save_revisions_disable') )
@@ -203,58 +199,74 @@ function apip_init()
         define('NGG_DISABLE_FILTER_THE_CONTENT', TRUE);
     }
 	/** 03 */
+    if( apip_option_check('better_excerpt') )
+    {
+        //更好的中文摘要
+        add_filter('the_excerpt', 'apip_excerpt', 100);
+    }
     if ( apip_option_check('header_description') )
     {
         //网站描述和关键字
         add_action( 'wp_head', 'apip_desc_tag' );
     }
 
-    /** 04 */
-    if ( apip_option_check('notify_comment_reply') )
-    {
-		//邮件回复
-        add_action('wp_insert_comment','apip_comment_inserted',99,2);
-    }
-
-	/** 05 */
+	/** 04 */
+  //4.1 头像替换
     add_filter('get_avatar','apip_get_cavatar');
+    //4.2 表情链接替换
 	add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
-    /** 06 */
-    //抢在akimest前面
+
+    /** 05 */
+    //5.1 广告关键字替换，抢在akimest前面
     add_filter('preprocess_comment', 'hm_check_user',1);
-	/** 07*/
+    //5.2 用户留言等级评分
+    if ( apip_option_check('commentator_rating_enable') ) {
+        //后台动作增加
+        add_filter( 'comment_row_actions', 'apip_show_commentator_rate', 11, 2 );
+        //增加ajax回调函数
+        add_action( 'wp_ajax_set_boring_comment_rank', 'apip_set_boring_comment_rank' );
+        //在comment模板的合适地方增加filter'apip_placeholder_text'后才有效。
+        add_filter( 'apip_placeholder_text', 'apip_replace_placeholder_text');
+        //在comment模板的合适地方增加filter'apip_submit_status'后才有效。
+        add_filter( 'apip_submit_status', 'apip_check_submit_status');
+        //如果使用传统comment_form,则下面一行生效。
+        add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
+        //针对废话的css惩罚
+        add_filter('comment_class', 'apip_add_boring_comment_style');
+    }
+	/** 06*/
 	//social没有添加项,需要外部手动调用
-	/** 08 */
-	//8.1 TAGcloud 注册
+	/** 07 */
+	//7.1 TAGcloud 注册
 	if ( apip_option_check('apip_tagcloud_enable') )
 	{
 		add_shortcode('mytagcloud', 'apip_tagcloud_page');
 	}
-    //8.2 友链注册
+    //7.2 友链注册
     if ( apip_option_check('apip_link_enable') )
 	{
 		add_shortcode('mylink', 'apip_link_page');
 	}
-    //8.3 归档页注册
+    //7.3 归档页注册
     if ( apip_option_check('apip_archive_enable') )
 	{
 		add_shortcode('myarchive', 'apip_archive_page');
 	}
 
-	/** 09 */
+	/** 08 */
 	//头部动作，一般用于附加css的加载
     //add_action('get_header','apip_header_actions') ;
-	//9.1 prettyprint脚本激活
+	//8.1 prettyprint脚本激活
     add_action('get_footer','apip_footer_actions') ;
 
-	//9.2 lazyload
+	//8.2 lazyload
 	if ( apip_option_check('apip_lazyload_enable') )
 	{
 		add_filter( 'the_content', 'apip_lazyload_filter',200 );
 		add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
 	}
 
-    //9.3 结果集内跳转
+    //8.3 结果集内跳转
     if ( apip_option_check('range_jump_enable') )
     {
         if ( !class_exists('Apip_Query') ) {
@@ -272,20 +284,11 @@ function apip_init()
         set_transient( $key, $apip_aq, 600);//保留10分钟
         add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
     }
-    //9.4 用户留言等级评分
-    if ( apip_option_check('commentator_rating_enable') ) {
-        //后台动作增加
-        add_filter( 'comment_row_actions', 'apip_show_commentator_rate', 11, 2 );
-        //增加ajax回调函数
-        add_action( 'wp_ajax_set_boring_comment_rank', 'apip_set_boring_comment_rank' );
-        //在comment模板的合适地方增加filter'apip_placeholder_text'后才有效。
-        add_filter( 'apip_placeholder_text', 'apip_replace_placeholder_text');
-        //在comment模板的合适地方增加filter'apip_submit_status'后才有效。
-        add_filter( 'apip_submit_status', 'apip_check_submit_status');
-        //如果使用传统comment_form,则下面一行生效。
-        add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
-        //针对废话的css惩罚
-        add_filter('comment_class', 'apip_add_boring_comment_style');
+    //8.4 留言邮件回复
+    if ( apip_option_check('notify_comment_reply') )
+    {
+		//邮件回复
+        add_action('wp_insert_comment','apip_comment_inserted',99,2);
     }
 
 	//0X 暂时不用了
@@ -399,12 +402,12 @@ function apip_init_actions()
 function apip_header_actions()
 {
 	global $apip_options ;
-	//8.1
+	//7.1
 	/*if ( is_page('my-tag-cloud') && $apip_options['apip_tagcloud_enable']== 1 )
 	{
 		wp_enqueue_style( 'apip_tagcloud_style', APIP_PLUGIN_URL . 'css/apip-tagcloud.css' );
 	}*/
-	//9.1
+	//8.1
     /*if ( in_category('code_share') && $apip_options['apip_codehighlight_enable'] == 1 )
     {
         add_filter('the_content', 'apip_code_highlight') ;
@@ -425,9 +428,7 @@ $options
     0.8                                 移除后台的作者列
     0.9                                 版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
     0.A                                 移除无用的钩子
-01.     better_excerpt                  更好的中文摘要
-    1.1     excerpt_length              摘要长度
-    1.2     excerpt_ellipsis            摘要结尾字符
+01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本
     2.2     auto_save_disabled          阻止自动保存
@@ -441,21 +442,24 @@ $options
 03.     header_description              头部描述信息
     3.1     hd_home_text                首页描述文字
     3.2     hd_home_keyword             首页标签
-04.     notify_comment_reply            有回复时邮件提示
-05.     GFW选项
-    5.1     local_gravatar              头像本地缓存
-    5.2     replace_emoji               替换emoji地址
-06.     blocked_commenters              替换广告留言用户名和网址
-07.     social_share_enable             社会化分享使能
-08.     自定义的shortcode
-    8.1     apip_tagcloud_enable        更好看的标签云
-    8.2     apip_link_page              自定义友情链接
-    8.3     apip_achive_page            自定义归档页
-09.     比较复杂的设定
-    9.1     apip_codehighlight_enable   代码高亮
-    9.2     apip_lazyload_enable        LazyLoad
-    9.3                                 结果集内跳转
-    9.4     apip_show_commentator_rate  为留言评分
+    3.3     excerpt_length              摘要长度
+    3.4     excerpt_ellipsis            摘要结尾字符
+04.     GFW选项
+    4.1     local_gravatar              头像本地缓存
+    4.2     replace_emoji               替换emoji地址
+05.    留言者控制
+   5.1  blocked_commenters              替换广告留言用户名和网址
+   5.2     apip_show_commentator_rate  为留言评分
+06.     social_share_enable             社会化分享使能
+07.     自定义的shortcode
+    7.1     apip_tagcloud_enable        更好看的标签云
+    7.2     apip_link_page              自定义友情链接
+    7.3     apip_achive_page            自定义归档页
+08.     比较复杂的设定
+    8.1     apip_codehighlight_enable   代码高亮
+    8.2     apip_lazyload_enable        LazyLoad
+    8.3                                 结果集内跳转
+    8.4.    notify_comment_reply            有回复时邮件提示
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -473,7 +477,7 @@ function apip_scripts()
 {
     global $apip_options;
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#FF0080";
-    wp_enqueue_style( 'apip-tyle-all', APIP_PLUGIN_URL . 'css/apip-all.css' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -757,14 +761,14 @@ function apip_scripts()
 		wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), false, true);
 	}
     if ( $css !== '' ) {
-        wp_add_inline_style('apip-tyle-all', $css);
+        wp_add_inline_style('apip-style-all', $css);
     }
 }
 
 function apip_admin_scripts() {
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array(), false, true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), false, true);
 }
 
 //0.2
@@ -944,64 +948,7 @@ function apip_remove_author_class( $classes, $class, $comment_ID, $comment, $pos
 /******************************************************************************/
 /*        01.解决中文摘要问题                                                     */
 /******************************************************************************/
- /**
- * 作用: 子函数,处理UTF8字符串的最后一个符号.
- * 来源: 中文工具箱
- * Author URI: http://yan.me/dia
- */
-function utf8_trim($str) {
 
-    $len = strlen($str);
-
-    for ($i=strlen($str)-1; $i>=0; $i-=1){
-        $hex .= ' '.ord($str[$i]);
-        $ch = ord($str[$i]);
-        if (($ch & 128)==0) return(substr($str,0,$i));
-        if (($ch & 192)==192) return(substr($str,0,$i));
-    }
-    return($str.$hex);
-}
-
- /**
- * 作用: 精确处理中文excerpt
- * 来源: 综合WP CN Excerpt和中文工具箱
- * URL:  http://yan.me/dia, http://weibo.com/joychaocc
- */
-function apip_excerpt( $text )
-{
-    global $apip_options;
-    //erase short codes
-    $text = get_the_content();
-    $text = strip_shortcodes($text);
-    $text = str_replace(']]>', ']]&gt;', $text);
-    $text = strip_tags($text );
-
-    //return and spaces
-    $search = array(
-
-                   '/<br\s*\/?>/' => "\n",
-
-                   '/\\n\\n/'     => "\n",
-
-                   '/&nbsp;/i'    => '',
-
-                  );
-
-    $text = preg_replace(array_keys($search), $search, $text);
-
-    if( $apip_options['excerpt_length'] > 0 )
-    {
-        $len = $apip_options['excerpt_length'] ;
-    }
-    else
-    {
-        $len = 180 ;
-    }
-    $text = mb_substr($text,0,$len,'utf-8');
-
-    $text = utf8_trim( $text ).$apip_options['excerpt_ellipsis'] ;
-    return $text;
-}
 /*                                          01终了                             */
 
 /******************************************************************************/
@@ -1136,8 +1083,9 @@ function remove_page_search($query) {
 /*                                          02终了                             */
 
 /******************************************************************************/
-/*        03.优化html头中的descriptor和tag信息                                    */
+/*        03.文字处理                                  */
 /******************************************************************************/
+//3.1
  /**
  * 作用: header中追加description和keyword.
  * 来源: lifishake原创
@@ -1165,7 +1113,7 @@ function apip_desc_tag(){
     else if (is_single())
     {
         global $post ;
-        $description = substr(strip_tags($post->post_content),0,240)."...";
+        $description = substr(strip_tags(strip_shortcodes($post->post_content)),0,240)."...";
         $keywords = "";
         $tags = wp_get_post_tags($post->ID);
         foreach ( $tags as $tag ) :
@@ -1190,55 +1138,71 @@ function apip_desc_tag(){
 <meta name="keywords" content="<?=$keywords?>" />
 <?php
 }
+//3.2
+/**
+* 作用: 子函数,处理UTF8字符串的最后一个符号.
+* 来源: 中文工具箱
+* Author URI: http://yan.me/dia
+*/
+function utf8_trim($str) {
+
+   $len = strlen($str);
+
+   for ($i=strlen($str)-1; $i>=0; $i-=1){
+       $hex .= ' '.ord($str[$i]);
+       $ch = ord($str[$i]);
+       if (($ch & 128)==0) return(substr($str,0,$i));
+       if (($ch & 192)==192) return(substr($str,0,$i));
+   }
+   return($str.$hex);
+}
+//3.3
+/**
+* 作用: 精确处理中文excerpt
+* 来源: 综合WP CN Excerpt和中文工具箱
+* URL:  http://yan.me/dia, http://weibo.com/joychaocc
+*/
+function apip_excerpt( $text )
+{
+   global $apip_options;
+   //erase short codes
+   $text = get_the_content();
+   $text = strip_shortcodes($text);
+   $text = str_replace(']]>', ']]&gt;', $text);
+   $text = strip_tags($text );
+
+   //return and spaces
+   $search = array(
+
+                  '/<br\s*\/?>/' => "\n",
+
+                  '/\\n\\n/'     => "\n",
+
+                  '/&nbsp;/i'    => '',
+
+                 );
+
+   $text = preg_replace(array_keys($search), $search, $text);
+
+   if( $apip_options['excerpt_length'] > 0 )
+   {
+       $len = $apip_options['excerpt_length'] ;
+   }
+   else
+   {
+       $len = 180 ;
+   }
+   $text = mb_substr($text,0,$len,'utf-8');
+
+   $text = utf8_trim( $text ).$apip_options['excerpt_ellipsis'] ;
+   return $text;
+}
 /*                                          03终了                             */
 
 /******************************************************************************/
-/*        04.comment的邮件回复                                                   */
+/*        04.GFW有关的内容                                                       */
 /******************************************************************************/
-/**
- * 作用: comment有reply时,通过邮件通知留言发布者.
- * 来源: Comment Email Reply
- * URL:  http://kilozwo.de/wordpress-comment-email-reply-plugin
- */
-function apip_comment_inserted($comment_id, $comment_object) {
-    if ($comment_object->comment_parent > 0) {
-        global $apip_options;
-        $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
-        $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
-        $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
-        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-        $comment_parent = get_comment($comment_object->comment_parent);
-        $bg_head = '<div style="border:3px solid '.$color_border.'; border-radius: 5px; margin: 1em 2em; background:'.$color_bg.'; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: '.$color_font.'; ">' ;
-        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed '.$color_border.'; border-radius: 5px;">' ;
-        $a_style = 'color:'.$color_link.'; text-decoration: none;';
-        $random_posts = apip_random_post( get_the_ID(), 1 ) ;
-        foreach ( $random_posts as $random_post ) :
-            $random_link = get_permalink( $random_post->ID ) ;
-        endforeach;
-        $mailcontent = "<p style=\"display:none\">{$comment_object->comment_content}</p>";
-        $mailcontent .= '<p>亲爱的 <b style=" font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
-        $mailcontent .= $content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
-        $mailcontent .= $content_border_head.$comment_object->comment_content.'</p>';
-        $mailcontent .= sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
-        $mailcontent = $bg_head.$mailcontent.'</div></div>' ;
-
-        $headers  = 'MIME-Version: 1.0' . "\r\n";
-
-        $headers .= 'Content-type: text/html; charset=UTF-8' . "\r\n";
-
-        $headers .= 'From: 破襪子站长 <webmaster@pewae.com>'. "\r\n";
-
-        //$headers .= 'Bcc: lifishake@gmail.com'. "\r\n";
-
-        wp_mail($comment_parent->comment_author_email,'您在『'.get_option('blogname').'』 的留言有了新回复。',$mailcontent,$headers);
-    }
-}
-/*                                          04终了                             */
-
-/******************************************************************************/
-/*        05.GFW有关的内容                                                       */
-/******************************************************************************/
-//5.1
+//4.1
 /**
  * 作用: gravatar本地缓存/v2ex镜像
  * 来源: 邪罗刹
@@ -1271,7 +1235,7 @@ function apip_get_cavatar($source) {
     if (filesize($abs)<500) { copy($default,$abs); }
     return '<img alt="" src="'.$url.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
 }
-//5.2
+//4.2
 /**
  * 作用: 替换emoji服务器地址
  * 来源: 自创
@@ -1286,8 +1250,9 @@ function apip_rep_emoji_url( $url )
 /*                                          05终了                             */
 
 /******************************************************************************/
-/*        06.屏蔽垃圾留言                                                        */
+/*        05.控制留言者                                                        */
 /******************************************************************************/
+//5.1
 /**
  * 作用: 替换广告留言
  * 来源: 自产
@@ -1322,10 +1287,98 @@ function hm_check_user ( $comment ) {
      }
     return $comment;
 }
-/*                                          06终了                             */
+
+//5.2 根据用户留言质量评定用户水平，并进行相应操作
+function apip_show_commentator_rate( $actions, $comment ) {
+    $desc = null;
+    $level = 0;
+    $n = 0;
+    $query = '';
+    //$comment->comment_author_email;
+    $n = intval(get_comment_meta($comment->comment_ID, '_boring_rank', true));
+
+    $boring_nonce = wp_create_nonce( "boring-comment_".$comment->comment_ID );
+    $selector = '<select id="set-boring-rank" name="boring-rank">
+				<option value="0">正常</option><option value="2">哦</option><option value="3">呵呵</option><option value="6">SoWhat</option></select>';
+    $format = '<span data-comment-id="%d" data-post-id="%d" wp_nonce="%s" class="%s" ><span class="set-boring-rank-label">无聊等级&nbsp;(%d)&nbsp;</span>%s</span>';
+    $actions['boringrank'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $boring_nonce, 'boring-level', $n, $selector );
+
+    return $actions;
+}
+
+function apip_replace_placeholder_text( $text ) {
+    $commenter = wp_get_current_commenter();
+    global $wpdb;
+    if ( isset($commenter) ) {
+        $email = esc_attr($commenter['comment_author_email']);
+    }
+    if ( !$email || $email == '' ) {
+        return $text;
+    }
+    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
+    $vals = $wpdb->get_col( $sql );
+    if ( count($vals) >= 1 ) {
+        if ( $vals[0] > 12 ) {
+            $text = '你留下的废话太多，博主已经决定跟你断绝往来。';
+        }
+        else if ( $vals[0] >= 6 ) {
+            $text = '你最近六个月的回复已经惹得博主不高兴了。请用心回复，谨防友尽。';
+        }
+    }
+    return $text;
+}
+
+function apip_check_submit_status( $type ) {
+    $commenter = wp_get_current_commenter();
+    global $wpdb;
+    if ( isset($commenter) ) {
+        $email = esc_attr($commenter['comment_author_email']);
+    }
+    if ( !$email || $email == '' ) {
+        return $type;
+    }
+    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
+    $vals = $wpdb->get_col( $sql );
+    if ( count($vals) >= 1 && $vals[0] > 12 ) {
+        $type = 'hidden';
+    }
+    return $type;
+}
+
+function apip_set_boring_comment_rank() {
+    $comment_id = $_POST['id'];
+    if ( !wp_verify_nonce($_POST['nonce'],"boring-comment_".$comment_id))
+        die();
+    $old = get_comment_meta($comment_id, '_boring_rank', true);
+    if ( $_POST['level'] == 0 ) {
+        delete_comment_meta($comment_id, '_boring_rank');
+    }
+    else if ( is_null($old) || ""=== $old ) {
+        add_comment_meta($comment_id, '_boring_rank', $_POST['level'], true);
+    }
+    else {
+        update_comment_meta($comment_id, '_boring_rank', $_POST['level']);
+    }
+
+}
+
+function apip_replace_triditional_comment_placeholder_text( $default ) {
+    $text = apip_replace_placeholder_text('请不要留下无趣的东西浪费大家时间。');
+    $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
+    return $default;
+}
+
+function apip_add_boring_comment_style( $class ) {
+    $comment_id = get_comment_ID();
+
+    $sql = "";
+    return $class;
+}
+
+/*                                          05终了                             */
 
 /******************************************************************************/
-/*        07.社会化分享                                                         */
+/*        06.社会化分享                                                         */
 /******************************************************************************/
 
 /**
@@ -1375,9 +1428,9 @@ function apip_get_social()
 /*                                          07终了                             */
 
 /******************************************************************************/
-/*        08.自定义SHORTCODE                                                   */
+/*        07.自定义SHORTCODE                                                   */
 /******************************************************************************/
-//8.1自定义标签云
+//7.1自定义标签云
 /**
  * 作用: 更好看的标签云
  * 来源: 自产
@@ -1431,7 +1484,7 @@ function apip_tagcloud_page($params = array()) {
     $ret .= '</ul>' ;
     return $ret ;
 }
-//8.2自定义友情链接页
+//7.2自定义友情链接页
 /**
  * 作用: 取出一定时间内被博主回复最多的留言者
  * 来源: 自产
@@ -1450,7 +1503,7 @@ function apip_link_page(){
     $ret.='</ul>';
     echo $ret;
 }
-//8.3自定义归档页
+//7.3自定义归档页
 /**
  * 作用: JQuery效果的归档页
  * 来源: http://skatox.com/blog/
@@ -1575,12 +1628,12 @@ function apip_archive_page() {
     $ret .= '</ul>';//ul achp-widget
     echo $ret;
 }
-/*                                          08终了                             */
+/*                                          07终了                             */
 
 /******************************************************************************/
-/*        09.比较复杂的设置                                                      */
+/*        08.比较复杂的设置                                                      */
 /******************************************************************************/
-//9.1codehighlight相关
+//8.1codehighlight相关
 /**
  * 作用: 在页脚激活JS
  * 来源: 自产
@@ -1618,7 +1671,7 @@ function apip_code_highlight($content) {
     return preg_replace("/<pre(.*?)>(.*?)<\/pre>/ise",
         "'<pre class=\" prettyprint \">'.wch_stripslashes('$2').'</pre>'", $content);
 }
-//9.2 Lazyload相关
+//8.2 Lazyload相关
 /**
  * 作用: lazyload过滤,替换src为data-src
  * 来源: 自产
@@ -1641,7 +1694,7 @@ function apip_lazyload_filter( $content )
     return $newHtml;
 }
 
-//9.3 范围内跳转
+//8.3 范围内跳转
 /**
  * 作用: 范围内查找的动作追加.
  * 来源: 自产
@@ -1656,95 +1709,47 @@ function apip_keep_quary(){
     $apip_aq->keep_query();
     set_transient($key, $apip_aq, 360);
 }
+//8.4 邮件回复
+/**
+ * 作用: comment有reply时,通过邮件通知留言发布者.
+ * 来源: Comment Email Reply
+ * URL:  http://kilozwo.de/wordpress-comment-email-reply-plugin
+ */
+function apip_comment_inserted($comment_id, $comment_object) {
+    if ($comment_object->comment_parent > 0) {
+        global $apip_options;
+        $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
+        $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
+        $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
+        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
+        $comment_parent = get_comment($comment_object->comment_parent);
+        $bg_head = '<div style="border:3px solid '.$color_border.'; border-radius: 5px; margin: 1em 2em; background:'.$color_bg.'; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: '.$color_font.'; ">' ;
+        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed '.$color_border.'; border-radius: 5px;">' ;
+        $a_style = 'color:'.$color_link.'; text-decoration: none;';
+        $random_posts = apip_random_post( get_the_ID(), 1 ) ;
+        foreach ( $random_posts as $random_post ) :
+            $random_link = get_permalink( $random_post->ID ) ;
+        endforeach;
+        $mailcontent = "<p style=\"display:none\">{$comment_object->comment_content}</p>";
+        $mailcontent .= '<p>亲爱的 <b style=" font-weight:800; padding:0 3px ;">'.$comment_parent->comment_author.'</b>， 您的留言：</p>' ;
+        $mailcontent .= $content_border_head.$comment_parent->comment_content.'</p><p>有了新回复：</p>';
+        $mailcontent .= $content_border_head.$comment_object->comment_content.'</p>';
+        $mailcontent .= sprintf( '<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link( $comment_object->comment_ID ), $random_link, get_bloginfo('url'), $a_style ) ;
+        $mailcontent = $bg_head.$mailcontent.'</div></div>' ;
 
-//9.4 根据用户留言质量评定用户水平，并进行相应操作
-function apip_show_commentator_rate( $actions, $comment ) {
-    $desc = null;
-    $level = 0;
-    $n = 0;
-    $query = '';
-    //$comment->comment_author_email;
-    $n = intval(get_comment_meta($comment->comment_ID, '_boring_rank', true));
+        $headers  = 'MIME-Version: 1.0' . "\r\n";
 
-    $boring_nonce = wp_create_nonce( "boring-comment_".$comment->comment_ID );
-    $selector = '<select id="set-boring-rank" name="boring-rank">
-				<option value="0">正常</option><option value="2">哦</option><option value="3">呵呵</option><option value="6">SoWhat</option></select>';
-    $format = '<span data-comment-id="%d" data-post-id="%d" wp_nonce="%s" class="%s" ><span class="set-boring-rank-label">无聊等级&nbsp;(%d)&nbsp;</span>%s</span>';
-    $actions['boringrank'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $boring_nonce, 'boring-level', $n, $selector );
+        $headers .= 'Content-type: text/html; charset=UTF-8' . "\r\n";
 
-    return $actions;
+        $headers .= 'From: 破襪子站长 <webmaster@pewae.com>'. "\r\n";
+
+        //$headers .= 'Bcc: lifishake@gmail.com'. "\r\n";
+
+        wp_mail($comment_parent->comment_author_email,'您在『'.get_option('blogname').'』 的留言有了新回复。',$mailcontent,$headers);
+    }
 }
 
-function apip_replace_placeholder_text( $text ) {
-    $commenter = wp_get_current_commenter();
-    global $wpdb;
-    if ( isset($commenter) ) {
-        $email = esc_attr($commenter['comment_author_email']);
-    }
-    if ( !$email || $email == '' ) {
-        return $text;
-    }
-    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
-    $vals = $wpdb->get_col( $sql );
-    if ( count($vals) >= 1 ) {
-        if ( $vals[0] > 12 ) {
-            $text = '你留下的废话太多，博主已经决定跟你断绝往来。';
-        }
-        else if ( $vals[0] >= 6 ) {
-            $text = '你最近六个月的回复已经惹得博主不高兴了。请用心回复，谨防友尽。';
-        }
-    }
-    return $text;
-}
-
-function apip_check_submit_status( $type ) {
-    $commenter = wp_get_current_commenter();
-    global $wpdb;
-    if ( isset($commenter) ) {
-        $email = esc_attr($commenter['comment_author_email']);
-    }
-    if ( !$email || $email == '' ) {
-        return $type;
-    }
-    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
-    $vals = $wpdb->get_col( $sql );
-    if ( count($vals) >= 1 && $vals[0] > 12 ) {
-        $type = 'hidden';
-    }
-    return $type;
-}
-
-function apip_set_boring_comment_rank() {
-    $comment_id = $_POST['id'];
-    if ( !wp_verify_nonce($_POST['nonce'],"boring-comment_".$comment_id))
-        die();
-    $old = get_comment_meta($comment_id, '_boring_rank', true);
-    if ( $_POST['level'] == 0 ) {
-        delete_comment_meta($comment_id, '_boring_rank');
-    }
-    else if ( is_null($old) || ""=== $old ) {
-        add_comment_meta($comment_id, '_boring_rank', $_POST['level'], true);
-    }
-    else {
-        update_comment_meta($comment_id, '_boring_rank', $_POST['level']);
-    }
-
-}
-
-function apip_replace_triditional_comment_placeholder_text( $default ) {
-    $text = apip_replace_placeholder_text('请不要留下无趣的东西浪费大家时间。');
-    $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
-    return $default;
-}
-
-function apip_add_boring_comment_style( $class ) {
-    $comment_id = get_comment_ID();
-
-    $sql = "";
-    return $class;
-}
-
-/*                                          09终了                             */
+/*                                          08终了                             */
 
  /**
  * 作用: 解决bjlazyload，ngg-gallery之间的冲突问题，暂时废弃
