@@ -11,9 +11,16 @@ textarea{
 }
 .apip-option h1 {
   font-family:  "Lucida Grande", Helvetica, Arial,Verdana, sans-serif;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
   border-bottom: 2px double #CCC;
+  color:#F9F9F9;
+  text-shadow: 1px -1px 2px #7c7b7a;
+}
 
+.apip-option h1 span{
+  color:#444;
+  font-size:28px;
+  /*text-shadow: */
 }
 
 .form-table {

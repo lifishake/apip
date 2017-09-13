@@ -13,3 +13,45 @@ span.suffix {
             text-align: center;
             font-size: 10px;
         }
+
+.album-photo img:last-child {
+    margin-right:0;
+}
+.apip-item {
+    margin:20px 0;
+}
+.doulist-subject {
+    line-height:1.5;
+    background-color:rgba(239, 239, 235, 0.95);
+    overflow:hidden;
+    padding:20px;
+}
+.doulist-subject .apiplist-post {
+    float:left;
+    margin-right:20px;
+}
+.title a {
+    text-decoration:none!important;
+}
+.doulist-subject .title {
+    margin-bottom:6px;
+}
+.doulist-subject .rating {
+    margin:6px 0 4px 120px;
+    font-size:12px;
+}
+.doulist-subject .abstract {
+    margin-left:120px;
+    font-size:12px;
+}
+.apip-item .mod {
+    background-color:rgba(34,34,34,0.6);
+    color:inherit;
+    padding:10px;
+    position:relative;
+    word-wrap:break-word;
+}
+.album-photo img {
+    margin-right: 2%;
+    max-width: 23.5%;
+}
