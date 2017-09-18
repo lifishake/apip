@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.23.1
+ * Version:     1.23.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -931,7 +931,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie"]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣专辑', '[mydouban id="', '" type="music"]', 'p' );
-        QTags.addButton( 'eg_mygame', '豆瓣专辑', '[mygame id="', '" type="game"]', 'p' );
+        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" jname="" alias="" year="" publisher=""  platform="" download=""]', 'p' );
     </script>
 <?php
 }
@@ -1960,8 +1960,12 @@ function apip_get_saved_images($id, $src, $dst )  {
     }
 
     $e = $thumb_path. $id .'.jpg';
+
     if ( !is_file($e) ) {
-        copy(htmlspecialchars_decode($src), $e);
+        if (!@copy(htmlspecialchars_decode($src), $e))
+        {
+            $errors= error_get_last();
+        }
     }
 
     if ( 'douban'===$dst ) {
@@ -1980,7 +1984,7 @@ function apip_get_saved_images($id, $src, $dst )  {
 * API格式：https://www.giantbomb.com/api/game/THE_GAME_ID/?api_key=YOUR_TOKEN&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers
 */
 function apip_game_detail($atts, $content = null) {
-    extract( shortcode_atts( array( 'id' => '0' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'', 'jname'=>'', 'year'=>'', 'download'=>'','platform'=>'','publisher'=>'' ), $atts ) );
     global $apip_options;
     $token = $apip_options['gaintbomb_key'];
     if (!$token || !$id ) {
@@ -1990,94 +1994,81 @@ function apip_game_detail($atts, $content = null) {
     $content = get_transient($cache_key);
     if ( !$content )
     {
-        $url = 'https://www.giantbomb.com/api/game/'.$id.'?api_key='.$token.'%1$s&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers';
+        $url = "http://www.giantbomb.com/api/game/".$id."?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
+
         delete_transient($cache_key);
         //从链接取数据
-        $ch=@curl_init($url);
-        @curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $cexecute=@curl_exec($ch);
-        @curl_close($ch);
-        if ($cexecute) {
-            $content = json_decode($cexecute,true);
+        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+        $response = file_get_contents($url, false, $context);
+        if ($response) {
+            $content = json_decode($response,true);
             set_transient($cache_key, $content, 60*60*24*30);
         } else {
-            //return false;
-            $content = array (
-                              "error"=> "OK",
-                              "limit"=> 1,
-                              "offset"=> 0,
-                              "number_of_page_results"=> 1,
-                              "number_of_total_results"=> 1,
-                              "status_code"=> 1,
-                              "results"=> array (
-                                "image"=> array (
-                                  "icon_url"=> "https://www.giantbomb.com/api/image/square_avatar/535386-yume_penguin_monogatari_box.jpg",
-                                  "medium_url"=> "https://www.giantbomb.com/api/image/scale_medium/535386-yume_penguin_monogatari_box.jpg",
-                                  "screen_url"=> "https://www.giantbomb.com/api/image/screen_medium/535386-yume_penguin_monogatari_box.jpg",
-                                  "screen_large_url"=> "https://www.giantbomb.com/api/image/screen_kubrick/535386-yume_penguin_monogatari_box.jpg",
-                                  "small_url"=> "https://www.giantbomb.com/api/image/scale_small/535386-yume_penguin_monogatari_box.jpg",
-                                  "super_url"=> "https://www.giantbomb.com/api/image/scale_large/535386-yume_penguin_monogatari_box.jpg",
-                                  "thumb_url"=> "https://www.giantbomb.com/api/image/scale_avatar/535386-yume_penguin_monogatari_box.jpg",
-                                  "tiny_url"=> "https://www.giantbomb.com/api/image/square_mini/535386-yume_penguin_monogatari_box.jpg"
-                                ),
-                                "name"=> "Yume Penguin Monogatari",
-                                "original_release_date"=> "1991-01-25 00:00:00",
-                                "platforms"=> [
-                                  array (
-                                    "api_detail_url"=> "https://www.giantbomb.com/api/platform/3045-21/",
-                                    "id"=> 21,
-                                    "name"=> "Nintendo Entertainment System",
-                                    "site_detail_url"=> "https://www.giantbomb.com/nintendo-entertainment-system/3045-21/",
-                                    "abbreviation"=> "NES"
-                                  )
-                                ],
-                                "site_detail_url"=> "https://www.giantbomb.com/yume-penguin-monogatari/3030-9867/",
-                                "genres"=> [
-                                  array (
-                                    "api_detail_url"=> "https://www.giantbomb.com/api/genre/3060-1/",
-                                    "id"=> 1,
-                                    "name"=> "Action",
-                                    "site_detail_url"=> "https://www.giantbomb.com/games/?wikiSlug=action&wikiTypeId=3060&wikiId=1&genre=1"
-                                  ),
-                                  array (
-                                    "api_detail_url"=> "https://www.giantbomb.com/api/genre/3060-41/",
-                                    "id"=> 41,
-                                    "name"=> "Platformer",
-                                    "site_detail_url"=> "https://www.giantbomb.com/games/?wikiSlug=platformer&wikiTypeId=3060&wikiId=41&genre=41"
-                                  )
-                                ],
-                                "publishers"=> [
-                                  array (
-                                    "api_detail_url"=> "https://www.giantbomb.com/api/publisher/3010-87/",
-                                    "id"=> 87,
-                                    "name"=> "Konami",
-                                    "site_detail_url"=> "https://www.giantbomb.com/konami/3010-87/"
-                                  )
-                                ]
-                              ),
-                              "version"=> "1.0"
-                            );
+            return false;
         }
     }//content
     if ( $content['error'] != 'OK' ) {
         return '';
     }
     $data = $content['results'];
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['image']['thumb_url'],'game') .'"></div>';
+    $img_src = APIP_GALLERY_DIR . 'game_poster/'.$id.'.jpg';
+    $img_url = $data['image']['thumb_url'];
+    /*if (  !is_file($img_src) ) {
+        if ( file_put_contents( $img_src, file_get_contents($img_url,false,$context) ) ){
+            $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
+        }
+    } else {
+        $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
+    }*/
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
     $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["name"] .'</a></div>';
+    $output .= '<div class="abstract">';
+    if ( $cname !== '' ) {
+        $output .='中文名: '.$cname.'<br>';
+    }
+    if ( $jname !== '' ) {
+        $output .='日文名: '.$jname.'<br>';
+    }
+    if ( $alias !== '' ) {
+        $output .='别名: '.str_replace(',','/ ',$alias).'<br>';
+    }
 
-    $output .= '<div class="abstract">发行商: ';
-    $publishers = $data["publishers"];
-    $publishers = wp_list_pluck($publishers,'name');
-    $output .= implode('/ ', $publishers);
+    if ( $publisher !== '' ) {
+        $output .='发行商: '.str_replace(',','/ ',$publisher);
+    } else {
+        $output .='发行商: ';
+        $publishers = $data["publishers"];
+        $publishers = wp_list_pluck($publishers,'name');
+        $output .= implode('/ ', $publishers);
+    }
+
+
 
     $output .='<br>发售日期: ';
-    $output .=substr($data['original_release_date'],0,10);
+    if ( $year !== '' ) {
+        $output .= $year;
+    } else {
+        $output .=substr($data['original_release_date'],0,10);
+    }
 
     $output .=' <br>类型: ';
     $genres = $data['genres'];
     $genres = wp_list_pluck($genres,'name');
     $output .= implode('/ ', $genres);
+
+    $output .=' <br>机种: ';
+    if ( $platform !== '' ) {
+        $output .= $platform;
+    }    else {
+        $platforms = $data['platforms'];
+        $platforms = wp_list_pluck($platforms,'abbreviation');
+        $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
+        $output .= implode('/ ', $platform_str);
+    }
+
+    if ( $download !== '' ){
+        $output .='<br><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
+    }
 
     $output .= '</div></div></div></div>';
     return $output;
