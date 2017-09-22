@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.23.3
+ * Version:     1.23.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -113,13 +113,11 @@ require ( APIP_PLUGIN_DIR.'/apip-func.php') ;
 function apip_option_check( $key, $val = 1 )
 {
     global $apip_options;
-    if ( empty($apip_options) )
-    {
+    if ( empty($apip_options) ) {
         $apip_options = get_option('apip_settings');
     }
     //array_key_exists
-    if ( isset( $apip_options[$key] ) && $apip_options[$key] == $val )
-    {
+    if ( isset( $apip_options[$key] ) && $apip_options[$key] == $val ) {
         return true;
     }
     return false;
@@ -165,13 +163,12 @@ function apip_init()
   //颜色目前没有函数
 
     /** 02 */
-    if( apip_option_check('save_revisions_disable') )
-    {
+    if( apip_option_check('save_revisions_disable') ) {
         //2.1停止自动版本更新
+        //这个必须在config里面设才行
         //apip_auto_rev_settings();
     }
-    if( apip_option_check('auto_save_disabled') )
-    {
+    if( apip_option_check('auto_save_disabled') ) {
     //2.2停止自动保存
         add_action( 'wp_print_scripts', 'apip_auto_save_setting' );
     }
@@ -181,8 +178,7 @@ function apip_init()
     //2.4后台英文前台中文
         add_filter( 'locale', 'apip_locale', 99 );
     }
-    if ( apip_option_check('block_open_sans') )
-    {
+    if ( apip_option_check('block_open_sans') ) {
         //2.5屏蔽已经注册的open sans
         add_action( 'wp_default_styles', 'apip_block_open_sans', 100);
     }
@@ -206,29 +202,22 @@ function apip_init()
         //2.9搜索结果不包括page页面
         add_filter('pre_get_posts','remove_page_search');
     }
-    if ( is_admin() )
-    {
+    if ( is_admin() ) {
         define('NGG_DISABLE_RESOURCE_MANAGER', FALSE);
-    }
-    else
-    {
+    } else {
         define('NGG_DISABLE_RESOURCE_MANAGER', TRUE);
     }
-    if ( is_page('gallery') )
-    {
+    if ( is_page('gallery') ) {
         define('NGG_DISABLE_FILTER_THE_CONTENT', FALSE);
-    }
-    else{
+    }  else {
         define('NGG_DISABLE_FILTER_THE_CONTENT', TRUE);
     }
     /** 03 */
-    if( apip_option_check('better_excerpt') )
-    {
+    if( apip_option_check('better_excerpt') ) {
         //更好的中文摘要
         add_filter('the_excerpt', 'apip_excerpt', 100);
     }
-    if ( apip_option_check('header_description') )
-    {
+    if ( apip_option_check('header_description') ) {
         //网站描述和关键字
         add_action( 'wp_head', 'apip_desc_tag' );
     }
@@ -276,8 +265,7 @@ function apip_init()
     add_shortcode('myarchive', 'apip_archive_page');
     }
     //8.5 豆瓣显示
-    if ( apip_option_check('apip_douban_enable') )
-    {
+    if ( apip_option_check('apip_douban_enable') )  {
         add_shortcode('mydouban', 'apip_dou_detail');
         add_shortcode('mygame', 'apip_game_detail');
     }
@@ -290,15 +278,13 @@ function apip_init()
     add_action('get_footer','apip_footer_actions') ;
 
     //8.2 lazyload
-    if ( apip_option_check('apip_lazyload_enable') )
-    {
-    add_filter( 'the_content', 'apip_lazyload_filter',200 );
-    add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
+    if ( apip_option_check('apip_lazyload_enable') )  {
+        add_filter( 'the_content', 'apip_lazyload_filter',200 );
+        add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
     }
 
     //8.3 结果集内跳转
-    if ( apip_option_check('range_jump_enable') )
-    {
+    if ( apip_option_check('range_jump_enable') ) {
         if ( !class_exists('Apip_Query') ) {
             //包跳转类含头文件
             require_once ( APIP_PLUGIN_DIR.'/class/apip-query.php') ;
@@ -315,8 +301,7 @@ function apip_init()
         add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
     }
     //8.4 留言邮件回复
-    if ( apip_option_check('notify_comment_reply') )
-    {
+    if ( apip_option_check('notify_comment_reply') )  {
     //邮件回复
         add_action('wp_insert_comment','apip_comment_inserted',99,2);
     }
@@ -329,7 +314,7 @@ function apip_init()
 
     /** 99 */
     if ( apip_option_check('local_widget_enable') ) {
-    require APIP_PLUGIN_DIR.'/apip-widgets.php';
+        require APIP_PLUGIN_DIR.'/apip-widgets.php';
     }
 
 }
@@ -355,43 +340,35 @@ function apip_init_actions()
     add_filter( 'feed_links_show_comments_feed', '__return_false' ); //不输出comments的rss,4.4以上
 
     ////0A.1屏蔽ngg带来的无用钩子
-    if( class_exists('M_Third_Party_Compat') )
-    {
+    if( class_exists('M_Third_Party_Compat') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
     }
-    if( class_exists('C_NextGen_Shortcode_Manager') )
-    {
+    if( class_exists('C_NextGen_Shortcode_Manager') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
     }
-    if( class_exists('M_Gallery_Display') )
-    {
+    if( class_exists('M_Gallery_Display') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
         apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
     }
-    if( class_exists('M_NextGen_Basic_Singlepic') )
-    {
+    if( class_exists('M_NextGen_Basic_Singlepic') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_NextGen_Basic_Singlepic', 'enqueue_singlepic_css' );
     }
     //静态函数
     remove_filter('the_content', 'NextGEN_shortcodes::convert_shortcode');
     remove_action('wp_head', 'nggGallery::nextgen_version');
-    if( class_exists('C_NextGen_Shortcode_Manager') )
-    {
+    if( class_exists('C_NextGen_Shortcode_Manager') )  {
         apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'parse_content' );
         apip_remove_anonymous_object_hook( 'widget_text', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
     }
-    if( class_exists('M_Attach_To_Post') )
-    {
+    if( class_exists('M_Attach_To_Post') )  {
         apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
         apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
     }
-    if( class_exists('C_NextGEN_Bootstrap') )
-    {
+    if( class_exists('C_NextGEN_Bootstrap') )  {
         apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
         apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
     }
-    if( class_exists('C_Lightbox_Library_Manager') )
-    {
+    if( class_exists('C_Lightbox_Library_Manager') )  {
         apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
     }
     /*
@@ -409,8 +386,7 @@ function apip_init_actions()
     ////禁用4.4以后的embed功能
     ////来源:disable-embeds
     global $wp;
-    if ( is_array($wp->public_query_vars) && !empty($wp->public_query_vars) )
-    {
+    if ( is_array($wp->public_query_vars) && !empty($wp->public_query_vars) ) {
         $wp->public_query_vars = array_diff( $wp->public_query_vars, array(
             'embed',
         ) );
@@ -460,38 +436,39 @@ $options
     0.A                                 移除无用的钩子
 01.     颜色选项
 02.     高级编辑选项
-    2.1     save_revisions_disable      阻止自动版本
-    2.2     auto_save_disabled          阻止自动保存
-    2.3     show_admin_bar              显示登录用户的admin bar
-    2.4     apip_locale                 后台英文前台中文
-    2.5     block_open_sans             屏蔽后台的open sans字体
+    2.1     save_revisions_disable         阻止自动版本
+    2.2     auto_save_disabled              阻止自动保存
+    2.3     show_admin_bar                   显示登录用户的admin bar
+    2.4     apip_locale                            后台英文前台中文
+    2.5     block_open_sans                  屏蔽后台的open sans字体
     2.6     show_author_comment         屏蔽作者留言
-    2.7     redirect_if_single          搜索结果只有一条时直接跳入
-    2.8     protect_comment_php         禁止直接访问wp_comments.php
-    2.9     search_without_page         搜索结果中屏蔽page
-03.     header_description              头部描述信息
-    3.1     hd_home_text                首页描述文字
-    3.2     hd_home_keyword             首页标签
-    3.3     excerpt_length              摘要长度
-    3.4     excerpt_ellipsis            摘要结尾字符
+    2.7     redirect_if_single                   搜索结果只有一条时直接跳入
+    2.8     protect_comment_php          禁止直接访问wp_comments.php
+    2.9     search_without_page           搜索结果中屏蔽page
+03.     header_description                   头部描述信息
+    3.1     hd_home_text                       首页描述文字
+    3.2     hd_home_keyword               首页标签
+    3.3     excerpt_length                      摘要长度
+    3.4     excerpt_ellipsis                     摘要结尾字符
 04.     GFW选项
-    4.1     local_gravatar              头像本地缓存
-    4.2     replace_emoji               替换emoji地址
+    4.1     local_gravatar                        头像本地缓存
+    4.2     replace_emoji                        替换emoji地址
 05.    留言者控制
-   5.1  blocked_commenters              替换广告留言用户名和网址
+   5.1  blocked_commenters                 替换广告留言用户名和网址
    5.2     apip_show_commentator_rate  为留言评分
-06.     social_share_enable             社会化分享使能
+06.     social_share_enable                     社会化分享使能
 07.     自定义的shortcode
-    7.1     apip_tagcloud_enable        更好看的标签云
-    7.2     apip_link_page              自定义友情链接
-    7.3     apip_achive_page            自定义归档页
+    7.1     apip_tagcloud_enable            更好看的标签云
+    7.2     apip_link_page                       自定义友情链接
+    7.3     apip_achive_page                  自定义归档页
 08.     比较复杂的设定
-    8.1     apip_codehighlight_enable   代码高亮
-    8.2     apip_lazyload_enable        LazyLoad
-    8.3                                 结果集内跳转
+    8.1     apip_codehighlight_enable     代码高亮
+    8.2     apip_lazyload_enable             LazyLoad
+    8.3                                                    结果集内跳转
     8.4.    notify_comment_reply            有回复时邮件提示
-99.     local_widget_enable             自定义小工具
-    99.1    local_definition_count      自定义widget条目数
+    8.5                                                    豆瓣电影和gaintbomb游戏信息
+99.     local_widget_enable                  自定义小工具
+    99.1    local_definition_count           自定义widget条目数
 */
 
 /******************************************************************************/
@@ -930,7 +907,8 @@ function apip_quicktags()
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie"]', 'p' );
-        QTags.addButton( 'eg_mydoubanmusic', '豆瓣专辑', '[mydouban id="', '" type="music"]', 'p' );
+        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
+        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" jname="" alias="" year="" publisher=""  platform="" download=""]', 'p' );
     </script>
 <?php
@@ -1804,7 +1782,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
     }
 }
 
-//8.5 豆瓣电影
+//8.5 豆瓣电影和gaintbomb游戏信息
 /**
 * 作用: 显示来自豆瓣的音乐/电影/图书信息。本函数是主入口。
 * 来源: 大发(bigFa)
@@ -1877,24 +1855,9 @@ function apip_dou_movie_detail($id) {
     $data = array();
     $data = apip_get_dou_content($id,$type = 'movie');
     if ( empty($data) ) {
-        //return '';
-        $data = array("rating"=> array("max"=> 10, "average"=> 5.1, "stars"=> "25", "min"=> 0)
-, "reviews_count"=> 49, "wish_count"=> 1471, "douban_site"=> "", "year"=> "2017", "images"=> array("small"=> "http://img3.doubanio.com/view/movie_poster_cover/ipst/public/p2497530254.jpg", "large"=> "http://img3.doubanio.com/view/movie_poster_cover/lpst/public/p2497530254.jpg", "medium"=> "http://img3.doubanio.com/view/movie_poster_cover/spst/public/p2497530254.jpg")
-, "alt"=> "https://movie.douban.com/subject/26752106/", "id"=> "26752106", "mobile_url"=> "https://movie.douban.com/subject/26752106/mobile", "title"=> "\u9ed1\u767d\u8ff7\u5bab", "do_count"=> null, "share_url"=> "http://m.douban.com/movie/subject/26752106", "seasons_count"=> null, "schedule_url"=> "https://movie.douban.com/subject/26752106/cinema/", "episodes_count"=> null, "countries"=> ["\u4e2d\u56fd\u5927\u9646", "\u9999\u6e2f"], "genres"=> ["\u5267\u60c5", "\u52a8\u4f5c", "\u72af\u7f6a"], "collect_count"=> 1296, "casts"=> [array("alt"=> "https://movie.douban.com/celebrity/1031194/", "avatars"=> array("small"=> "http://img3.doubanio.com/img/celebrity/small/32971.jpg", "large"=> "http://img3.doubanio.com/img/celebrity/large/32971.jpg", "medium"=> "http://img3.doubanio.com/img/celebrity/medium/32971.jpg")
-, "name"=> "\u4efb\u8fbe\u534e", "id"=> "1031194")
-, array("alt"=> "https://movie.douban.com/celebrity/1075760/", "avatars"=> array("small"=> "http://img3.doubanio.com/img/celebrity/small/1351835006.51.jpg", "large"=> "http://img3.doubanio.com/img/celebrity/large/1351835006.51.jpg", "medium"=> "http://img3.doubanio.com/img/celebrity/medium/1351835006.51.jpg")
-, "name"=> "\u9648\u5c0f\u6625", "id"=> "1075760")
-, array("alt"=> "https://movie.douban.com/celebrity/1316267/", "avatars"=> array("small"=> "http://img3.doubanio.com/img/celebrity/small/35867.jpg", "large"=> "http://img3.doubanio.com/img/celebrity/large/35867.jpg", "medium"=> "http://img3.doubanio.com/img/celebrity/medium/35867.jpg")
-, "name"=> "\u4f0d\u5141\u9f99", "id"=> "1316267")
-, array("alt"=> "https://movie.douban.com/celebrity/1335402/", "avatars"=> array("small"=> "http://img3.doubanio.com/img/celebrity/small/1463132781.42.jpg", "large"=> "http://img3.doubanio.com/img/celebrity/large/1463132781.42.jpg", "medium"=> "http://img3.doubanio.com/img/celebrity/medium/1463132781.42.jpg")
-, "name"=> "\u90b1\u610f\u6d53", "id"=> "1335402")
-], "current_season"=> null, "original_title"=> "\u9ed1\u767d\u8ff7\u5bab", "summary"=> "\u793e\u56e2\u5927\u54e5\u5927\u534e\uff08\u4efb\u8fbe\u534e \u9970\uff09\u901a\u8fc7\u9e21\u5305\uff08\u6797\u96ea \u9970\uff09\u7684\u5b89\u6392\u524d\u53bb\u6267\u884c\u975e\u5e38\u68d8\u624b\u7684\u793e\u56e2\u4efb\u52a1\uff0c\u4e8e\u662f\u91cd\u65b0\u53ec\u96c6\u81ea\u5df1\u624b\u4e0b\u6700\u4fe1\u5f97\u8fc7\u7684\u5144\u5f1f\u963f\u6625\uff08\u9648\u5c0f\u6625 \u9970\uff09\u3001\u9ad8\u5929\uff08\u4f0d\u5141\u9f99 \u9970\uff09\u3001\u53c9\u70e7\uff08\u5f20\u5146\u8f89 \u9970\uff09\u3001\u8d85\u4eba\uff08\u6881\u70c8\u552f\uff09\u4ee5\u53ca\u81ea\u5df1\u7684\u5973\u513f\uff08\u90b1\u610f\u6d53 \u9970\uff09\u4e00\u540c\u91cd\u51fa\u6c5f\u6e56\uff0c\u4e0d\u6599\u5728\u6267\u884c\u4efb\u52a1\u65f6\uff0c\u5374\u4e00\u6b21\u6b21\u5931\u8d25\uff0c\u906d\u9047\u793e\u56e2\u548c\u8b66\u65b9\u7684\u53cc\u91cd\u56f4\u527f\uff0c\u5144\u5f1f\u51e0\u4eba\u4e0d\u5f97\u4e0d\u62e8\u5f00\u91cd\u91cd\u8ff7\u96fe\uff0c\u6293\u51fa\u5185\u9b3c\uff0c\u627e\u51fa\u771f\u76f8\u2026\u2026\n", "subtype"=> "movie", "directors"=> [array("alt"=> "https://movie.douban.com/celebrity/1360179/", "avatars"=> array("small"=> "http://img3.doubanio.com/img/celebrity/small/1503628630.88.jpg", "large"=> "http://img3.doubanio.com/img/celebrity/large/1503628630.88.jpg", "medium"=> "http://img3.doubanio.com/img/celebrity/medium/1503628630.88.jpg")
-, "name"=> "\u961a\u5bb6\u4f1f", "id"=> "1360179")
-], "comments_count"=> 730, "ratings_count"=> 1240, "aka"=> ["Color of the Game"]);
-
-;
+        return '';
     }
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['large'],'douban') .'"></div>';
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["ratings_count"]. '人评价)</span></div>';
     $output .= '<div class="abstract">导演 :';
@@ -1930,11 +1893,11 @@ function apip_get_dou_content( $id, $type )  {
         return $cache;
     }
     if ( $type == 'movie') {
-        $link = "http://api.douban.com/v2/movie/subject/".$id;
+        $link = "https://api.douban.com/v2/movie/subject/".$id;
     } elseif ( $type == 'book' ) {
-	$link = "http://api.douban.com/v2/book/" . $id;
+	$link = "https://api.douban.com/v2/book/" . $id;
     } else {
-        $link = "http://api.douban.com/v2/music/".$id;
+        $link = "https://api.douban.com/v2/music/".$id;
     }
     delete_transient($cache_key);
     //从链接取数据
@@ -2013,13 +1976,17 @@ function apip_game_detail($atts, $content = null) {
     $data = $content['results'];
     $img_src = APIP_GALLERY_DIR . 'game_poster/'.$id.'.jpg';
     $img_url = $data['image']['thumb_url'];
-    /*if (  !is_file($img_src) ) {
-        if ( file_put_contents( $img_src, file_get_contents($img_url,false,$context) ) ){
+    //拷贝到本地，该网站需要验证用户信息，所以不能直接使用@copy
+    if (  !is_file($img_src) ) {
+        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+        $imageString = file_get_contents($img_url, false, $context);
+        $save = file_put_contents($img_src, $imageString);
+        if( $save ) {
             $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
         }
     } else {
         $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
-    }*/
+    }
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
     $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["name"] .'</a></div>';
     $output .= '<div class="abstract">';
@@ -2041,8 +2008,6 @@ function apip_game_detail($atts, $content = null) {
         $publishers = wp_list_pluck($publishers,'name');
         $output .= implode('/ ', $publishers);
     }
-
-
 
     $output .='<br>发售日期: ';
     if ( $year !== '' ) {
