@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.23.4
+ * Version:     1.24.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -267,9 +267,14 @@ function apip_init()
     //8.5 豆瓣显示
     if ( apip_option_check('apip_douban_enable') )  {
         add_shortcode('mydouban', 'apip_dou_detail');
-        add_shortcode('mygame', 'apip_game_detail');
+        add_shortcode('myimdb', 'apip_imbd_detail');
     }
-
+    //8.6 每夜一游
+    add_shortcode('mygame', 'apip_game_detail');
+    if ( !class_exists('Apip_SimpleImage') ) {
+        //包跳转类含头文件
+        require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
+    }
 
     /** 08 */
     //头部动作，一般用于附加css的加载
@@ -466,7 +471,8 @@ $options
     8.2     apip_lazyload_enable             LazyLoad
     8.3                                                    结果集内跳转
     8.4.    notify_comment_reply            有回复时邮件提示
-    8.5                                                    豆瓣电影和gaintbomb游戏信息
+    8.5                                                    豆瓣电影
+    8.6                                                     gaintbomb游戏信息
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -783,8 +789,8 @@ function apip_scripts()
                       -webkit-text-stroke-width: 0.2px;
                       -moz-osx-font-smoothing: grayscale;
                     }
-                    .allstardark{position:relative;color:'.$link_color.';display: inline-block;vertical-align: top;}
-                    .allstarlight{position:absolute;left:0;color:'.$link_color.';height:18px;overflow:hidden}
+                    .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;}
+                    .allstarlight{position:absolute;left:0;color:#f99b01;height:18px;overflow:hidden}
                     .allstarlight:before{content:"\f005\f005\f005\f005\f005"}
                     .allstardark:before{content:"\f006\f006\f006\f006\f006"} ';
      }
@@ -855,15 +861,6 @@ function apip_remove_styles()
         wp_dequeue_style( 'nextgen_pagination_style' );
 
     }
-    if ( is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs')||has_tag('testcode')))
-    {
-        ;
-    }
-    else
-    {
-        //豆瓣插件的style,仅限评论类别
-        wp_dequeue_style( 'wpd-css' );
-    }
     if ( !is_page('gallery') )
     {
         wp_dequeue_style( 'jquery-plugins-slider-style' );
@@ -907,6 +904,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie"]', 'p' );
+        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" ]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
         QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" jname="" alias="" year="" publisher=""  platform="" download=""]', 'p' );
@@ -1782,7 +1780,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
     }
 }
 
-//8.5 豆瓣电影和gaintbomb游戏信息
+//8.5 豆瓣电影
 /**
 * 作用: 显示来自豆瓣的音乐/电影/图书信息。本函数是主入口。
 * 来源: 大发(bigFa)
@@ -1806,7 +1804,7 @@ function apip_dou_detail( $atts, $content = null ) {
 }
 
 /**
-* 作用: 显示书籍详情。
+* 作用: 显示书籍详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
 */
 function apip_dou_book_detail($id) {
@@ -1825,10 +1823,10 @@ function apip_dou_book_detail($id) {
     $output .= '</div></div></div></div>';
     return $output;
 }
+
 /**
-* 作用: 显示音乐详情。
+* 作用: 显示音乐专辑详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
-* 2286206
 */
 function apip_dou_music_detail($id){
 
@@ -1839,20 +1837,19 @@ function apip_dou_music_detail($id){
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
     $output .= '<div class="abstract">表演者 : ';
     $authors = $data["author"];
+    $authors = wp_list_pluck($authors,'name');
     $output .= implode('/', $authors);
     $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
+    $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
     $output .= '</div></div></div></div>';
     return $output;
 }
 
 /**
-* 作用: 显示书籍详情。
+* 作用: 显示电影详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
-* 25980443
-* http://www.theimdbapi.org/
 */
 function apip_dou_movie_detail($id) {
-    $data = array();
     $data = apip_get_dou_content($id,$type = 'movie');
     if ( empty($data) ) {
         return '';
@@ -1883,6 +1880,10 @@ function apip_dou_movie_detail($id) {
     return $output;
 }
 
+/**
+* 作用: 从doubanapi取得数据的子函数。
+* 来源: 大发
+*/
 function apip_get_dou_content( $id, $type )  {
 
     $type = $type ? $type : 'movie';
@@ -1914,6 +1915,10 @@ function apip_get_dou_content( $id, $type )  {
 	return $cache;
 }
 
+/**
+* 作用: 用于保存图像缓存的子函数。
+* 来源: 大发
+*/
 function apip_get_saved_images($id, $src, $dst )  {
 
     if ( 'douban'===$dst ) {
@@ -1938,6 +1943,68 @@ function apip_get_saved_images($id, $src, $dst )  {
     }
 
     return $url;
+}
+
+/**
+* 作用: theimdbapi.org取得电影资料，用于豆瓣无资料的电影。
+* 来源: 受大发启示，自作
+* API格式：http://www.theimdbapi.org/api/movie?movie_id=
+*/
+function apip_imbd_detail($atts, $content = null){
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
+    $cache_key = 'imdb_'.$id;
+    $content = get_transient($cache_key);
+    if ( !$content )
+    {
+        $url = "http://www.theimdbapi.org/api/movie?movie_id=".$id;
+        delete_transient($cache_key);
+        //从链接取数据
+        $response = file_get_contents($url, false);
+        if ($response) {
+            $content = json_decode($response,true);
+            set_transient($cache_key, $content, 60*60*24*30);
+        } else {
+            return false;
+        }
+    }
+    $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
+    $img_url = $content['poster']['thumb'];
+    if ( !is_file($img_src) ) {
+        if (!@copy(htmlspecialchars_decode($img_url), $img_src))
+        {
+            $errors= error_get_last();
+            return false;
+        }
+        $image = new Apip_SimpleImage();
+        $image->load($img_src);
+        $image->resize(100, 150);
+        $image->save($img_src);
+    }
+    $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
+    $output .= '<div class="title"><a href="'. $content["title"] .'" class="cute" target="_blank" rel="external nofollow">'. $content["title"] .'</a></div>';
+    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $content["rating"]*10 . '%"></span></span><span class="rating_nums"> ' . $content["rating"]. ' </span><span>(' . $content["rating_count"]. '人评价)</span></div>';
+    $output .= '<div class="abstract">';
+
+    if ( $cname !== '' ) {
+        $output .='中文名: '.$cname.'<br>';
+    }
+
+    $output .= '导演 :'.$content["director"];
+
+    $output .= '<br >演员: ';
+
+    $casts = $content["cast"];
+    $casts = wp_list_pluck($casts,'name');
+    $output .= implode('/', $casts);
+
+    $output .= '<br >';
+    $output .= '类型: ';
+    $genres = $content["genre"];
+    $output .= implode('/', $genres);
+
+    $output .= '<br>年份: ' . $content["year"] .'</div></div></div></div>';
+    return $output;
 }
 
 //8.6游戏资料
