@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.0
+ * Version:     1.24.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -907,7 +907,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" ]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
         QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
-        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" jname="" alias="" year="" publisher=""  platform="" download=""]', 'p' );
+        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""]', 'p' );
     </script>
 <?php
 }
@@ -2014,27 +2014,39 @@ function apip_imbd_detail($atts, $content = null){
 * API格式：https://www.giantbomb.com/api/game/THE_GAME_ID/?api_key=YOUR_TOKEN&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers
 */
 function apip_game_detail($atts, $content = null) {
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'', 'jname'=>'', 'year'=>'', 'download'=>'','platform'=>'','publisher'=>'' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'', 'ename'=>'', 'jname'=>'', 'year'=>'', 'download'=>'','platform'=>'','publisher'=>'','genres'=>'','poster'=>'' ), $atts ) );
     global $apip_options;
     $token = $apip_options['gaintbomb_key'];
-    if (!$token || !$id ) {
+    if (!$token) {
         return;
     }
+    if( $id == 'x' ) {
+        $id = 'nodata_'.get_the_ID();
+        $nodata = 1;
+    }
+
     $cache_key = 'game_'.$id;
     $content = get_transient($cache_key);
     if ( !$content )
     {
-        $url = "http://www.giantbomb.com/api/game/".$id."?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
-
-        delete_transient($cache_key);
-        //从链接取数据
-        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
-        $response = file_get_contents($url, false, $context);
-        if ($response) {
-            $content = json_decode($response,true);
-            set_transient($cache_key, $content, 60*60*24*30);
+        if ( $nodata  ) {
+            $content['error'] = 'OK';
+            $content['results']['image']['thumb_url'] = $poster;
+            $content['results']["site_detail_url"] = get_the_permalink();
+            $content['results']["name"] = $ename!=''?$ename:($cname!=''?$cname: get_the_title());
         } else {
-            return false;
+            $url = "http://www.giantbomb.com/api/game/".$id."?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
+
+            delete_transient($cache_key);
+            //从链接取数据
+            $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+            $response = file_get_contents($url, false, $context);
+            if ($response) {
+                $content = json_decode($response,true);
+                set_transient($cache_key, $content, 60*60*24*30);
+            } else {
+                return false;
+            }
         }
     }//content
     if ( $content['error'] != 'OK' ) {
@@ -2048,6 +2060,12 @@ function apip_game_detail($atts, $content = null) {
         $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
         $imageString = file_get_contents($img_url, false, $context);
         $save = file_put_contents($img_src, $imageString);
+        if ( $nodata ) {
+            $image = new Apip_SimpleImage();
+            $image->load($img_src);
+            $image->resize(100, 150);
+            $image->save($img_src);
+        }
         if( $save ) {
             $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
         }
@@ -2055,10 +2073,10 @@ function apip_game_detail($atts, $content = null) {
         $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
     }
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
-    $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["name"] .'</a></div>';
+    $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. ($cname!=''?$cname:$data["name"]) .'</a></div>';
     $output .= '<div class="abstract">';
     if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br>';
+        $output .='英文名: '.$data["name"].'<br>';
     }
     if ( $jname !== '' ) {
         $output .='日文名: '.$jname.'<br>';
@@ -2084,9 +2102,13 @@ function apip_game_detail($atts, $content = null) {
     }
 
     $output .=' <br>类型: ';
-    $genres = $data['genres'];
-    $genres = wp_list_pluck($genres,'name');
-    $output .= implode('/ ', $genres);
+    if ($genres !=='') {
+        $output .= $genres;
+    } else{
+        $genres = $data['genres'];
+        $genres = wp_list_pluck($genres,'name');
+        $output .= implode('/ ', $genres);
+    }
 
     $output .=' <br>机种: ';
     if ( $platform !== '' ) {
