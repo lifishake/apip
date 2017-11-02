@@ -23,9 +23,8 @@ span.suffix {
 .doulist-subject {
     line-height:1.5;
     background-color:rgba(239, 239, 235, 0.95);
-     border-radius: 13px;
     overflow:hidden;
-    padding:20px;
+    padding:13px;
 }
 .doulist-subject .apiplist-post {
     float:left;
@@ -46,11 +45,9 @@ span.suffix {
     font-size:12px;
 }
 .apip-item .mod {
-    background-color: #ffc080;
-    border: 1px solid #f0eeec;
-    border-radius: 13px;
+    background-color: #f5c98a;
     color:inherit;
-    padding:2px;
+    padding: 0 0 0 5px;
     position:relative;
     word-wrap:break-word;
 }

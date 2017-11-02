@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.1
+ * Version:     1.24.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1934,6 +1934,10 @@ function apip_get_saved_images($id, $src, $dst )  {
         {
             $errors= error_get_last();
         }
+        $image = new Apip_SimpleImage();
+        $image->load($e);
+        $image->resize(100, 150);
+        $image->save($e);
     }
 
     if ( 'douban'===$dst ) {
@@ -1948,7 +1952,7 @@ function apip_get_saved_images($id, $src, $dst )  {
 /**
 * 作用: theimdbapi.org取得电影资料，用于豆瓣无资料的电影。
 * 来源: 受大发启示，自作
-* API格式：http://www.theimdbapi.org/api/movie?movie_id=
+* API格式：http://www.theimdbapi.org/api/movie?movie_id=tt4901304
 */
 function apip_imbd_detail($atts, $content = null){
     extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
