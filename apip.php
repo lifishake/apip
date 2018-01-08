@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.4
+ * Version:     1.24.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2029,7 +2029,7 @@ function apip_imbd_detail($atts, $content = null){
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
             $errors= error_get_last();
-            echo "err3";
+            echo "err3 server=".$img_url."dest=".$img_src;
             return false;
         }
         $image = new Apip_SimpleImage();
