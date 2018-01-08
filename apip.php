@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.2
+ * Version:     1.24.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -275,6 +275,10 @@ function apip_init()
         //包跳转类含头文件
         require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
     }
+    //8.7 发帖天气
+    //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
+    add_action( 'draft_to_publish','apip_save_heweather',10,1);
+    add_action( 'draft_to_parvite','apip_save_heweather',10,1);
 
     /** 08 */
     //头部动作，一般用于附加css的加载
@@ -473,6 +477,7 @@ $options
     8.4.    notify_comment_reply            有回复时邮件提示
     8.5                                                    豆瓣电影
     8.6                                                     gaintbomb游戏信息
+    8.7     heweather_key                       和风天气/发帖时天气信息
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -1949,11 +1954,111 @@ function apip_get_saved_images($id, $src, $dst )  {
     return $url;
 }
 
+function apip_is_local_mode()
+{
+    if (isset( $_SERVER['REDIRECT_TMP'] ) && strpos($_SERVER['REDIRECT_TMP'], "xampp" ) > 0)
+    {
+        return 1;
+    }
+    return 0;
+}
+
 /**
 * 作用: theimdbapi.org取得电影资料，用于豆瓣无资料的电影。
 * 来源: 受大发启示，自作
 * API格式：http://www.theimdbapi.org/api/movie?movie_id=tt4901304
+* https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
 */
+function apip_imbd_detail($atts, $content = null){
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
+    $cache_key = 'imdb_'.$id;
+    $content = get_transient($cache_key);
+    global $apip_options;
+    //for local debug
+    if ( apip_is_local_mode() ){
+        $content = array(
+            "Title"=>"Guardians of the Galaxy Vol. 2",
+            "Year"=>"2017",
+            "Rated"=>"PG-13",
+            "Released"=>"05 May 2017",
+            "Runtime"=>"136 min",
+            "Genre"=>"Action, Adventure, Sci-Fi",
+            "Director"=>"James Gunn",
+            "Writer"=>"James Gunn, Dan Abnett (based on the Marvel comics by), Andy Lanning (based on the Marvel comics by), Steve Englehart (Star-lord created by), Steve Gan (Star-lord created by), Jim Starlin (Gamora and Drax created by), Stan Lee (Groot created by), Larry Lieber (Groot created by), Jack Kirby (Groot created by), Bill Mantlo (Rocket Raccoon created by), Keith Giffen (Rocket Raccoon created by), Steve Gerber (Howard the Duck created by), Val Mayerik (Howard the Duck created by)",
+            "Actors"=>"Chris Pratt, Zoe Saldana, Dave Bautista, Vin Diesel",
+            "Plot"=>"The Guardians must fight to keep their newfound family together as they unravel the mystery of Peter Quill's true parentage.",
+            "Language"=>"English",
+            "Country"=>"USA, New Zealand, Canada",
+            "Awards"=>"6 wins & 13 nominations.",
+            "Poster"=>"https://images-na.ssl-images-amazon.com/images/M/MV5BMTg2MzI1MTg3OF5BMl5BanBnXkFtZTgwNTU3NDA2MTI@._V1_SX300.jpg",
+            "Metascore"=>"67",
+            "imdbRating"=>"7.8",
+            "imdbVotes"=>"301,863",
+            "imdbID"=>"tt3896198",
+            "Type"=>"movie",
+            "DVD"=>"22 Aug 2017",
+            "BoxOffice"=>"$389,804,217",
+            "Production"=>"Walt Disney Pictures",
+            "Website"=>"https=>//marvel.com/guardians",
+            "Response"=>"True"
+        );
+    }
+    if ( !$content )
+    {
+        $apikey = "36edb41f";
+        $url = "https://www.omdbapi.com/?movie_id=".$id."&apikey=".$apikey;
+        delete_transient($cache_key);
+        //从链接取数据
+        $response = file_get_contents($url, false);
+        if ($response) {
+            $content = json_decode($response,true);
+            set_transient($cache_key, $content, 60*60*24*30);
+        } else {
+            return false;
+        }
+    }
+    $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
+    $img_url = $content['Poster'];
+    if ( !is_file($img_src) && !apip_is_local_mode() ) {
+        if (!@copy(htmlspecialchars_decode($img_url), $img_src))
+        {
+            $errors= error_get_last();
+            return false;
+        }
+        $image = new Apip_SimpleImage();
+        $image->load($img_src);
+        $image->resize(100, 150);
+        $image->save($img_src);
+    }
+    $imdb_url = "https://www.imdb.com/title/".$id;
+    $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
+    $output .= '<div class="title"><a href="'. $imdb_url .'" class="cute" target="_blank" rel="external nofollow">'. $cname !== ''?$cname:$content["Title"] .' </a></div>';
+    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $content["imdbRating"]*10 . '%"></span></span><span class="rating_nums"> ' . $content["imdbRating"]. ' </span><span>(' . $content["imdbVotes"]. '人评价)</span></div>';
+    $output .= '<div class="abstract">';
+
+    if ( $cname !== '' ) {
+        $output .='中文名: '.$cname.'<br>';
+    }
+
+    $output .= '导演 :'.$content["Director"];
+
+    $output .= '<br >演员: ';
+
+    $casts = $content["Actors"];
+    $casts = str_replace(',','/',$casts);
+    $output .= $casts;
+
+    $output .= '<br >';
+    $output .= '类型: ';
+    $genres = $content["Genre"];
+    $genres = str_replace(',','/',$genres);
+    $output .= $genres;
+
+    $output .= '<br>年份: ' . $content["Year"] .'</div></div></div></div>';
+    return $output;
+}
+/*
 function apip_imbd_detail($atts, $content = null){
     extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
     $cache_key = 'imdb_'.$id;
@@ -2010,6 +2115,7 @@ function apip_imbd_detail($atts, $content = null){
     $output .= '<br>年份: ' . $content["year"] .'</div></div></div></div>';
     return $output;
 }
+*/
 
 //8.6游戏资料
 /**
@@ -2131,6 +2237,49 @@ function apip_game_detail($atts, $content = null) {
     $output .= '</div></div></div></div>';
     return $output;
 }
+
+//8.7 发帖时天气信息
+/**
+* 作用: post第一次发布或者从draft转成publish的时候，从和风天气heweather.com取得该时点的天气信息，保存到post_meta中。
+* 主题调用相关函数，显示当日天气信息。
+* TBD：widget支持，日后再说。
+* 来源: 自作
+* API格式：https://free-api.heweather.com/s6/weather/now?location=地点信息&key=key
+* 资料：https://www.heweather.com/documents/api/s6/weather-now --和风天气时事天气API文档
+* 资料：https://codex.wordpress.org/Post_Status_Transitions -- WP钩子说明
+*/
+
+function apip_save_heweather ( $post )
+{
+    $meta_key = 'apip_heweather';
+    global $apip_options;
+    $token = $apip_options['heweather_key'];
+    if (!$token) {
+        return;
+    }
+    if ( false != get_post_meta($post->ID, $meta_key, false) )
+    {
+        return;
+    }
+    $weather = array();
+    $req=curl_init();
+    $addr = 'https://free-api.heweather.com/s6/weather/now?key='.$token.'&location=CN101070211';
+    curl_setopt($req, CURLOPT_URL,$addr);
+    curl_setopt($req, CURLOPT_TIMEOUT,3);
+    curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
+    $headers=array( "Accept: application/json", "Content-Type: application/json;charset=utf-8" );
+    curl_setopt($req, CURLOPT_HTTPHEADER, $headers);
+
+    curl_setopt($req, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($req, CURLOPT_SSL_VERIFYHOST, false);
+    $data = curl_exec($req);
+    curl_close($req);
+    $got = $data["HeWeather6"][0];
+    $weather["time"] = $got["update"]["loc"];
+    $weather["result"] = $got["now"];
+    add_post_meta($post->ID, $meta_key, $weather, false);
+}
+
 
 /*                                          08终了                             */
 
