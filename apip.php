@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.3
+ * Version:     1.24.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1966,8 +1966,7 @@ function apip_is_local_mode()
 /**
 * 作用: theimdbapi.org取得电影资料，用于豆瓣无资料的电影。
 * 来源: 受大发启示，自作
-* API格式：http://www.theimdbapi.org/api/movie?movie_id=tt4901304
-* https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
+* API格式： https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
 */
 function apip_imbd_detail($atts, $content = null){
     extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
@@ -2005,7 +2004,12 @@ function apip_imbd_detail($atts, $content = null){
     }
     if ( !$content )
     {
-        $apikey = "36edb41f";
+        $apikey = $options['omdb_key'];
+        if( is_empty($apikey) )
+        {
+            echo "err1";
+            return false;
+        }
         $url = "https://www.omdbapi.com/?movie_id=".$id."&apikey=".$apikey;
         delete_transient($cache_key);
         //从链接取数据
@@ -2014,6 +2018,8 @@ function apip_imbd_detail($atts, $content = null){
             $content = json_decode($response,true);
             set_transient($cache_key, $content, 60*60*24*30);
         } else {
+            echo "err2";
+            echo $url;
             return false;
         }
     }
@@ -2023,6 +2029,7 @@ function apip_imbd_detail($atts, $content = null){
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
             $errors= error_get_last();
+            echo "err3";
             return false;
         }
         $image = new Apip_SimpleImage();
