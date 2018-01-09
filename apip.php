@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.7
+ * Version:     1.24.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2010,7 +2010,7 @@ function apip_imbd_detail($atts, $content = null){
             echo "err1\n";
             return false;
         }
-        $url = "https://www.omdbapi.com/?movie_id=".$id."&apikey=".$apikey;
+        $url = "https://www.omdbapi.com/?i=".$id."&apikey=".$apikey;
         delete_transient($cache_key);
         //从链接取数据
         $response = file_get_contents($url, false);
