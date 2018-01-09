@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.8
+ * Version:     1.24.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2007,7 +2007,6 @@ function apip_imbd_detail($atts, $content = null){
         $apikey = $apip_options['omdb_key'];
         if( empty($apikey) )
         {
-            echo "err1\n";
             return false;
         }
         $url = "https://www.omdbapi.com/?i=".$id."&apikey=".$apikey;
@@ -2018,14 +2017,10 @@ function apip_imbd_detail($atts, $content = null){
             $content = json_decode($response,true);
             if ($content["Response"] == "False")
             {
-                echo "err15\n";
-                echo $url;
                 return false;
             }
             set_transient($cache_key, $content, 60*60*24*30);
         } else {
-            echo "err2\n";
-            echo $url;
             return false;
         }
     }
@@ -2034,8 +2029,6 @@ function apip_imbd_detail($atts, $content = null){
     if ( !is_file($img_src) && !apip_is_local_mode() ) {
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
-            $errors= error_get_last();
-            echo "err3 server=".$img_url."dest=".$img_src;
             return false;
         }
         $image = new Apip_SimpleImage();
@@ -2054,7 +2047,7 @@ function apip_imbd_detail($atts, $content = null){
         $output .='中文名: '.$cname.'<br>';
     }
 
-    $output .= '导演 :'.$content["Director"];
+    $output .= '导演 : '.$content["Director"];
 
     $output .= '<br >演员: ';
 
@@ -2062,11 +2055,15 @@ function apip_imbd_detail($atts, $content = null){
     $casts = str_replace(',','/',$casts);
     $output .= $casts;
 
-    $output .= '<br >';
-    $output .= '类型: ';
+    $output .= '<br >类型: ';
     $genres = $content["Genre"];
     $genres = str_replace(',','/',$genres);
     $output .= $genres;
+
+    $output .= '<br >国家/地区: ';
+    $countries = $data["Country"];
+    $countries = str_replace(',','/',$countries);
+    $output .= $countries;
 
     $output .= '<br>年份: ' . $content["Year"] .'</div></div></div></div>';
     return $output;
