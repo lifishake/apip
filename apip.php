@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.9
+ * Version:     1.24.10
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -279,6 +279,8 @@ function apip_init()
     //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
     add_action( 'draft_to_publish','apip_save_heweather',10,1);
     add_action( 'draft_to_parvite','apip_save_heweather',10,1);
+    add_action( 'new_to_publish','apip_save_heweather',10,1);
+    add_action( 'new_to_parvite','apip_save_heweather',10,1);
 
     /** 08 */
     //头部动作，一般用于附加css的加载
@@ -2274,6 +2276,7 @@ function apip_save_heweather ( $post )
     $weather = array();
     $req=curl_init();
     $addr = 'https://free-api.heweather.com/s6/weather/now?key='.$token.'&location=CN101070211';
+    echo "<script>alert('{$addr}')</script>";
     curl_setopt($req, CURLOPT_URL,$addr);
     curl_setopt($req, CURLOPT_TIMEOUT,3);
     curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
@@ -2284,7 +2287,7 @@ function apip_save_heweather ( $post )
     curl_setopt($req, CURLOPT_SSL_VERIFYHOST, false);
     $data = curl_exec($req);
     curl_close($req);
-    $got = $data["HeWeather6"][0];
+    $got = $data["HeWeather6"][0];
     $weather["time"] = $got["update"]["loc"];
     $weather["result"] = $got["now"];
     add_post_meta($post->ID, $meta_key, $weather, false);
