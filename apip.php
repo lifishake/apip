@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.15
+ * Version:     1.24.16
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2274,14 +2274,15 @@ function apip_save_heweather ( $post )
         return;
     }
     $weather = array();
-    $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
+    //$addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
+    $addr = "https://free-api.heweather.com/s6/weather/now?key=6eed4156b9054a4e9d53dbd7207adfd0&location=CN101070211";
     //echo "<script>alert('{$addr}')</script>";
     $req=@curl_init();
     //@curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
     @curl_setopt($req, CURLOPT_URL,$addr);
     @curl_setopt($req, CURLOPT_TIMEOUT,3);
     @curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
-    $headers=array( "Accept: application/json", "Content-Type: application/json;charset=utf-8" );
+    $headers=array( "Accept: application/json", "Content-Type: application/json;charset=UTF-8" );
     @curl_setopt($req, CURLOPT_HTTPHEADER, $headers);
 
     @curl_setopt($req, CURLOPT_SSL_VERIFYPEER, false);
@@ -2295,13 +2296,14 @@ function apip_save_heweather ( $post )
     }
     else {
         $weather["raw"] = $data;
+        $weather["if"] = $data["HeWeather6"][0];
         $cache = json_decode($data,true);
     }
 
     $got = $cache["HeWeather6"][0];
     $weather["got"] = $cache;
-    //$weather["time"] = $got["update"]["loc"];
-    //$weather["result"] = $got["now"];
+    $weather["time"] = $got["update"]["loc"];
+    $weather["result"] = $got["now"];
     add_post_meta($post->ID, $meta_key, $weather, false);
 }
 
