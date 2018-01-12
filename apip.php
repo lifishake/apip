@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.12
+ * Version:     1.24.14
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2277,7 +2277,7 @@ function apip_save_heweather ( $post )
     $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
     //echo "<script>alert('{$addr}')</script>";
     $req=@curl_init();
-    @curl_setopt(req, CURLOPT_RETURNTRANSFER, true);
+    @curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
     //@curl_setopt($req, CURLOPT_URL,$addr);
     //@curl_setopt($req, CURLOPT_TIMEOUT,3);
     //@curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
