@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.11
+ * Version:     1.24.12
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2275,24 +2275,30 @@ function apip_save_heweather ( $post )
     }
     $weather = array();
     $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
-    echo "<script>alert('{$addr}')</script>";
+    //echo "<script>alert('{$addr}')</script>";
     $req=@curl_init();
-    @curl_setopt($req, CURLOPT_URL,$addr);
-    @curl_setopt($req, CURLOPT_TIMEOUT,3);
-    @curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
-    $headers=array( "Accept: application/json", "Content-Type: application/json;charset=utf-8" );
-    @curl_setopt($req, CURLOPT_HTTPHEADER, $headers);
+    @curl_setopt(req, CURLOPT_RETURNTRANSFER, true);
+    //@curl_setopt($req, CURLOPT_URL,$addr);
+    //@curl_setopt($req, CURLOPT_TIMEOUT,3);
+    //@curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
+    //$headers=array( "Accept: application/json", "Content-Type: application/json;charset=utf-8" );
+    //@curl_setopt($req, CURLOPT_HTTPHEADER, $headers);
 
-    @curl_setopt($req, CURLOPT_SSL_VERIFYPEER, false);
-    @curl_setopt($req, CURLOPT_SSL_VERIFYHOST, false);
+    //@curl_setopt($req, CURLOPT_SSL_VERIFYPEER, false);
+    //@curl_setopt($req, CURLOPT_SSL_VERIFYHOST, false);
     $data = @curl_exec($req);
+    @curl_close($req);
     if ( !$data )
     {
         $weather["error"] = error_get_last();
+        echo $weather["error"];
     }
-    @curl_close($req);
-    $got = $data["HeWeather6"][0];
-    $weather["got"] = $data;
+    else {
+        $cache = json_decode($data,true);
+    }
+
+    $got = $cache["HeWeather6"][0];
+    $weather["got"] = $cache;
     //$weather["time"] = $got["update"]["loc"];
     //$weather["result"] = $got["now"];
     add_post_meta($post->ID, $meta_key, $weather, false);
