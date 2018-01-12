@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.16
+ * Version:     1.24.17
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -21,6 +21,11 @@ global $apip_options;
 register_activation_hook( __FILE__, 'apip_plugin_activation' );
 register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
+
+function apip_log(  $any )
+{
+    echo '<pre>'.$any.'</pre>';
+}
 
 /*插件激活*/
 function apip_plugin_activation()
@@ -2278,7 +2283,7 @@ function apip_save_heweather ( $post )
     $addr = "https://free-api.heweather.com/s6/weather/now?key=6eed4156b9054a4e9d53dbd7207adfd0&location=CN101070211";
     //echo "<script>alert('{$addr}')</script>";
     $req=@curl_init();
-    //@curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
+    @curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
     @curl_setopt($req, CURLOPT_URL,$addr);
     @curl_setopt($req, CURLOPT_TIMEOUT,3);
     @curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
