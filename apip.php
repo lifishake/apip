@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.24.18
+ * Version:     1.25.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -521,6 +521,10 @@ function apip_scripts()
                       font-style: normal;
                     }
         ";
+    }
+    if ( is_single() ) {
+        wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css' );
+        wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css' );
     }
 
     //0.1 Ctrl+Enter 提交

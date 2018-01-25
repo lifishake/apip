@@ -1,4 +1,141 @@
 <?php
+
+/**
+ * 作用: 显示heweather情报所包含的文字。
+ * 资源: CSS和图标来自，http://erikflowers.github.io/weather-icons，图标字体使用 SIL OFL 1.1 -  http://scripts.sil.org/OFL授权；
+ * CSS使用MIT License - http://opensource.org/licenses/mit-license.html授权。
+ * 来源: 自产
+ * URL:
+ */
+function apip_get_heweather()
+{
+    $ret = '';
+    //$weather_result = array();
+    $weather_result = get_post_meta(get_the_ID(),'apip_heweather',false);
+    if ( empty($weather_result) || null==($weather_result[0]['time']))
+    {
+        return $ret;
+    }
+    $then = $weather_result[0]['result'];
+    $cond_code = (int)($then['cond_code']);
+    switch($cond_code) {
+        case	100	:	//	晴
+        case	102	:	//	少云
+        case	201	:	//	平静
+        case	202	:	//	微风
+            $w_icon_str = 'wi-day-sunny';
+            break;
+        case	101	:	//	多云
+        case	103	:	//	晴间多云
+            $w_icon_str = 'wi-day-cloudy-high';
+            break;
+        case	104	:	//	阴
+            $w_icon_str = 'wi-cloudy';
+            break;
+        case	200	:	//	有风
+            $w_icon_str = 'wi-cloudy';
+            break;
+        case	203	:	//	和风
+        case	204	:	//	清风
+            $w_icon_str = 'wi-day-light-wind';
+            break;
+        case	205	:	//	强风/劲风
+        case	206	:	//	疾风
+        case	207	:	//	大风
+        case	208	:	//	烈风
+            $w_icon_str = 'wi-day-windy';
+            break;
+        case	209	:	//	风暴
+        case	210	:	//	狂爆风
+        case	211	:	//	飓风
+            $w_icon_str = 'wi-strong-wind';
+            break;
+        case	212	:	//	龙卷风
+            $w_icon_str = 'wi-tornado';
+            break;
+        case	213	:	//	热带风暴
+            $w_icon_str = 'wi-hurricane';
+            break;
+        case	309	:	//	毛毛雨/细雨
+        case	300	:	//	阵雨
+        case	301	:	//	强阵雨
+            $w_icon_str = 'wi-showers';
+            break;
+        case	302	:	//	雷阵雨
+        case	303	:	//	强雷阵雨
+            $w_icon_str = 'wi-storm-showers';
+            break;
+        case	304	:	//	雷阵雨伴有冰雹
+            $w_icon_str = 'wi-hail';
+            break;
+        case	305	:	//	小雨
+        case	306	:	//	中雨
+            $w_icon_str = 'wi-rain';
+            break;
+        case	307	:	//	大雨
+            $w_icon_str = 'wi-rain-mix';
+            break;
+        case	308	:	//	极端降雨
+        case	310	:	//	暴雨
+        case	311	:	//	大暴雨
+        case	312	:	//	特大暴雨
+            $w_icon_str = 'wi-raindrops';
+            break;
+        case	313	:	//	冻雨
+            $w_icon_str = 'wi-sleet';
+            break;
+        case	400	:	//	小雪
+        case	401	:	//	中雪
+        case	402	:	//	大雪
+        case	403	:	//	暴雪
+        case	404	:	//	雨夹雪
+        case	405	:	//	雨雪天气
+        case	406	:	//	阵雨夹雪
+        case	407	:	//	阵雪
+            $w_icon_str = 'wi-snow';
+            break;
+        case	500	:	//	薄雾
+        case	501	:	//	雾
+            $w_icon_str = 'wi-fog';
+            break;
+        case	502	:	//	霾
+            $w_icon_str = 'wi-smog';
+            break;
+        case	503	:	//	扬沙
+        case	504	:	//	浮尘
+            $w_icon_str = 'wi-dust';
+            break;
+        case	507	:	//	沙尘暴
+        case	508	:	//	强沙尘暴
+            $w_icon_str = 'wi-sandstorm';
+            break;
+        case	900	:	//	热
+            $w_icon_str = 'wi-hot';
+            break;
+        case	901	:	//	冷
+            $w_icon_str = 'wi-snowflake-cold';
+            break;
+        case	999	:	//	未知
+        default:
+            $w_icon_str = 'wi-na';
+            break;
+    }
+    $wind_str = '';
+    if ((int)$then['wind_spd'] > 8) {
+        $wind_icon_str = "from-".$then['wind_deg']."-deg";
+        $wind_str = $then['wind_dir'].$then['wind_sc']."级 ";
+    }
+    $ret = '<i class="wi '.$w_icon_str.' icon"></i>';
+    $ret .= $then['cond_txt'];
+    if ( '' !== $wind_str) {
+        $ret .= '  <i class="wi wi-wind '.$wind_icon_str.'"></i> ';
+        $ret .= $wind_str;
+    }
+    $ret .= '  <i class="wi wi-thermometer"></i> ';
+    $ret .= $then['tmp'].'&#8451;';
+    return $ret;
+}
+
 /**
  * 作用: 显示最近更新文章
  * 来源: 自产
@@ -93,9 +230,12 @@ function apip_related_post()
     $post_id = get_the_ID() ;
     $tags = get_the_terms( $post_id, 'post_tag') ;
     $cats = get_the_terms( $post_id, 'category') ;
-    $tags = array_merge( $tags, $cats ) ;
-    if( count($tags) != 0 )
+    if( $tags && count($tags) != 0 )
     {
+        if (  count($tags) > 1 )
+        {
+            $tags = array_merge( $tags, $cats ) ;
+        }
         $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
         $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
         $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
