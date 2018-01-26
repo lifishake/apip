@@ -121,7 +121,7 @@ function apip_get_heweather()
             break;
     }
     $wind_str = '';
-    if ((int)$then['wind_spd'] > 8) {
+    if ((int)$then['wind_spd'] > 38) {
         $wind_icon_str = "from-".$then['wind_deg']."-deg";
         $wind_str = $then['wind_dir'].$then['wind_sc']."级 ";
     }
