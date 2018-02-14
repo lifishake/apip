@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.25.2
+ * Version:     1.25.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1920,11 +1920,11 @@ function apip_get_dou_content( $id, $type )  {
         return $cache;
     }
     if ( $type == 'movie') {
-        $link = "https://api.douban.com/v2/movie/subject/".$id;
+        $link = "http://api.douban.com/v2/movie/subject/".$id;
     } elseif ( $type == 'book' ) {
-	$link = "https://api.douban.com/v2/book/" . $id;
+	$link = "http://api.douban.com/v2/book/" . $id;
     } else {
-        $link = "https://api.douban.com/v2/music/".$id;
+        $link = "http://api.douban.com/v2/music/".$id;
     }
     delete_transient($cache_key);
     //从链接取数据
