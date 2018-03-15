@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.25.3
+ * Version:     1.25.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -292,10 +292,16 @@ function apip_init()
     }
     //8.7 发帖天气
     //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
-    add_action( 'draft_to_publish','apip_save_heweather',10,1);
-    add_action( 'draft_to_private','apip_save_heweather',10,1);
-    add_action( 'new_to_publish','apip_save_heweather',10,1);
-    add_action( 'new_to_private','apip_save_heweather',10,1);
+    add_action( 'draft_to_publish','apip_save_heweather',99,1);
+    add_action( 'draft_to_private','apip_save_heweather',99,1);
+    add_action( 'new_to_publish','apip_save_heweather',99,1);
+    add_action( 'new_to_private','apip_save_heweather',99,1);
+
+    if (is_admin())
+    {
+        //add_meta_box('heweatherupdate', "和天气", 'post_heweather_box', null, 'normal', 'core');
+        add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
+    }
 
     /** 08 */
     //头部动作，一般用于附加css的加载
@@ -2319,6 +2325,50 @@ function apip_save_heweather ( $post )
     $weather["time"] = $got["update"]["loc"];
     $weather["result"] = $got["now"];
     add_post_meta($post->ID, $meta_key, $weather, false);
+}
+
+
+function apip_heweather_field()
+{
+    global $post;
+
+    if (get_post_type($post) != 'post') return false;
+
+    $value = get_post_meta($post->ID, 'apip_heweather', true);
+    $check = 0;
+    if ( empty($value) )
+    {
+        $check= 0;
+    }
+    else if(!empty($value[0]['error']))
+    {
+        $check = 1;
+        $str = 'error';
+    }
+    else {
+        $str = apip_get_heweather();
+    }
+    ?>
+        <div class="misc-pub-section">
+            <label><input type="checkbox"<?php echo ($check==1 ? ' checked="checked"' : null) ?> value="1" name="apip_heweather" />和天气：<?php echo $str;  ?></label>
+        </div>
+    <?php
+}
+
+add_action( 'save_post', 'apip_heweather_retrieve');
+
+function apip_heweather_retrieve($postid)
+{
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
+
+    if ( !current_user_can( 'edit_page', $postid ) ) return false;
+
+    if(empty($postid) || $_POST['post_type'] != 'post' ) return false;
+
+    if(isset($_POST['apip_heweather'])){
+        delete_post_meta($postid, 'apip_heweather');
+        apip_save_heweather(get_post($postid));
+    }
 }
 
 
