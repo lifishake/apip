@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.25.4
+ * Version:     1.25.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -267,40 +267,17 @@ function apip_init()
     //7.1 TAGcloud 注册
     if ( apip_option_check('apip_tagcloud_enable') )
     {
-    add_shortcode('mytagcloud', 'apip_tagcloud_page');
+        add_shortcode('mytagcloud', 'apip_tagcloud_page');
     }
     //7.2 友链注册
     if ( apip_option_check('apip_link_enable') )
     {
-    add_shortcode('mylink', 'apip_link_page');
+        add_shortcode('mylink', 'apip_link_page');
     }
     //7.3 归档页注册
     if ( apip_option_check('apip_archive_enable') )
     {
-    add_shortcode('myarchive', 'apip_archive_page');
-    }
-    //8.5 豆瓣显示
-    if ( apip_option_check('apip_douban_enable') )  {
-        add_shortcode('mydouban', 'apip_dou_detail');
-        add_shortcode('myimdb', 'apip_imbd_detail');
-    }
-    //8.6 每夜一游
-    add_shortcode('mygame', 'apip_game_detail');
-    if ( !class_exists('Apip_SimpleImage') ) {
-        //包跳转类含头文件
-        require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
-    }
-    //8.7 发帖天气
-    //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
-    add_action( 'draft_to_publish','apip_save_heweather',99,1);
-    add_action( 'draft_to_private','apip_save_heweather',99,1);
-    add_action( 'new_to_publish','apip_save_heweather',99,1);
-    add_action( 'new_to_private','apip_save_heweather',99,1);
-
-    if (is_admin())
-    {
-        //add_meta_box('heweatherupdate', "和天气", 'post_heweather_box', null, 'normal', 'core');
-        add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
+        add_shortcode('myarchive', 'apip_archive_page');
     }
 
     /** 08 */
@@ -336,6 +313,32 @@ function apip_init()
     if ( apip_option_check('notify_comment_reply') )  {
     //邮件回复
         add_action('wp_insert_comment','apip_comment_inserted',99,2);
+    }
+    //8.5 豆瓣显示
+    if ( apip_option_check('apip_douban_enable') )  {
+        add_shortcode('mydouban', 'apip_dou_detail');
+        add_shortcode('myimdb', 'apip_imbd_detail');
+    }
+    //8.6 每夜一游
+    add_shortcode('mygame', 'apip_game_detail');
+    if ( !class_exists('Apip_SimpleImage') ) {
+        //包跳转类含头文件
+        require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
+    }
+    //8.7 发帖天气
+    //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
+    add_action( 'draft_to_publish','apip_save_heweather',99,1);
+    add_action( 'draft_to_private','apip_save_heweather',99,1);
+    add_action( 'new_to_publish','apip_save_heweather',99,1);
+    add_action( 'new_to_private','apip_save_heweather',99,1);
+    //在后台update区域增加手动更新天气的checkbox
+    if (is_admin())
+    {
+        add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
+    }
+    //8.8 留言验证问题
+    if(is_admin() && apip_option_check('apip_commentquiz_enable') ) {
+        add_action('admin_init','apip_commentquiz_init');
     }
 
     //0X 暂时不用了
@@ -379,8 +382,9 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
     }
     if( class_exists('M_Gallery_Display') ) {
-        apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
-        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
     }
     if( class_exists('M_NextGen_Basic_Singlepic') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_NextGen_Basic_Singlepic', 'enqueue_singlepic_css' );
@@ -397,15 +401,18 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
     }
     if( class_exists('C_NextGEN_Bootstrap') )  {
-        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
-        apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+        //apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
     }
     if( class_exists('C_Lightbox_Library_Manager') )  {
-        apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
     }
     /*
     if( class_exists('C_Photocrati_Resource_Manager') )
     {
+    //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
         apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
     }*/
     //删除原来插入时的class
@@ -501,6 +508,7 @@ $options
     8.5                                                    豆瓣电影
     8.6                                                     gaintbomb游戏信息
     8.7     heweather_key                       和风天气/发帖时天气信息
+    8.8     apip_commentquiz_enable     回复前答题
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -545,13 +553,13 @@ function apip_scripts()
 
     //0.1 Ctrl+Enter 提交
     if (comments_open() && is_singular() ) {
-    wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
+        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
     }
     //07
     if  ( is_singular() && apip_option_check('social_share_enable') )
     {
-    wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
-    //wp_enqueue_style( 'apip-style-social', APIP_PLUGIN_URL . 'css/apip-social.css' );
+        wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
+        //wp_enqueue_style( 'apip-style-social', APIP_PLUGIN_URL . 'css/apip-social.css' );
         $css .= '   #sharebar{
                         clear:both;
                         background: none repeat scroll 0 0 #EEFAF6;
@@ -826,7 +834,40 @@ function apip_scripts()
                     .allstarlight:before{content:"\f005\f005\f005\f005\f005"}
                     .allstardark:before{content:"\f006\f006\f006\f006\f006"} ';
      }
-
+     //8.8
+     if ( is_single() && comments_open() && apip_option_check('apip_commentquiz_enable')) {
+         $css .= ' .apipcommentquiz,
+                        .apipcommentquiz + * {
+                          overflow: hidden;
+                          transition: .5s;
+                          height: 0;
+                        }
+                        .apipcommentquiz { height: auto }
+                        .apipcommentquiz p{
+                            font-size:12px;
+                            font-style: italic;
+                        }
+                        .apipcommentquiz label {
+                          cursor: pointer;
+                          display: inline-block;
+                          margin: 0 7px 6px 0;
+                          border-radius: 5px;
+                          padding: 10px 15px;
+                          transition: .2s;
+                        }
+                        .apipcommentquiz label:hover {
+                          background: #ccc;
+                        }
+                        .apipcommentquiz h3 {
+                          color: red;
+                          font: inherit;
+                          animation: apipcommentquiz forward;
+                        }
+                        @keyframes apipcommentquiz{
+                          from{transform:scale(0)}
+                        } ';
+        wp_enqueue_script( 'apip-js-comment-quiz',APIP_PLUGIN_URL . 'js/apip-commentquiz.js', array(), false, true);
+     }
     if ( $css !== '' ) {
         wp_add_inline_style('apip-style-all', $css);
     }
@@ -2371,6 +2412,83 @@ function apip_heweather_retrieve($postid)
     }
 }
 
+//8.8 留言前答题
+/*
+作用：
+1. 在后台编辑画面增加一个meta box，用于追加问题。在保存post的时候把问题存成post_meta。
+2. 主题在显示留言框前调用接口，显示问题。如果选择正确，则显示留言框，如果选择错误，无法显示留言框。
+来源：https://github.com/nrkbeta/nrkbetaquiz
+license：GPLv3
+修改内容：css风格，js简化，汉化，插件风格统一。
+*/
+function apip_commentquiz_init() {
+    add_meta_box('apipcommentquiz', '留言验证问题', 'apip_commentquiz_meta_box', 'post', 'side', 'high');
+}
+
+function apip_commentquiz_meta_box($post)
+{
+    //插入一个空问题
+    $questions = array_pad(get_post_meta($post->ID, 'apipcommentquiz'), 1, array());
+    $addmore = '增加一个问题+';
+    $correct = '正确答案';
+    $answer = '答案';
+
+  foreach($questions as $index => $question){
+    $title = '问题'. ' ' . ($index + 1);
+    $text = esc_attr(empty($question['text'])? '' : $question['text']);
+    $name = 'apipcommentquiz' . '[' . $index . ']';
+
+    echo '<div style="margin-bottom:1em;padding-bottom:1em;border-bottom:1px solid #eee">';
+    echo '<label><strong>' . $title . ':</strong><br><input type="text" name="' . $name . '[text]" value="' . $text . '"></label>';
+    for($i = 0; $i<3; $i++){
+      $check = checked($i, isset($question['correct'])? intval($question['correct']) : 0, false);
+      $value = isset($question['answer'][$i])? esc_attr($question['answer'][$i]) : '';
+
+      echo '<br><input type="text" name="' . $name . '[answer][' . $i . ']" placeholder="' . $answer . '" value="' . $value . '">';
+      echo '<label><input type="radio" name="' . $name . '[correct]" value="' . $i . '"' . $check . '> ' . $correct . '</label>';
+    }
+    echo '</div>';
+  }
+  echo '<button class="button" type="button" data-apipcommentquiz>' . $addmore . '</button>';
+
+  ?><script>
+    document.addEventListener('click', function(event){
+      if(event.target.hasAttribute('data-apipcommentquiz')){
+        var button = event.target;
+        var index = [].indexOf.call(button.parentNode.children, button);
+        var clone = button.previousElementSibling.cloneNode(true);
+        var title = clone.querySelector('strong');
+
+        title.textContent = title.textContent.replace(/\d+/, index + 1);
+        [].forEach.call(clone.querySelectorAll('input'), function(input){
+          input.name = input.name.replace(/\d+/, index);  //Update index
+          if(input.type === 'text')input.value = '';      //Reset value
+        });
+        button.parentNode.insertBefore(clone, button);    //Insert in DOM
+      }
+    });
+  </script>
+  <?php wp_nonce_field('apipcommentquiz', 'apipcommentquiz-nonce');
+}
+add_action('save_post', 'apip_commentquiz_save', 10, 3);
+function apip_commentquiz_save($post_id, $post, $update){
+  if(isset($_POST['apipcommentquiz'], $_POST['apipcommentquiz-nonce']) &&
+        wp_verify_nonce($_POST['apipcommentquiz-nonce'], 'apipcommentquiz')){
+    delete_post_meta($post_id, 'apipcommentquiz');                         //Clean up previous quiz meta
+    foreach($_POST['apipcommentquiz'] as $k=>$v){
+      if($v['text'] && array_filter($v['answer'], 'strlen')){   //Only save filled in questions
+
+        // Sanitizing data input
+        foreach ( $v as $key => $value ) {
+          $key = wp_kses_post( $key );
+          $value = wp_kses_post( $value );
+          $v[$key] = $value;
+        }
+        add_post_meta($post_id, 'apipcommentquiz', $v);
+      }
+    }
+  }
+}
 
 /*                                          08终了                             */
 

@@ -137,6 +137,27 @@ function apip_get_heweather()
 }
 
 /**
+* 作用: 显示留言测试问题
+* 来源: 插件改编，汉化和格式修改
+* URL: https://github.com/nrkbeta/nrkbetaquiz
+*/
+function apip_commentquiz_form(){
+    if ( !is_single() || !comments_open() || !apip_option_check('apip_commentquiz_enable')) {
+        return;
+    };
+    ?>
+  <div class="apipcommentquiz"
+    data-apipcommentquiz="<?php echo esc_attr(rawurlencode(json_encode(get_post_meta(get_the_ID(), 'apipcommentquiz')))); ?>"
+    data-apipcommentquiz-error="<?php echo esc_attr('回答错误，请重试', 'apipcommentquiz'); ?>">
+    <h2>答对问题，留言框就会出现</h2>
+    <p>
+      我尊重并感谢每位用心的读者。<br/>如果对本文无感，请不要浪费时间，毫不犹豫地点叉关闭，<br/>因为我是否会在贵站留言，只取决于您的文章内容和订阅通道的畅通。
+    </p>
+  </div>
+<?php }
+
+
+/**
  * 作用: 显示最近更新文章
  * 来源: 自产
  * URL:

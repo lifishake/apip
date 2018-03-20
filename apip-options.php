@@ -304,6 +304,8 @@ function apip_heavy_tools_render()
   <input type='text' name='apip_settings[gaintbomb_key]' size='64' value='<?php echo $options['gaintbomb_key']; ?>'/></br>
   <span>    和风天气 API KEY：</span>
   <input type='text' name='apip_settings[heweather_key]' size='64' value='<?php echo $options['heweather_key']; ?>'/></br>
+  <span>   使用留言前答题功能： </span>
+  <input type='checkbox' name='apip_settings[apip_commentquiz_enable]' <?php checked( $options['apip_commentquiz_enable'], 1 ); ?> value='1'></br>
   <?php
 }
 
