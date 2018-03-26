@@ -145,9 +145,13 @@ function apip_commentquiz_form(){
     if ( !is_single() || !comments_open() || !apip_option_check('apip_commentquiz_enable')) {
         return;
     };
+    $quizs = get_post_meta(get_the_ID(), 'apipcommentquiz');
+    if ( empty($quizs) ) {
+        return;
+    }
     ?>
   <div class="apipcommentquiz"
-    data-apipcommentquiz="<?php echo esc_attr(rawurlencode(json_encode(get_post_meta(get_the_ID(), 'apipcommentquiz')))); ?>"
+    data-apipcommentquiz="<?php echo esc_attr(rawurlencode(json_encode($quizs))); ?>"
     data-apipcommentquiz-error="<?php echo esc_attr('回答错误，请重试', 'apipcommentquiz'); ?>">
     <h2>答对问题，留言框就会出现</h2>
     <p>
