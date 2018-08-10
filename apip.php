@@ -70,6 +70,19 @@ function apip_plugin_activation()
     ORDER BY comment_author_email ASC ";
     $wpdb->query($sql);
 
+    //4.1
+    $thumb_path = APIP_GALLERY_DIR . "/gravatar_cache";
+    if (file_exists ($thumb_path)) {
+        if (! is_writeable ( $thumb_path )) {
+            @chmod ( $thumb_path, '511' );
+        }
+    } else {
+        @mkdir ( $thumb_path, '511', true );
+    }
+    if (!file_exist($thumb_path."/default.png")) {
+        @copy (APIP_PLUGIN_DIR."/img/default.png" $thumb_path."/default.png");
+    }
+
     //8.5
     $thumb_path = APIP_GALLERY_DIR . "/douban_cache";
 
@@ -1330,9 +1343,9 @@ function apip_get_cavatar($source) {
     }
     $time = 1209600; //The time of cache(seconds)
     preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
-    $abs = ABSPATH.'wp-content/plugins/feature-in-one-custom/iava/'.$tmp[1].'.jpg';
-    $url = get_bloginfo('wpurl').'/wp-content/plugins/feature-in-one-custom/iava/'.$tmp[1].'.jpg';
-    $default = get_bloginfo('wpurl').'/wp-content/plugins/feature-in-one-custom/iava/'.'default.png';
+    $abs =APIP_GALLERY_DIR . '/gravatar_cache/'.$tmp[1].'.jpg';
+    $url = APIP_GALLERY_URL.'/gravatar_cache/'.$tmp[1].'.jpg';
+    $default = APIP_GALLERY_URL.'/gravatar_cache/'.'default.png';
     if (!is_file($abs)||(time()-filemtime($abs))>$time){
         copy('http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G',$abs);
     }
