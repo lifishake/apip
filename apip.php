@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.25.9
+ * Version:     1.26.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -79,7 +79,7 @@ function apip_plugin_activation()
     } else {
         @mkdir ( $thumb_path, '511', true );
     }
-    echo  $thumb_path;
+
     if (!file_exists($thumb_path."/default.png")) {
         @copy (APIP_PLUGIN_DIR."img/default.png", $thumb_path."/default.png");
     }
