@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.25.8
+ * Version:     1.25.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -71,7 +71,7 @@ function apip_plugin_activation()
     $wpdb->query($sql);
 
     //4.1
-    $thumb_path = APIP_GALLERY_DIR . "/gravatar_cache";
+    $thumb_path = APIP_GALLERY_DIR . "gravatar_cache";
     if (file_exists ($thumb_path)) {
         if (! is_writeable ( $thumb_path )) {
             @chmod ( $thumb_path, '511' );
@@ -79,12 +79,13 @@ function apip_plugin_activation()
     } else {
         @mkdir ( $thumb_path, '511', true );
     }
-    if (!file_exist($thumb_path."/default.png")) {
-        @copy (APIP_PLUGIN_DIR."/img/default.png" $thumb_path."/default.png");
+    echo  $thumb_path;
+    if (!file_exists($thumb_path."/default.png")) {
+        @copy (APIP_PLUGIN_DIR."img/default.png", $thumb_path."/default.png");
     }
 
     //8.5
-    $thumb_path = APIP_GALLERY_DIR . "/douban_cache";
+    $thumb_path = APIP_GALLERY_DIR . "douban_cache";
 
     if (file_exists ($thumb_path)) {
         if (! is_writeable ( $thumb_path )) {
@@ -95,7 +96,7 @@ function apip_plugin_activation()
     }
 
     //8.6
-    $thumb_path = APIP_GALLERY_DIR . "/game_poster";
+    $thumb_path = APIP_GALLERY_DIR . "game_poster";
     if (file_exists ($thumb_path)) {
         if (! is_writeable ( $thumb_path )) {
             @chmod ( $thumb_path, '511' );
@@ -1343,9 +1344,9 @@ function apip_get_cavatar($source) {
     }
     $time = 1209600; //The time of cache(seconds)
     preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
-    $abs =APIP_GALLERY_DIR . '/gravatar_cache/'.$tmp[1].'.jpg';
-    $url = APIP_GALLERY_URL.'/gravatar_cache/'.$tmp[1].'.jpg';
-    $default = APIP_GALLERY_URL.'/gravatar_cache/'.'default.png';
+    $abs =APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1].'.jpg';
+    $url = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1].'.jpg';
+    $default = APIP_GALLERY_URL.'gravatar_cache/'.'default.png';
     if (!is_file($abs)||(time()-filemtime($abs))>$time){
         copy('http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G',$abs);
     }
