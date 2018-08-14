@@ -7,14 +7,14 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.0
+ * Version:     1.26.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
 /*宏定义*/
 define('APIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define('APIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ) ;
-define('APIP_GALLERY_URL',home_url('/').'wp-content/gallery/');
+define('APIP_GALLERY_URL',home_url('/',is_ssl()?'https':'http').'wp-content/gallery/');
 define('APIP_GALLERY_DIR', ABSPATH.'wp-content/gallery/');
 global $apip_options;
 
@@ -1345,8 +1345,8 @@ function apip_get_cavatar($source) {
     $time = 1209600; //The time of cache(seconds)
     preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
     $abs =APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1].'.jpg';
-    $url = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1].'.jpg';
-    $default = APIP_GALLERY_URL.'gravatar_cache/'.'default.png';
+    $url = home_url('/').'wp-content/gallery/gravatar_cache/'.$tmp[1].'.jpg';
+    $default =  home_url('/').'wp-content/gallery/gravatar_cache/'.'default.png';
     if (!is_file($abs)||(time()-filemtime($abs))>$time){
         copy('http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G',$abs);
     }
