@@ -174,6 +174,10 @@ function apip_color_setting_render(  ) {
   <input type= 'text' name='apip_settings[border_color]' id='border-color'  value='<?php if ( isset( $options['border_color'] ) ) echo $options['border_color']; else echo " #8A8988"; ?>' /></br>
   <span> 自定义背景颜色：</span>
   <input type= 'text' name='apip_settings[bg_color]' id='bg-color'  value='<?php if ( isset( $options['bg_color'] ) ) echo $options['bg_color']; else echo " #ECE5DF"; ?>' /></br>
+  <span> 自定义标签云链接颜色：</span>
+  <input type= 'text' name='apip_settings[tagcloud_link_color]' id='tagcloud-link-color'  value='<?php if ( isset( $options['tagcloud_link_color'] ) ) echo $options['tagcloud_link_color']; else echo " #ea3382"; ?>' /></br>
+  <span> 自定义标签云背景颜色：</span>
+  <input type= 'text' name='apip_settings[tagcloud_bg_color]' id='tagcloud-bg-color'  value='<?php if ( isset( $options['tagcloud_bg_color'] ) ) echo $options['tagcloud_bg_color']; else echo " #9eccef"; ?>' /></br>
   <?php
 }
 

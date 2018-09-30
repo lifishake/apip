@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.3
+ * Version:     1.26.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -260,6 +260,9 @@ function apip_init()
     /** 05 */
     //5.1 广告关键字替换，抢在akimest前面
     add_filter('preprocess_comment', 'hm_check_user',1);
+    add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
+    add_filter( 'manage_edit-comments_columns', 'apip_comment_columns' );
+    add_filter( 'manage_comments_custom_column',  'apip_add_comment_forbidden_parts',10,2 );
     //5.2 用户留言等级评分
     if ( apip_option_check('commentator_rating_enable') ) {
         //后台动作增加
@@ -630,6 +633,12 @@ function apip_scripts()
     //7.1
     if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
     {
+        $tagcloud_link_color = isset( $apip_options['tagcloud_link_color'] ) ? $apip_options['tagcloud_link_color'] : "#ece5df";
+        $tagcloud_bg_color =  isset( $apip_options['tagcloud_bg_color'] ) ? $apip_options['tagcloud_bg_color'] : "#ece5df";
+        $link_colors = array();
+        $bg_colors = array();
+        $link_colors = apip_get_link_colors($tagcloud_link_color);
+        $bg_colors = apip_get_bg_colors($tagcloud_bg_color);
         $css .= '   ul.tagcloud, ul.tagcloud li {
                         font-size: 1em;
                         list-style-type: none;
@@ -646,44 +655,43 @@ function apip_scripts()
                         border-radius: 3px;
                     }
                     ul.tagcloud a:hover {
-                        color:#BF52A9;
-                        border-radius: 3px;
+                        color:#ea3382;
                     }
                     a.tagged1 {
                         font-size: 1.00em;
-                        color: #AF7E62;
+                        color: '.$link_colors[0].';
                         font-weight: 300;
                         padding: 6px 11px;
-                        background: rgba(240,121,142,0.6);
+                        background: '.$bg_colors[0].';
                         }
 
                     a.tagged2 {
                         font-size: 1.20em;
-                        color: #B25E2A;
+                        color: '.$link_colors[1].';
                         font-weight: 400;
                         padding: 9px 14px;
-                        background: rgba(129,240,127,0.6);
+                        background:'.$bg_colors[1].';
                         }
                     a.tagged3 {
                         font-size: 1.50em;
-                        color:#995124;
+                        color'.$link_colors[2].';
                         font-weight: 400;
                         padding: 12px 17px;
-                        background: rgba(48,120,240,0.6);
+                        background: '.$bg_colors[2].';
                     }
                     a.tagged4 {
                         font-size: 1.80em;
-                        color:#663718;
+                        color:'.$link_colors[3].';
                         font-weight: 500;
                         padding: 15px 20px;
-                        background: rgba(231,170,240,0.6);
+                        background: '.$bg_colors[3].';
                         }
                     a.tagged5 {
                         font-size: 2.20em;
-                        color:#331C0C;
+                        color:'.$link_colors[4].';
                         font-weight: 700;
                         padding: 18px 23px;
-                        background: rgba(240,76,73,0.6);
+                        background:'.$bg_colors[4].';
                         }';
     }
     //7.2
@@ -1265,7 +1273,7 @@ function apip_desc_tag(){
 function utf8_trim($str) {
 
    $len = strlen($str);
-
+   $hex = '';
    for ($i=strlen($str)-1; $i>=0; $i-=1){
        $hex .= ' '.ord($str[$i]);
        $ch = ord($str[$i]);
@@ -1394,12 +1402,12 @@ function hm_check_user ( $comment ) {
     }
     if ($f != 0) {
         $push_comment = array();
-        $push_comment['comment_author'] = $comment['comment_author'];
-        $push_comment['comment_forbidden'] = $forbidden;
-        add_comment_meta($comment->comment_ID, 'apip_garbage_commenter_info', $push_comment );
+        $comment['comment_o_author'] = $comment['comment_author'];
+        $comment['comment_o_email'] = $comment['comment_author_email'];
+        $comment['comment_o_url'] = $comment['comment_author_url'];
+        $comment['comment_forbidden'] = $forbidden;
         $comment['comment_author'] = $str_replacement ;
         $comment['comment_author_email'] = $str_author_email ;
-        $comment['comment_agent'] = $forbidden;
         if ( 'true' == $show_random ) {
             $rand_posts = get_posts('numberposts=1&orderby=rand');
             $comment['comment_author_url'] = get_permalink($rand_posts[0]->ID);
@@ -1409,6 +1417,38 @@ function hm_check_user ( $comment ) {
         }
      }
     return $comment;
+}
+
+function apip_remember_advertise_comment_details($comment_ID, $approved, $commentdata)
+{
+    if ( !isset($commentdata['comment_o_author'])||!isset($commentdata['comment_forbidden']) )
+    {
+        return;
+    }
+    $comment_meta = array();
+    $comment_meta['o_email'] = isset($commentdata['comment_o_email'])?$commentdata['comment_o_email']:'';
+    $comment_meta['o_url'] = isset($commentdata['comment_o_url'])?$commentdata['comment_o_url']:'';
+    $comment_meta['forbidden'] = $commentdata['comment_forbidden'];
+    $comment_meta['o_author'] = $commentdata['comment_o_author'];
+    add_comment_meta( $comment_ID, 'apip_hm_original', $comment_meta, true );
+}
+
+function apip_comment_columns( $columns )
+{
+	$columns['comment_real'] = '垃圾源头';
+	return $columns;
+}
+
+
+function apip_add_comment_forbidden_parts($column, $comment_ID)
+{
+    if ($column !== 'comment_real')  {
+        return;
+    }
+    $comment_meta = get_comment_meta($comment_ID,'apip_hm_original',true);
+    if ( $comment_meta ) {
+        echo $comment_meta['o_author']/*.' / '.$comment_meta['o_url'] .' / '.$comment_meta['o_email'].' /<b> '.$comment_meta['forbidden'].'</b>'*/;
+    }
 }
 
 //5.2 根据用户留言质量评定用户水平，并进行相应操作
@@ -1567,8 +1607,6 @@ function apip_tagcloud_page($params = array()) {
         'number' => '169',          // limit the number of tags
         'wrapper' => 'li',      // a tag wrapped around tag links, e.g. li
         'sizeclass' => 'tagged',    // the tag class name
-        'sizemin' => 1,         // the smallest number applied to the tag class
-        'sizemax' => 5          // the largest number applied to the tab class
     ), $params));
     // initialize
     $ret = '<ul class="tagcloud">';
@@ -1577,17 +1615,22 @@ function apip_tagcloud_page($params = array()) {
     $tags = get_tags(array('orderby' => $orderby, 'order' => $order, 'number' => $number));
     // get minimum and maximum number tag counts
     $index = 0;
-    $part = 1;
-    $lev = $sizemax ;
-    $ori = 0 ;
+
     foreach ($tags as $tag) {
-        $tag->parent = $lev ;
-        if ( $index == $part * 13 )
-        {
-            $lev--;
-            $part = $part + $ori;
-            $ori = $part ;
-            $part++ ;
+        if ( $index < 13 ) {
+            $tag->parent = 5;
+        }
+        elseif( $index < 39 )  {
+            $tag->parent = 4;
+        }
+        elseif( $index < 91 ) {
+            $tag->parent = 3;
+        }
+        elseif( $index < 143 ) {
+            $tag->parent = 2;
+        }
+        else {
+            $tag->parent = 1;
         }
         $index++ ;
     }

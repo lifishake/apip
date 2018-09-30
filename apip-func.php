@@ -155,7 +155,7 @@ function apip_commentquiz_form(){
     data-apipcommentquiz-error="<?php echo esc_attr('回答错误，请重试', 'apipcommentquiz'); ?>">
     <h2>答对问题，留言框就会出现</h2>
     <p>
-      我尊重并感谢每位用心的读者。<br/>如果对本文无感，请不要浪费时间，毫不犹豫地点叉关闭，<br/>因为我是否会在贵站留言，只取决于您的文章内容和订阅通道的畅通。
+      珍爱生命，拒绝尬聊。<br/>只要贵站的订阅通道畅通且言之有物，本人一定会回访。
     </p>
   </div>
 <?php }
@@ -502,4 +502,136 @@ function apip_media_upload_nextgen() {
 	}
 
 	return wp_iframe( 'media_upload_nextgen_form', $errors );
+}
+
+/**
+ * 作用: HEX描述的颜色值转成RGB
+ * 来源: Oblique原版
+ */
+if (!function_exists('hex2rgb'))
+{
+function hex2rgb($color) {
+	if ($color[0] == '#' ) {
+		$color = substr( $color, 1 );
+	}
+	$hex = array( $color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5] );
+    $rgb =  array_map('hexdec', $hex);
+	return $rgb;
+}
+}
+
+/**
+ * 作用: RGB颜色值转成HSV描述
+ * 来源: http://stackoverflow.com/questions/1773698/rgb-to-hsv-in-php
+ * 输出的范围0-360, 0-100, 0-100!!
+ */
+if (!function_exists('rgb2hsv'))
+{
+function rgb2hsv(array $rgb)
+{
+	list($R,$G,$B) = $rgb;
+    $R = ($R / 255);
+    $G = ($G / 255);
+    $B = ($B / 255);
+
+    $maxRGB = max($R, $G, $B);
+    $minRGB = min($R, $G, $B);
+    $chroma = $maxRGB - $minRGB;
+
+    $computedV = floor(100 * $maxRGB);
+
+    if ($chroma == 0)
+        return array(0, 0, $computedV);
+
+    $computedS = floor(100 * ($chroma / $maxRGB));
+
+    if ($R == $minRGB)
+        $h = 3 - (($G - $B) / $chroma);
+    elseif ($B == $minRGB)
+        $h = 1 - (($R - $G) / $chroma);
+    else // $G == $minRGB
+        $h = 5 - (($B - $R) / $chroma);
+
+    $computedH = floor(60 * $h);
+
+    return array($computedH, $computedS, $computedV);
+}
+}
+
+if (!function_exists('hsv2rgb'))
+{
+function hsv2rgb(array $hsv) {
+	list($H,$S,$V) = $hsv;
+	//1
+	$H /= 60;
+	//2
+	$I = floor($H);
+	$F = $H - $I;
+	$S /= 100;
+	$V /= 100;
+	//3
+	$M = round( $V * (1 - $S) * 255);
+	$N = round( $V * (1 - $S * $F) * 255 );
+	$K = round( $V * (1 - $S * (1 - $F)) * 255 );
+	$V = round( $V * 255) ;
+	//4
+	switch ($I) {
+		case 0:
+			list($R,$G,$B) = array($V,$K,$M);
+			break;
+		case 1:
+			list($R,$G,$B) = array($N,$V,$M);
+			break;
+		case 2:
+			list($R,$G,$B) = array($M,$V,$K);
+			break;
+		case 3:
+			list($R,$G,$B) = array($M,$N,$V);
+			break;
+		case 4:
+			list($R,$G,$B) = array($K,$M,$V);
+			break;
+		case 5:
+		case 6: //for when $H=1 is given
+			list($R,$G,$B) = array($V,$M,$N);
+			break;
+	}
+	return array($R, $G, $B);
+}
+}
+function apip_get_link_colors( $color_str)
+{
+    $rgb = hex2rgb($color_str);
+    $hsv = rgb2hsv($rgb);
+    $ret = array();
+    $hsv_temp = $hsv;
+    for($i=4; $i>=0; $i--) {
+        if ($hsv[1]<50){
+            $hsv_temp[1] = $hsv[1]+$i*8;
+        }
+        else {
+            $hsv_temp[1] = $hsv[1]-$i*8;
+            }
+        $rgb_temp = hsv2rgb($hsv_temp);
+        $ret[] =sprintf("#%1$02X%2$02X%3$02X",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2]) ;
+    }
+        return $ret;
+}
+function apip_get_bg_colors($color_str,$trancy = 0.6)
+{
+    $rgb = hex2rgb($color_str);
+    $hsv = rgb2hsv($rgb);
+    $ret = array();
+    $hsv_temp = $hsv;
+    for($i=4; $i>=0; $i--) {
+        $hsv_temp[1] = $hsv[1]+100-5*$i;
+        if ($hsv_temp[1]>100)
+        {
+            $hsv_temp[1] -= 100;
+        }
+        $rgb_temp = hsv2rgb($hsv_temp);
+        $ret[] =sprintf("RGBA(%d,%d,%d,%1.1f)",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2],$trancy) ;
+    }
+    $ret =array_reverse($ret);
+    return $ret;
 }
