@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.4
+ * Version:     1.26.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -57,7 +57,7 @@ function apip_plugin_activation()
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN CEIL(1024/COUNT(rel.`term_taxonomy_id`))
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 1000
     ELSE 1580 END AS `term_weight`
-    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, {$wpdb->prefix}terms WHERE rel.`term_taxonomy_id` = tax.`term_taxonomy_id` AND tax.`taxonomy` in ('category','post_tag') AND {$wpdb->prefix}terms.`term_id` = rel.`term_taxonomy_id` GROUP BY rel.`term_taxonomy_id` ORDER BY `term_count` DESC ";
+    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, `{$wpdb->prefix}terms` WHERE rel.term_taxonomy_id = tax.term_taxonomy_id AND tax.taxonomy in ('category','post_tag') AND `{$wpdb->prefix}terms.term_id` = rel.term_taxonomy_id GROUP BY rel.term_taxonomy_id ORDER BY term_count DESC";
     $wpdb->query($sql);
 
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
@@ -261,8 +261,7 @@ function apip_init()
     //5.1 广告关键字替换，抢在akimest前面
     add_filter('preprocess_comment', 'hm_check_user',1);
     add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
-    add_filter( 'manage_edit-comments_columns', 'apip_comment_columns' );
-    add_filter( 'manage_comments_custom_column',  'apip_add_comment_forbidden_parts',10,2 );
+    add_filter( 'comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
     //5.2 用户留言等级评分
     if ( apip_option_check('commentator_rating_enable') ) {
         //后台动作增加
@@ -556,14 +555,14 @@ function apip_scripts()
     {
         $css .= "   @font-face {
                       font-family: 'FontAwesome';
-                      src: url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.eot?v=4.3.0');
-                      src: url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('".APIP_PLUGIN_URL."/fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+                      src: url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.eot?v=4.3.0');
+                      src: url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
                       font-weight: normal;
                       font-style: normal;
                     }
         ";
     }
-    if ( is_single() ) {
+    if ( /*is_single()*/1 ) {
         wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css' );
         wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css' );
     }
@@ -898,6 +897,7 @@ function apip_scripts()
 function apip_admin_scripts() {
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
+    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), false, true);
 }
 
@@ -1433,22 +1433,14 @@ function apip_remember_advertise_comment_details($comment_ID, $approved, $commen
     add_comment_meta( $comment_ID, 'apip_hm_original', $comment_meta, true );
 }
 
-function apip_comment_columns( $columns )
-{
-	$columns['comment_real'] = '垃圾源头';
-	return $columns;
-}
-
-
-function apip_add_comment_forbidden_parts($column, $comment_ID)
-{
-    if ($column !== 'comment_real')  {
-        return;
-    }
-    $comment_meta = get_comment_meta($comment_ID,'apip_hm_original',true);
+function apip_show_advertise_comment_details( $actions, $comment ){
+    $comment_meta = get_comment_meta($comment->comment_ID,'apip_hm_original',true);
     if ( $comment_meta ) {
-        echo $comment_meta['o_author']/*.' / '.$comment_meta['o_url'] .' / '.$comment_meta['o_email'].' /<b> '.$comment_meta['forbidden'].'</b>'*/;
+        $format = '<span data-comment-id="%d" data-post-id="%d" class="original_key" >%s</span>';
+        $actions['original_key'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $comment_meta['o_author']);
+        //echo $comment_meta['o_author']/*.' / '.$comment_meta['o_url'] .' / '.$comment_meta['o_email'].' /<b> '.$comment_meta['forbidden'].'</b>'*/;
     }
+    return $actions;
 }
 
 //5.2 根据用户留言质量评定用户水平，并进行相应操作

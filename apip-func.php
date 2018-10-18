@@ -7,7 +7,7 @@
  * 来源: 自产
  * URL:
  */
-function apip_get_heweather()
+function apip_get_heweather( $style='')
 {
     $ret = '';
     //$weather_result = array();
@@ -126,13 +126,19 @@ function apip_get_heweather()
         $wind_str = $then['wind_dir'].$then['wind_sc']."级 ";
     }
     $ret = '<i class="wi '.$w_icon_str.' icon"></i>';
-    $ret .= $then['cond_txt'];
+    if ('notext'!=$style) {
+        $ret .= $then['cond_txt'];
+    }
     if ( '' !== $wind_str) {
         $ret .= '  <i class="wi wi-wind '.$wind_icon_str.'"></i> ';
-        $ret .= $wind_str;
+        if ('notext'!=$style) {
+            $ret .= $wind_str;
+        }
     }
-    $ret .= '  <i class="wi wi-thermometer"></i> ';
-    $ret .= $then['tmp'].'&#8451;';
+    if ('notext'!=$style) {
+        $ret .= '  <i class="wi wi-thermometer"></i> ';
+        $ret .= $then['tmp'].'&#8451;';
+    }
     return $ret;
 }
 
