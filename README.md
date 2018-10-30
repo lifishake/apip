@@ -51,3 +51,4 @@
 - 使用omdbapi获取imdb信息
 - 利用heweather提供的API，保存文章发布时天气，并提供调用函数（需要主题配合）
 - 留言前先回答博文相关的问题（需要主题配合）
+- 利用yandex translate的API，手动翻译标题到英文

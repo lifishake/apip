@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.5
+ * Version:     1.26.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -348,13 +348,16 @@ function apip_init()
     add_action( 'new_to_publish','apip_save_heweather',99,1);
     add_action( 'new_to_private','apip_save_heweather',99,1);
     //在后台update区域增加手动更新天气的checkbox
-    if (is_admin())
-    {
+    if (is_admin())  {
         add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
     }
     //8.8 留言验证问题
     if(is_admin() && apip_option_check('apip_commentquiz_enable') ) {
         add_action('admin_init','apip_commentquiz_init');
+    }
+    //8.9 手动翻译按钮
+    if(is_admin()) {
+        add_action('admin_menu','apip_optimize_boxes');
     }
 
     //0X 暂时不用了
@@ -525,6 +528,7 @@ $options
     8.6                                                     gaintbomb游戏信息
     8.7     heweather_key                       和风天气/发帖时天气信息
     8.8     apip_commentquiz_enable     回复前答题
+    8.9     yandex_translate_key            手动翻译标题的按钮
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -895,10 +899,12 @@ function apip_scripts()
 }
 
 function apip_admin_scripts() {
+    global $apip_options;
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), false, true);
+    wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
 }
 
 //0.2
@@ -2018,7 +2024,12 @@ function apip_get_dou_content( $id, $type )  {
     //申请缓存
     $cache =  get_transient($cache_key);
     if ($cache)  {
+        if (count($data) == 3){//error
+            delete_transient($cache_key);
+            unset($cache);
+        } else {
         return $cache;
+        }
     }
     if ( $type == 'movie') {
         $link = "http://api.douban.com/v2/movie/subject/".$id;
@@ -2035,7 +2046,7 @@ function apip_get_dou_content( $id, $type )  {
     @curl_close($ch);
     if ($cexecute) {
         $cache = json_decode($cexecute,true);
-        set_transient($cache_key, $cache, 60*60*24*30);
+        set_transient($cache_key, $cache, 60*60*24*30*6);
     } else {
         return false;
     }
@@ -2542,6 +2553,33 @@ function apip_commentquiz_save($post_id, $post, $update){
       }
     }
   }
+}
+
+//8.9 文章发布前，通过调用yandex translate的API，手动生成英文slug。
+/*
+apip_optimize_boxes 函数在admin_menu的钩子里调用。
+这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
+*/
+function apip_optimize_boxes() {
+    //第二个参数必须传‘pos’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
+    remove_meta_box('authordiv', 'post', 'normal');//移除[author]，顺道。
+    remove_meta_box('trackbacksdiv', 'post', 'normal');//移除[trackback]，顺道。
+    remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
+    remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
+    remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+    add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
+}
+
+/*
+yandex translate的文档
+https://tech.yandex.com/translate/doc/dg/reference/translate-docpage/
+*/
+function apip_title_translate_meta_box( $post ){
+    $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
+    ?>
+    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiptranlatebtn" >翻译或更新</button>
+    <?php
+    /*剩下的看js的了*/
 }
 
 /*                                          08终了                             */

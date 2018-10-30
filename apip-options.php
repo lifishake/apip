@@ -28,6 +28,13 @@ function apip_settings_init(  ) {
   'apip_option_group'
   );
 
+  add_settings_section(
+  'apip_extra_section',
+  'APIP试验台',
+  'apip_extra_section_callback',
+  'apip_extra_group'
+  );
+
   //01
   add_settings_field(
   'better_excerpt',
@@ -104,13 +111,13 @@ function apip_settings_init(  ) {
   'apip_pluginPage_section'
   );
     //-1
-    /*add_settings_field(
+    add_settings_field(
   'test_field_settings',
   '保留功能',
   'apip_test_field_render',
-  'apip_option_group',
-  'apip_pluginPage_section'
-  );*/
+  'apip_extra_group',
+  'apip_extra_section'
+  );
   /*
   add_settings_field(
   'apip_text_field_0',
@@ -310,6 +317,8 @@ function apip_heavy_tools_render()
   <input type='text' name='apip_settings[heweather_key]' size='64' value='<?php echo $options['heweather_key']; ?>'/></br>
   <span>   使用留言前答题功能： </span>
   <input type='checkbox' name='apip_settings[apip_commentquiz_enable]' <?php checked( $options['apip_commentquiz_enable'], 1 ); ?> value='1'></br>
+  <span>   Yandex Translate API KEY： </span>
+  <input type='text' name='apip_settings[yandex_translate_key]' size='64' value='<?php echo $options['yandex_translate_key']; ?>'/></br>
   <?php
 }
 
@@ -331,16 +340,36 @@ function apip_settings_section_callback(  ) {
 
 }
 
+function apip_extra_section_callback() {
+    echo '<span>一些基本设定项目，抄自多个插件</span>';
+}
 
 function apip_options_page(  ) {
-
-  ?>
+        if( isset( $_GET[ 'tab' ] ) ) {
+            $active_tab = $_GET[ 'tab' ];
+        } else {
+            $active_tab = 'tab_option';
+        }
+        ?>
     <div id="apip_page_content" class="wrap apip-option" >
   <h1><span>A</span>ll <span>P</span>lugins <span>I</span>n <span>P</span>ewae</h1>
+  <div class="description">This is description of the page.</div>
+            <?php settings_errors(); ?>
+
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=<?php echo __FILE__;?>&tab=tab_option" class="nav-tab <?php echo $active_tab == 'tab_option' ? 'nav-tab-active' : ''; ?>">基本功能</a>
+                <a href="?page=<?php echo __FILE__;?>&tab=tab_extra" class="nav-tab <?php echo $active_tab == 'tab_extra' ? 'nav-tab-active' : ''; ?>">实验台</a>
+            </h2>
      <form action='options.php' method='post'>
   <?php
-  settings_fields( 'apip_option_group' );
-  do_settings_sections( 'apip_option_group' );
+  if( $active_tab == 'tab_option' ) {
+      settings_fields( 'apip_option_group' );
+      do_settings_sections( 'apip_option_group' );
+  }
+  else {
+      settings_fields( 'apip_extra_group' );
+      do_settings_sections( 'apip_extra_group' );
+  }
   submit_button();
   ?>
 

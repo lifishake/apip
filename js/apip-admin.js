@@ -31,4 +31,23 @@ jQuery(document).ready(function($) {
 			}
 		});
     })
+    $('button[name="apiptranlatebtn"]').click(function(){
+        var parent = $(this).parent();
+        var chinese_title = document.getElementById("title").value;
+        var url = "https://translate.yandex.net/api/v1.5/tr.json/translate";
+        var part = "key="+yandexkey+"&text="+encodeURI(chinese_title)+"&lang=zh-en";
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST",url,true);
+        xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        xhr.send(part);
+        xhr.onreadystatechange = function() {
+            if (this.readyState==4 && this.status==200) {
+                var res = this.responseText;
+                var json = JSON.parse(res);
+                if(json.code == 200) {
+                    document.getElementById("post_name").value=json.text[0];
+                }
+            }
+        }
+    })
 })
