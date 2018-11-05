@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.6
+ * Version:     1.26.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -322,7 +322,7 @@ function apip_init()
         if ( !$apip_aq->isloaded() ){
             $apip_aq->init();
         }
-        set_transient( $key, $apip_aq, 600);//保留10分钟
+        set_transient( $key, $apip_aq, 1200);//保留20分钟
         add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
     }
     //8.4 留言邮件回复
@@ -549,7 +549,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20180105' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -903,7 +903,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), false, true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20181105', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
 }
 
@@ -1871,7 +1871,8 @@ function apip_keep_quary(){
         return;
     }
     $apip_aq->keep_query();
-    set_transient($key, $apip_aq, 360);
+    delete_transient($key);//先删除,否则保存的是上一次的状态
+    set_transient($key, $apip_aq, 600);//更新失效时间
 }
 //8.4 邮件回复
 /**

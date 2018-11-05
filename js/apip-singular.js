@@ -1,5 +1,5 @@
 //jQuery(document).ready(function($){
-	
+
 	//回到顶部的JS
 	/*var back_top_btn = $('#back_top');
 	if(back_top_btn.length) {
@@ -18,7 +18,7 @@
 			$('body,html').animate({scrollTop: 0}, 400);
 		});
 	}*/
-	
+
 //});
 
 //Ctrl+Enter提交
