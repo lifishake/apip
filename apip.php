@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.26.7
+ * Version:     1.26.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1954,7 +1954,7 @@ function apip_dou_book_detail($id) {
     $output .= '<br>出版社 : ' . $data["publisher"] .'<br>出版年 : ';
 
     $output .= $data["pubdate"] ;
-    $output .= '</div></div></div></div>';
+    $output .= '</div></div></div></div></br>';
     return $output;
 }
 
@@ -1975,7 +1975,7 @@ function apip_dou_music_detail($id){
     $output .= implode('/', $authors);
     $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
     $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
-    $output .= '</div></div></div></div>';
+    $output .= '</div></div></div></div></br>';
     return $output;
 }
 
@@ -2010,7 +2010,7 @@ function apip_dou_movie_detail($id) {
     $countries = $data["countries"];
     $output .= implode('/', $countries);
 
-    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div>';
+    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div></br>';
     return $output;
 }
 
@@ -2153,7 +2153,7 @@ function apip_imbd_detail($atts, $content = null){
             {
                 return false;
             }
-            set_transient($cache_key, $content, 60*60*24*30);
+            set_transient($cache_key, $content, 60*60*24*30*6);
         } else {
             return false;
         }
@@ -2297,7 +2297,7 @@ function apip_game_detail($atts, $content = null) {
             $response = file_get_contents($url, false, $context);
             if ($response) {
                 $content = json_decode($response,true);
-                set_transient($cache_key, $content, 60*60*24*30);
+                set_transient($cache_key, $content, 60*60*24*30*6);
             } else {
                 return false;
             }

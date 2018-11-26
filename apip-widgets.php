@@ -1,5 +1,5 @@
 <?php
-class APIP_Widget_Related extends WP_Widget {               
+class APIP_Widget_Related extends WP_Widget {
 
 
   public function __construct() {
@@ -14,8 +14,8 @@ class APIP_Widget_Related extends WP_Widget {
 
        $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP相关文章', 'exclude' => '', 'taxonomy' => 'post_tag', 'post_type' => 'post', 'related_count' => '5' ) );
        $title = $instance['title'];
-       $post_type = $instance['post_type']; 
-       $taxonomy = $instance['taxonomy']; 
+       $post_type = $instance['post_type'];
+       $taxonomy = $instance['taxonomy'];
        $exclude = $instance['exclude'];
        $related_count = $instance['related_count']; ?>
        <p>
@@ -26,36 +26,36 @@ class APIP_Widget_Related extends WP_Widget {
        <p>
             <label for="<?php echo $this->get_field_id( 'taxonomy' ); ?>">
                  <?php _e( 'Related by taxonomy' , 'simply-related-posts'); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'taxonomy' ); ?>" name="<?php echo $this->get_field_name( 'taxonomy' ); ?>"><?php
-                      $taxonomies = get_taxonomies( array( 'show_ui' => true ), 'objects' ); 
+                      $taxonomies = get_taxonomies( array( 'show_ui' => true ), 'objects' );
                       foreach ( $taxonomies as $slug => $tax ): ?>
                            <option value="<?php echo $slug; ?>" <?php echo ( $slug == $taxonomy ) ? 'selected="selected"' : ''; ?>><?php echo $tax->labels->name; ?></option><?php
                       endforeach; ?>
                  </select>
-            </label>               
+            </label>
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'post_type' ); ?>">
                  <?php _e( 'Related post-type' , 'simply-related-posts'); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'post_type' ); ?>" name="<?php echo $this->get_field_name( 'post_type' ); ?>"><?php
-                      $post_types = get_post_types( array( 'show_ui' => true, 'public' => true ), 'objects', 'and' ); 
+                      $post_types = get_post_types( array( 'show_ui' => true, 'public' => true ), 'objects', 'and' );
                       foreach ( $post_types as $slug => $pt ): ?>
                            <option value="<?php echo $slug; ?>" <?php echo ( $slug == $post_type ) ? 'selected="selected"' : ''; ?>><?php echo $pt->labels->name; ?></option><?php
                       endforeach; ?>
                  </select>
-            </label>               
-       </p>               
+            </label>
+       </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'related_count' ); ?>">
                  <?php _e( 'How many posts to show' , 'simply-related-posts'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'related_count' ); ?>" name="<?php echo $this->get_field_name( 'related_count' ); ?>" type="text" value="<?php echo attribute_escape( $related_count ); ?>" />
-            </label>               
+            </label>
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'exclude' ); ?>">
                  <?php _e( 'Term ids to exclude (e.g 5,4,2)' , 'simply-related-posts'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'exclude' ); ?>" name="<?php echo $this->get_field_name( 'exclude' ); ?>" type="text" value="<?php echo attribute_escape( $exclude ); ?>" />
-            </label>               
+            </label>
        </p><?php
 
   }
-   
+
 
   public function update( $new_instance, $old_instance ) {
 
@@ -68,7 +68,7 @@ class APIP_Widget_Related extends WP_Widget {
        return $instance;
 
   }
-   
+
 
   public function widget( $args, $instance ) {
 
@@ -81,7 +81,7 @@ class APIP_Widget_Related extends WP_Widget {
        $post_type = $instance['post_type'];
        $taxonomy = ( $instance['taxonomy'] == "" ) ? 'post_tag' : $instance['taxonomy'];
        $terms = wp_get_post_terms( get_the_ID(), $taxonomy, array( 'fields' => 'ids' ));
-       
+
        $exclude = ( empty( $instance['exclude'] ) ) ? array() : explode( ',', $instance['exclude'] );
        if ( count( ( $terms = array_diff( $terms, $exclude ) ) ) == 0 )
             return;
@@ -93,7 +93,7 @@ class APIP_Widget_Related extends WP_Widget {
                       'field' => 'id',
                       'terms' => $terms,
                       'operator' => 'IN'
-                 )                               
+                 )
             ),
             'post_type' => $post_type,
             'posts_per_page' => $instance['related_count'],
@@ -124,9 +124,9 @@ class APIP_Widget_Related extends WP_Widget {
 
 }
 add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Related" );' ) );
-     
 
- class APIP_Widget_Sameday_Post extends WP_Widget {               
+
+ class APIP_Widget_Sameday_Post extends WP_Widget {
 
 
           public function __construct() {
@@ -135,29 +135,29 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_
                     'classname' => 'APIP_Widget_Sameday_Post',
                     'description' =>'显示历史同日文章'
                );
-               parent::__construct( 'APIP_Widget_Sameday_Post', 'APIP历史文章', $widget_ops );   
+               parent::__construct( 'APIP_Widget_Sameday_Post', 'APIP历史文章', $widget_ops );
           }
 
           public function form( $instance ) {
 
                $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP历史文章', 'numbers' => '5', 'padtonum' => 'false' ) );
                $title = $instance['title'];
-               $numbers = $instance['numbers']; 
-               $padtonum = $instance['padtonum']; 
+               $numbers = $instance['numbers'];
+               $padtonum = $instance['padtonum'];
                ?>
                <p>
                     <label for="<?php echo $this->get_field_id( 'title' ); ?>">
                          <?php _e( 'Title' , 'history-post-on-the-day'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo attribute_escape( $title ); ?>" />
                     </label>
-               </p>        
+               </p>
                <p>
                     <label for="<?php echo $this->get_field_id( 'numbers' ); ?>">
                          <?php _e( 'How many posts to show' , 'history-post-on-the-day'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo attribute_escape( $numbers ); ?>" />
-                    </label>               
+                    </label>
                </p><?php
 
           }
-           
+
 
           public function update( $new_instance, $old_instance ) {
 
@@ -168,7 +168,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_
                return $instance;
 
           }
-           
+
 
           public function widget( $args, $instance ) {
 
@@ -178,17 +178,17 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_
                extract( $args, EXTR_SKIP );
                 $number = $instance['numbers'];
                // Thanks to David Gil (github.com/dgilperez) for the custom-post-type fix
-               
+
                global $wpdb;
                 $month = get_the_time('m');
                 $day = get_the_time('j');
                 $id = get_the_ID() ;
-                $sql = "select ID, year(post_date_gmt) as h_year, post_title FROM 
-                        $wpdb->posts WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish' 
-                        AND month(post_date_gmt)='$month' AND day(post_date_gmt)='$day' AND ID != '$id' 
-                        order by post_date_gmt";
+                $sql = "select ID, year(post_date) as h_year, post_title FROM
+                        $wpdb->posts WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish'
+                        AND month(post_date)='$month' AND day(post_date)='$day' AND ID != '$id'
+                        order by post_date LIMIT ". $number;
                 $history_post = $wpdb->get_results($sql);
-               
+
                if ( count( $history_post ) == 0 )
                     return;
 
@@ -210,7 +210,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_
                echo $after_widget;
 
           }
-      
+
      }
 
      add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Sameday_Post" );' ) );
@@ -231,21 +231,21 @@ class APIP_Widget_Recent extends WP_Widget {
 
                $instance = wp_parse_args( (array) $instance, array( 'title' => __( 'Recent Modify' , 'prokuso'), 'numbers' => '5' ) );
                $title = $instance['title'];
-               $numbers = $instance['numbers']; 
+               $numbers = $instance['numbers'];
                ?>
                <p>
                     <label for="<?php echo $this->get_field_id( 'title' ); ?>">
                          <?php _e( 'Title' , 'prokuso'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo attribute_escape( $title ); ?>" />
                     </label>
-               </p>        
+               </p>
                <p>
                     <label for="<?php echo $this->get_field_id( 'numbers' ); ?>">
                          <?php _e( 'How many posts to show' , 'prokuso'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo attribute_escape( $numbers ); ?>" />
-                    </label>               
+                    </label>
                </p><?php
 
           }
-           
+
 
           public function update( $new_instance, $old_instance ) {
                $instance = $old_instance;
@@ -253,7 +253,7 @@ class APIP_Widget_Recent extends WP_Widget {
                $instance['numbers'] = $new_instance['numbers'];
                return $instance;
           }
-           
+
 
           public function widget( $args, $instance ) {
                 extract( $args, EXTR_SKIP );
@@ -265,7 +265,7 @@ class APIP_Widget_Recent extends WP_Widget {
                     'order' => 'DESC',
                     'numberposts' => $number
                ) );
-               
+
                if ( count( $related_posts ) == 0 )
                     return;
 
@@ -287,10 +287,10 @@ class APIP_Widget_Recent extends WP_Widget {
                echo $after_widget;
 
           }
-      
+
      }
 
- add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Recent" );' ) );    
+ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Recent" );' ) );
 
 /**
  * Custom Meta class
@@ -322,19 +322,19 @@ class APIP_Widget_Meta extends WP_Widget {
                     'post_status' => 'publish',
                     'order' => 'ASC',
                     'numberposts' => 5
-               ) ); 
+               ) );
                $spam_count = get_option( 'akismet_spam_count' );
                $spam_count += 9334 ;
                $comments_count = wp_count_comments();
-               if ( $all_posts ) 
+               if ( $all_posts )
                 $firstpost = $all_posts[0];
-               if ( $firstpost ) { 
+               if ( $firstpost ) {
                 $days_ago = round( ( date('U') - get_the_time('U', $firstpost->ID) ) / ( 60*60*24 ) );
                 } ?>
             <li><?php $count_posts = wp_count_posts(); $published_posts = $count_posts->publish; echo number_format_i18n($published_posts); ?> Posts</li>
             <!--? php echo number_format_i18n($comments_count->approved); ?-->
             <!--?php $count_tags = wp_count_terms('post_tag'); echo number_format_i18n($count_tags); ?-->
-            <!--?php echo number_format_i18n($spam_count); ?-->     
+            <!--?php echo number_format_i18n($spam_count); ?-->
             <li>Survived for <?php echo number_format_i18n($days_ago); ?> days </li>
             <li class = "custom-login"><?php wp_loginout(); ?></li>
             </ul>
@@ -358,7 +358,7 @@ class APIP_Widget_Meta extends WP_Widget {
     }
 }
 
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Meta" );' ) ); 
+add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Meta" );' ) );
 
 /**
  * 自定义显示当前页面上filter用class
@@ -441,4 +441,4 @@ class APIP_Widget_Hook_List extends WP_Widget {
 	}
 }
 
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) ); 
+add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) );
