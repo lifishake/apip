@@ -2025,7 +2025,7 @@ function apip_get_dou_content( $id, $type )  {
     //申请缓存
     $cache =  get_transient($cache_key);
     if ($cache)  {
-        if (count($data) == 3){//error
+        if (count($cache) == 3){//error
             delete_transient($cache_key);
             unset($cache);
         } else {
