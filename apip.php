@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.0
+ * Version:     1.27.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -776,7 +776,7 @@ function apip_scripts()
     //8.1
     if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
     {
-    add_filter('the_content', 'apip_code_highlight') ;
+    //add_filter('the_content', 'apip_code_highlight') ;
         $css .= '   pre.prettyprint {
                         display: block;
                         background-color: #333;
@@ -830,7 +830,7 @@ function apip_scripts()
                     li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
                         list-style-type: none;
                         }';
-    wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), false, true);
+    wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20181208", true);
     }
     //8.2
     if ( apip_option_check('apip_lazyload_enable') ) {
