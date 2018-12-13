@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.1
+ * Version:     1.27.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -188,6 +188,9 @@ function apip_init()
     add_action('template_redirect', 'apip_redirect_author');
     //0.11 屏蔽留言class中的作者名
     add_filter('comment_class', 'apip_remove_author_class', 10, 5);
+    //0.12 禁用古腾堡
+    add_filter('use_block_editor_for_post', '__return_false');
+    remove_action( 'wp_enqueue_scripts', 'wp_common_block_scripts_and_styles' );
     /** 01 */
   //颜色目前没有函数
 
