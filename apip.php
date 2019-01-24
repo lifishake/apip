@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.2
+ * Version:     1.27.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1909,7 +1909,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
 
         $headers .= 'Content-type: text/html; charset=UTF-8' . "\r\n";
 
-        $headers .= 'From: 破襪子站长 <webmaster@pewae.com>'. "\r\n";
+        $headers .= 'From: 破襪子站长 <dazhi.pewae@gmail.com>'. "\r\n";
 
         //$headers .= 'Bcc: lifishake@gmail.com'. "\r\n";
 
@@ -1957,7 +1957,7 @@ function apip_dou_book_detail($id) {
     $output .= '<br>出版社 : ' . $data["publisher"] .'<br>出版年 : ';
 
     $output .= $data["pubdate"] ;
-    $output .= '</div></div></div></div></br>';
+    $output .= '</div></div></div></div></br><p></p>';
     return $output;
 }
 
@@ -1978,7 +1978,7 @@ function apip_dou_music_detail($id){
     $output .= implode('/', $authors);
     $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
     $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
-    $output .= '</div></div></div></div></br>';
+    $output .= '</div></div></div></div></br><p></p>';
     return $output;
 }
 
@@ -2013,7 +2013,7 @@ function apip_dou_movie_detail($id) {
     $countries = $data["countries"];
     $output .= implode('/', $countries);
 
-    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div></br>';
+    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div></br><p></p>';
     return $output;
 }
 
@@ -2364,7 +2364,12 @@ function apip_game_detail($atts, $content = null) {
     } else{
         $genres = $data['genres'];
         $genres = wp_list_pluck($genres,'name');
-        $output .= implode('/ ', $genres);
+        if (is_array($genres)){
+            $output .= implode('/ ', $genres);
+        }
+        else{
+            $output .= $genres;
+        }
     }
 
     $output .=' <br>机种: ';
