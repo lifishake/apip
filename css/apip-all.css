@@ -34,6 +34,43 @@ span.suffix {
     float:left;
     margin-right:20px;
 }
+
+.doulist-subject .apiplist-score {
+    margin-right:20px;
+    font-size:60px;
+    max-width: 125px;
+    box-shadow:0 5px 15px -22px #FF783A;
+    position: absolute;
+    right:0;
+    line-height:1;
+}
+
+.apip-score-10 {
+    color:#FF6868;
+}
+
+.apip-score-9,
+.apip-score-8 {
+    color:#FF9068;
+}
+
+.apip-score-7,
+.apip-score-6,
+.apip-score-5 {
+    color:#68FF84;
+}
+
+.apip-score-4,
+.apip-score-3,
+.apip-score-2 {
+    color:#68D4FF;
+}
+
+.apip-score-1,
+.apip-score-0 {
+    color:#C6C6C6;
+}
+
 .title a {
     text-decoration:none!important;
 }

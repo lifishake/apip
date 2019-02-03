@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.3
+ * Version:     1.27.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -552,7 +552,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20180105' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20190203' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -1924,7 +1924,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
 * URL: http://fatesinger.com/74915
 */
 function apip_dou_detail( $atts, $content = null ) {
-    extract( shortcode_atts( array( 'id' => '', 'type' => '' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'' ), $atts ) );
     $items =  explode(',', $id);
     foreach ( $items as $item )  {
         if ($type == 'music') {
@@ -1934,7 +1934,7 @@ function apip_dou_detail( $atts, $content = null ) {
                 $output .= apip_dou_book_detail($item);
         }
         else{ //movie
-                $output .= apip_dou_movie_detail($item);
+                $output .= apip_dou_movie_detail($item, $atts['score']);
         }
     }
     return $output;
@@ -1974,8 +1974,14 @@ function apip_dou_music_detail($id){
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
     $output .= '<div class="abstract">表演者 : ';
     $authors = $data["author"];
-    $authors = wp_list_pluck($authors,'name');
-    $output .= implode('/', $authors);
+    if (count($authors)>1){
+        $authors = wp_list_pluck($authors,'name');
+        $output .= implode('/', $authors);
+    }
+    else {
+        $output .= $authors[0]['name'];
+    }
+
     $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
     $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
     $output .= '</div></div></div></div></br><p></p>';
@@ -1986,32 +1992,155 @@ function apip_dou_music_detail($id){
 * 作用: 显示电影详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
 */
-function apip_dou_movie_detail($id) {
+function apip_dou_movie_detail($id, $score) {
     $data = apip_get_dou_content($id,$type = 'movie');
+    if ( apip_is_local_mode() ){
+        $data = array(
+  "rating"=>array(
+    "max"=>10,
+    "average"=>8.3,
+    "stars"=>"45",
+    "min"=>0
+  ),
+  "reviews_count"=>5736,
+  "wish_count"=>59987,
+  "douban_site"=>"",
+  "year"=>"2018",
+  "images"=>array(
+    "small"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg",
+    "large"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg",
+    "medium"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg"
+  ),
+  "alt"=>"https://movie.douban.com/subject/26861685/",
+  "id"=>"26861685",
+  "mobile_url"=>"https://movie.douban.com/subject/26861685/mobile",
+  "title"=>"红海行动",
+  "do_count"=>null,
+  "share_url"=>"http://m.douban.com/movie/subject/26861685",
+  "seasons_count"=>null,
+  "schedule_url"=>"",
+  "episodes_count"=>null,
+  "countries"=>array(
+    "中国大陆",
+    "香港"
+  ),
+  "genres"=>array(
+    "动作",
+    "战争"
+  ),
+  "collect_count"=>810900,
+  "casts"=>array(
+    array(
+      "alt"=>"https://movie.douban.com/celebrity/1274761/",
+      "avatars"=>array(
+        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg",
+        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg",
+        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg"
+      ),
+      "name"=>"张译",
+      "id"=>"1274761"
+    ),
+    array(
+      "alt"=>"https://movie.douban.com/celebrity/1354442/",
+      "avatars"=>array(
+        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg",
+        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg",
+        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg"
+      ),
+      "name"=>"黄景瑜",
+      "id"=>"1354442"
+    ),
+    array(
+      "alt"=>"https://movie.douban.com/celebrity/1272245/",
+      "avatars"=>array(
+        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg",
+        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg",
+        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg"
+      ),
+      "name"=>"海清",
+      "id"=>"1272245"
+    ),
+    array(
+      "alt"=>"https://movie.douban.com/celebrity/1322949/",
+      "avatars"=>array(
+        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg",
+        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg",
+        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg"
+      ),
+      "name"=>"杜江",
+      "id"=>"1322949"
+    )
+  ),
+  "current_season"=>null,
+  "original_title"=>"红海行动",
+  "summary"=>"中东国家伊维亚共和国发生政变，武装冲突不断升级。刚刚在索马里执行完解救人质任务的海军护卫舰临沂号，受命前往伊维亚执行撤侨任务。舰长高云（张涵予 饰）派出杨锐（张译 饰）率领的蛟龙突击队登陆战区，护送华侨安全撤离。谁知恐怖组织扎卡却将撤侨部队逼入交火区，一场激烈的战斗在所难免。与此同时，法籍华人记者夏楠（海清 饰）正在伊维亚追查威廉·柏森博士贩卖核原料的事实，而扎卡则突袭柏森博士所在的公司，意图抢走核原料。混战中，一名隶属柏森博士公司的中国员工成为人质。为了解救该人质，八名蛟龙队员必须潜入有150名恐怖分子的聚集点，他们用自己的信念和鲜血铸成中国军人顽强不屈的丰碑！\n本片根据也门撤侨事件改编。©豆瓣",
+  "subtype"=>"movie",
+  "directors"=>array(
+    array(
+      "alt"=>"https://movie.douban.com/celebrity/1275075/",
+      "avatars"=>array(
+        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg",
+        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg",
+        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg"
+      ),
+      "name"=>"林超贤",
+      "id"=>"1275075"
+    )
+  ),
+  "comments_count"=>190376,
+  "ratings_count"=>583555,
+  "aka"=>array(
+    "刀锋·红海行动",
+    "Operation Red Sea"
+  )
+);
+    }
     if ( empty($data) ) {
         return '';
     }
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
+    if ( $score !== '' ) {
+        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+    }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["ratings_count"]. '人评价)</span></div>';
     $output .= '<div class="abstract">导演 :';
     $directors = $data["directors"];
-    $directors = wp_list_pluck($directors,'name');
-    $output .= implode('/', $directors);
+    if (count($directors) > 1){
+        $directors = wp_list_pluck($directors,'name');
+        $output .= implode('/', $directors);
+    }
+    else {
+        $output .= $directors[0]["name"];
+    }
+
     $output .= '<br >演员: ';
-
     $casts = $data["casts"];
-    $casts = wp_list_pluck($casts,'name');
-    $output .= implode('/', $casts);
+    if ( count($casts)>1 ) {
+        $casts = wp_list_pluck($casts,'name');
+        $output .= implode('/', $casts);
+    }
+    else {
+        $output .= $casts[0]["name"];
+    }
 
-    $output .= '<br >';
-    $output .= '类型: ';
+    $output .= '<br >类型: ';
     $genres = $data["genres"];
-    $output .= implode('/', $genres);
+    if (count($genres)>1){
+        $output .= implode('/', $genres);
+    }
+    else {
+        $output .= $genres[0];
+    }
 
     $output .= '<br >国家/地区: ';
     $countries = $data["countries"];
-    $output .= implode('/', $countries);
+    if (count($countries)>1){
+        $output .= implode('/', $countries);
+    }
+    else {
+        $output .= $countries[0];
+    }
 
     $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div></br><p></p>';
     return $output;
@@ -2054,6 +2183,7 @@ function apip_get_dou_content( $id, $type )  {
     } else {
         return false;
     }
+
 	return $cache;
 }
 
@@ -2063,6 +2193,10 @@ function apip_get_dou_content( $id, $type )  {
 */
 function apip_get_saved_images($id, $src, $dst )  {
 
+    if ( apip_is_local_mode() )
+    {
+        return APIP_GALLERY_URL.'douban_cache/26752106.jpg';
+    }
     if ( 'douban'===$dst ) {
         $thumb_path = APIP_GALLERY_DIR . 'douban_cache/';
     } else {
@@ -2106,7 +2240,7 @@ function apip_is_local_mode()
 * API格式： https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
 */
 function apip_imbd_detail($atts, $content = null){
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'' ), $atts ) );
     $cache_key = 'imdb_'.$id;
     $content = get_transient($cache_key);
     global $apip_options;
@@ -2176,6 +2310,9 @@ function apip_imbd_detail($atts, $content = null){
     $imdb_url = "https://www.imdb.com/title/".$id;
     $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
+    if ( $score !== '' ) {
+        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+    }
     $output .= '<div class="title"><a href="'. $imdb_url .'" class="cute" target="_blank" rel="external nofollow">'. $cname !== ''?$cname:$content["Title"] .' </a></div>';
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $content["imdbRating"]*10 . '%"></span></span><span class="rating_nums"> ' . $content["imdbRating"]. ' </span><span>(' . $content["imdbVotes"]. '人评价)</span></div>';
     $output .= '<div class="abstract">';
@@ -2347,8 +2484,14 @@ function apip_game_detail($atts, $content = null) {
     } else {
         $output .='发行商: ';
         $publishers = $data["publishers"];
-        $publishers = wp_list_pluck($publishers,'name');
-        $output .= implode('/ ', $publishers);
+        if ( count($publishers)>1 ){
+            $publishers = wp_list_pluck($publishers,'name');
+            $output .= implode('/ ', $publishers);
+        }
+        else {
+            $output .= $publishers[0]['name'];
+        }
+
     }
 
     $output .='<br>发售日期: ';
@@ -2363,12 +2506,12 @@ function apip_game_detail($atts, $content = null) {
         $output .= $genres;
     } else{
         $genres = $data['genres'];
-        $genres = wp_list_pluck($genres,'name');
-        if (is_array($genres)){
+        if ( count($genres) >1 ) {
+            $genres = wp_list_pluck($genres,'name');
             $output .= implode('/ ', $genres);
         }
-        else{
-            $output .= $genres;
+        else {
+            $output .= $genres[0]['name'];
         }
     }
 
@@ -2377,9 +2520,15 @@ function apip_game_detail($atts, $content = null) {
         $output .= $platform;
     }    else {
         $platforms = $data['platforms'];
-        $platforms = wp_list_pluck($platforms,'abbreviation');
-        $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
-        $output .= implode('/ ', $platform_str);
+        if (count($platforms)>1){
+            $platforms = wp_list_pluck($platforms,'abbreviation');
+            $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
+            $output .= implode('/ ', $platform_str);
+        }
+        else {
+            $output .= $platforms[0]['abbreviation'];
+        }
+
     }
 
     if ( $download !== '' ){
