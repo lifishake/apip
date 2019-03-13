@@ -270,10 +270,12 @@ function apip_related_post()
         $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
         $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
         $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
-                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v
+                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v, {$wpdb->posts} pp,
                 WHERE rel.`term_taxonomy_id` IN ({$term_taxonomy_ids_str})
                 AND rel.`term_taxonomy_id` = v.`term_taxonomy_id`
                 AND rel.`object_id` != '$post_id'
+                AND rel.`object_id` = pp.`ID`
+                AND pp.`post_status`  = 'publish'
                 GROUP BY rel.`object_id`
                 ORDER BY `evaluate` DESC,
                 rel.`object_id` DESC";

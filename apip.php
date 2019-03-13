@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.4
+ * Version:     1.27.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2142,7 +2142,7 @@ function apip_dou_movie_detail($id, $score) {
         $output .= $countries[0];
     }
 
-    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div></br><p></p>';
+    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div>';
     return $output;
 }
 
