@@ -1926,6 +1926,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
 function apip_dou_detail( $atts, $content = null ) {
     extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'' ), $atts ) );
     $items =  explode(',', $id);
+    $output = "";
     foreach ( $items as $item )  {
         if ($type == 'music') {
                 $output .= apip_dou_music_detail($item);
@@ -2335,7 +2336,7 @@ function apip_imbd_detail($atts, $content = null){
     $output .= $genres;
 
     $output .= '<br >国家/地区: ';
-    $countries = $data["Country"];
+    $countries = $content["Country"];
     $countries = str_replace(',','/',$countries);
     $output .= $countries;
 
