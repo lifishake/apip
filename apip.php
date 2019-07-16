@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.27.5
+ * Version:     1.28.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -103,6 +103,19 @@ function apip_plugin_activation()
         }
     } else {
         @mkdir ( $thumb_path, '511', true );
+    }
+
+    //8.11
+    $thumb_path = APIP_GALLERY_DIR . "book_cover";
+    if (file_exists ($thumb_path)) {
+        if (! is_writeable ( $thumb_path )) {
+            @chmod ( $thumb_path, '511' );
+        }
+    } else {
+        @mkdir ( $thumb_path, '511', true );
+    }
+    if (!file_exists($thumb_path."/nocover.jpg")) {
+        @copy (APIP_PLUGIN_DIR."img/nocover.jpg", $thumb_path."/nocover.jpg");
     }
 }
 
@@ -359,9 +372,15 @@ function apip_init()
         add_action('admin_init','apip_commentquiz_init');
     }
     //8.9 手动翻译按钮
+    //8.10 特色图主颜色按钮
     if(is_admin()) {
         add_action('admin_menu','apip_optimize_boxes');
+        //增加ajax回调函数
+        add_action( 'wp_ajax_apip_accept_color', 'apip_accept_color' );
+        add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
     }
+    //8.11 自定义图书格式
+    add_shortcode('mybook', 'apip_book_detail');
 
     //0X 暂时不用了
     //三插件冲突
@@ -532,6 +551,8 @@ $options
     8.7     heweather_key                       和风天气/发帖时天气信息
     8.8     apip_commentquiz_enable     回复前答题
     8.9     yandex_translate_key            手动翻译标题的按钮
+    8.10    apip_colorthief_meta_box        取特色图片主色调相关内容
+    8.11    apip_book_detail                手动添加图书信息
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -906,6 +927,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
+    wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), false, true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20181105', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
 }
@@ -1010,8 +1032,8 @@ function apip_quicktags()
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie"]', 'p' );
         QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" ]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
-        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""]', 'p' );
+        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater=""]', 'p' );
     </script>
 <?php
 }
@@ -1931,34 +1953,10 @@ function apip_dou_detail( $atts, $content = null ) {
         if ($type == 'music') {
                 $output .= apip_dou_music_detail($item);
         }
-        else if ($type == 'book') {
-                $output .= apip_dou_book_detail($item);
-        }
         else{ //movie
                 $output .= apip_dou_movie_detail($item, $atts['score']);
         }
     }
-    return $output;
-}
-
-/**
-* 作用: 显示书籍详情的子函数，主要区别是格式和字段。
-* 来源: 大发(bigFa)
-*/
-function apip_dou_book_detail($id) {
-
-    $data = apip_get_dou_content($id,$type = 'book');
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
-    $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
-    $output .= '<div class="abstract">作者 : ';
-    $authors = $data["author"];
-    $output .= implode('/', $authors);
-
-    $output .= '<br>出版社 : ' . $data["publisher"] .'<br>出版年 : ';
-
-    $output .= $data["pubdate"] ;
-    $output .= '</div></div></div></div></br><p></p>';
     return $output;
 }
 
@@ -2168,7 +2166,11 @@ function apip_get_dou_content( $id, $type )  {
     if ( $type == 'movie') {
         $link = "http://api.douban.com/v2/movie/subject/".$id;
     } elseif ( $type == 'book' ) {
-	$link = "http://api.douban.com/v2/book/" . $id;
+        /*$link = "http://api.douban.com/v2/book/" . $id;*/
+        //$link = "http://isbn.szmesoft.com/isbn/query?isbn=" . $id;
+        //$link = "https://www.googleapis.com/books/v1/volumes?q=isbn:" . $id;
+        //20190507因为豆瓣图书API已经关闭，所以废掉了。
+
     } else {
         $link = "https://api.douban.com/v2/music/".$id;
     }
@@ -2301,6 +2303,7 @@ function apip_imbd_detail($atts, $content = null){
     if ( !is_file($img_src) && !apip_is_local_mode() ) {
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
+            $errors= error_get_last();
             return false;
         }
         $image = new Apip_SimpleImage();
@@ -2726,7 +2729,10 @@ function apip_optimize_boxes() {
     remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
     remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
     remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+    //8.9
     add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
+    //8.10
+    add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
 
 /*
@@ -2741,6 +2747,159 @@ function apip_title_translate_meta_box( $post ){
     /*剩下的看js的了*/
 }
 
+//8.10 根据特色图片获取颜色。
+/*
+apip_colorthief_meta_box 函数在admin_menu的钩子里调用。
+*/
+function apip_colorthief_meta_box( $post ){
+    $color_main = "#FFFFFF";
+    $pic_id="";
+    if (has_post_thumbnail()) {
+        $pic_id = get_post_thumbnail_id();
+        $color_main = get_post_meta($pic_id, "apip_main_color", true);
+    }
+    ?>
+    <input type= 'text' name='apip-color-thief-picker' id='thief-color-picker'  value="<?php echo esc_attr( $color_main ); ?>" />
+    <button class="button"  type="button" name="apipcolorthirfbtn" picid="<?php echo $pic_id; ?>" wpnonce="<?php echo wp_create_nonce('apip-color-thief-'.$pic_id);  ?>" >更新颜色</button>   
+    <?php
+    /*剩下的看js的了*/
+}
+
+/**
+ * 作用: 按下按钮后，更新保存图片主颜色的回调函数。
+ *      js在apip-admin.js中。
+ * 来源: 自产
+ * URL:
+ */
+function apip_accept_color(){
+    $pic_id = $_POST['picid'];
+    if ( !wp_verify_nonce($_POST['nonce'],"apip-color-thief-".$pic_id))
+        die();
+    $maincolor = $_POST['maincolor'];
+    delete_post_meta( $pic_id, "apip_main_color", false );
+    add_post_meta($pic_id, "apip_main_color", $maincolor, false);
+}
+
+/**
+ * 作用: 设定特色图片后，更新保存图片主颜色的回调函数。
+ *      js在apip-admin.js中。
+ * 来源: 自产
+ * URL:
+ */
+function apip_new_thumbnail_color(){
+    $pic_id = $_POST['picid'];
+    if (!$pic_id){
+        return;
+    }
+    $maincolor = get_post_meta($pic_id, "apip_main_color", true);
+    if (!$maincolor) {
+        $maincolor = $_POST['maincolor'];
+        delete_post_meta( $pic_id, "apip_main_color", false );
+        add_post_meta($pic_id, "apip_main_color", $maincolor, false);
+    }   
+}
+
+/**
+* 作用: 将UTF8字符串转成16进制带下划线的字符串
+*/
+function apip_mb_str2_hex($str) {
+    $ret="";    
+    for ($i = 0; $i < mb_strlen($str, "utf-8"); $i++)
+    {
+        $char = mb_substr($str, $i, 1, "utf-8");
+
+        for ($j = 0; $j < strlen($char); $j++)
+        {
+            $ret.= "_".(dechex(ord($char[$j])));
+        }
+    }
+    return $ret;
+}
+
+//8.11图书信息
+/**
+* 作用: 201905开始豆瓣图书API不再开放，所以自己造数据格式。从豆瓣拷贝一张缩略图回来。
+*/
+function apip_book_detail($atts, $content = null) {
+    extract( shortcode_atts( array( 'id' => '0', 'name'=>'', 'year'=>'', 'media'=>'', 'publisher'=>'','author'=>'','cover'=>'', 'score'=>'0', 'subtitle'=>'', 'translater'=>'' ), $atts ) );
+    $nourl=0;
+    if( $id == 'x' ) {
+        $id = 'nodata'.apip_mb_str2_hex($name);
+        $nourl = 1;
+    }
+
+    $img_src = APIP_GALLERY_DIR . 'book_cover/'.$id.'.jpg';
+    //拷贝到本地
+    
+    if (  !is_file($img_src) ) {
+        if ($cover) {
+            $img_url = $cover;
+            if (!@copy(htmlspecialchars_decode($img_url), $img_src))
+            {
+                $errors= error_get_last();
+                $img_url = APIP_GALLERY_URL.'book_cover/nocover.jpg';
+            }
+            else {
+                $image = new Apip_SimpleImage();
+                $image->load($img_src);
+                $image->resize(100, 150);
+                $image->save($img_src);
+                $img_url = APIP_GALLERY_URL.'book_cover/'. $id .'.jpg';
+            }
+        }
+        else {
+            $img_url = APIP_GALLERY_URL.'book_cover/nocover.jpg';
+        }
+    } else {
+        $img_url = APIP_GALLERY_URL.'book_cover/'. $id .'.jpg';
+    }
+
+    if (is_ssl()) {
+        $douban_url="http://book.douban.com/subject/".$id."/";
+    } else {
+        $douban_url="https://book.douban.com/subject/".$id."/";
+    }
+    
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
+    if ( $nourl ) {
+        $output .= '<div class="title"><a href="'. $douban_url .'" class="cute" target="_blank" rel="external nofollow">'. $name .'</a></div>';
+    } else {
+        $output .= '<div class="title">'.$name.'</div>';
+    }
+    if ( $score !== '' ) {
+        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+    }
+    
+    $output .= '<div class="abstract">';
+
+    if ( $author !== '' ) {
+        $output .='作者: '.$author.'</br>';
+    }
+
+    if ( $publisher !== '' ) {
+        $output .='出版社: '.$publisher.'</br>';
+    }
+
+    if ( $year !== '' ) {
+        $output .= '年份: '.$year.'</br>';
+    }
+    
+    if ( $subtitle !== '' ) {
+        $output .= '副标题: '.$subtitle.'</br>';
+    } 
+
+    if ( $translater !== '' ) {
+        $output .= '译者: '.$translater.'</br>';
+    } 
+
+    if ($media !=='') {
+        $output .= '媒介: '.$media.'</br>';
+    }
+
+    $output .= '</div></div></div></div></br>';
+    return $output;
+
+}
 /*                                          08终了                             */
 
  /**
