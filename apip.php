@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.1
+ * Version:     1.28.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1869,10 +1869,22 @@ function wch_stripslashes($code){
  * 来源: 自产
  * URL:
  */
+/*
 function apip_code_highlight($content) {
     return preg_replace("/<pre(.*?)>(.*?)<\/pre>/ise",
         "'<pre class=\" prettyprint \">'.wch_stripslashes('$2').'</pre>'", $content);
 }
+*/
+
+function apip_code_highlight($content) {
+    $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
+        // $matches[0]: "foobazbar" 
+        // $matches[1]: "baz" 
+        return '<pre class=" prettyprint ">' . wch_stripslashes($matches[2]) . '</pre>';
+   }, $content);
+   return $result ;
+}
+
 //8.2 Lazyload相关
 /**
  * 作用: lazyload过滤,替换src为data-src
