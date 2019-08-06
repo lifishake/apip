@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.0
+ * Version:     1.28.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -57,7 +57,7 @@ function apip_plugin_activation()
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN CEIL(1024/COUNT(rel.`term_taxonomy_id`))
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 1000
     ELSE 1580 END AS `term_weight`
-    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, `{$wpdb->prefix}terms` WHERE rel.term_taxonomy_id = tax.term_taxonomy_id AND tax.taxonomy in ('category','post_tag') AND `{$wpdb->prefix}terms.term_id` = rel.term_taxonomy_id GROUP BY rel.term_taxonomy_id ORDER BY term_count DESC";
+    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, `{$wpdb->prefix}terms` WHERE rel.term_taxonomy_id = tax.term_taxonomy_id AND tax.taxonomy in ('category','post_tag') AND `{$wpdb->prefix}terms`.`term_id` = rel.term_taxonomy_id GROUP BY rel.term_taxonomy_id ORDER BY term_count DESC";
     $wpdb->query($sql);
 
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
@@ -204,6 +204,9 @@ function apip_init()
     //0.12 禁用古腾堡
     add_filter('use_block_editor_for_post', '__return_false');
     remove_action( 'wp_enqueue_scripts', 'wp_common_block_scripts_and_styles' );
+    //0.13 替换human_time_diff函数中的英文单词
+    add_filter( 'human_time_diff', 'apip_replaced_human_time_diff', 10, 1 );
+
     /** 01 */
   //颜色目前没有函数
 
@@ -800,7 +803,7 @@ function apip_scripts()
     //8.1
     if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
     {
-    //add_filter('the_content', 'apip_code_highlight') ;
+        add_filter('the_content', 'apip_code_highlight') ;
         $css .= '   pre.prettyprint {
                         display: block;
                         background-color: #333;
@@ -1099,6 +1102,16 @@ function apip_remove_author_class( $classes, $class, $comment_ID, $comment, $pos
     $classes = array_diff( $classes, $c_rm );
     return $classes;
 }
+
+//0.13
+//来源:https://www.syshut.com/human_time_diff-function-localization-with-en-wp.html
+function apip_replaced_human_time_diff( $since ) {
+    $search = array( 'years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'mins', 'min', 'seconds', 'second', );
+    $replace = array( '年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '秒', '秒', );
+    $since = str_replace( $search, $replace, $since );
+    return $since;
+}
+
 
 /*                                          00终了                             */
 
@@ -2607,6 +2620,7 @@ function apip_heweather_field()
     if ( empty($value) )
     {
         $check= 0;
+        $str = 'none';
     }
     else if(!empty($value[0]['error']))
     {
@@ -2764,6 +2778,19 @@ function apip_colorthief_meta_box( $post ){
     <?php
     /*剩下的看js的了*/
 }
+
+function save_my_thumbnail_url($post_id) {
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
+        return;
+    if ( !current_user_can( 'edit_post', $post_id ) )
+        return;
+    if ($_POST['my_thumbnail_url'] && !empty($_POST['my_thumbnail_url'])) {
+        update_post_meta($post_id, '_thumbnail_id', $_POST['my_thumbnail_url']);
+}
+    //TODO: Handle empty featured image url.
+}
+
+add_action( 'save_post', 'save_my_thumbnail_url', 99);
 
 /**
  * 作用: 按下按钮后，更新保存图片主颜色的回调函数。
