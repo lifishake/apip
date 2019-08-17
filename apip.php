@@ -2189,7 +2189,7 @@ function apip_get_dou_content( $id, $type )  {
         }
     }
     if ( $type == 'movie') {
-        $link = "http://api.douban.com/v2/movie/subject/".$id;
+        $link = "http://api.douban.com/v2/movie/subject/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
     } elseif ( $type == 'book' ) {
         /*$link = "http://api.douban.com/v2/book/" . $id;*/
         //$link = "http://isbn.szmesoft.com/isbn/query?isbn=" . $id;
