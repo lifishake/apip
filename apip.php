@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.2
+ * Version:     1.28.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -804,6 +804,7 @@ function apip_scripts()
     if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
     {
         add_filter('the_content', 'apip_code_highlight') ;
+        add_filter('the_content', 'so_handle_038', 199, 1);
         $css .= '   pre.prettyprint {
                         display: block;
                         background-color: #333;
@@ -1869,18 +1870,21 @@ function wch_stripslashes($code){
  * 来源: 自产
  * URL:
  */
-/*
-function apip_code_highlight($content) {
-    return preg_replace("/<pre(.*?)>(.*?)<\/pre>/ise",
-        "'<pre class=\" prettyprint \">'.wch_stripslashes('$2').'</pre>'", $content);
-}
-*/
-
 function apip_code_highlight($content) {
     $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
-        // $matches[0]: "foobazbar" 
-        // $matches[1]: "baz" 
         return '<pre class=" prettyprint ">' . wch_stripslashes($matches[2]) . '</pre>';
+   }, $content);
+   return $result ;
+}
+
+function wch_stripaddr($code){
+    $code = str_replace(array("&#038;","&amp;"), "&", $code); 
+    return $code;
+}
+
+function so_handle_038($content) {
+    $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
+        return '<pre class=" prettyprint ">' . wch_stripaddr($matches[2]) . '</pre>';
    }, $content);
    return $result ;
 }
@@ -2234,10 +2238,27 @@ function apip_get_saved_images($id, $src, $dst )  {
     $e = $thumb_path. $id .'.jpg';
 
     if ( !is_file($e) ) {
-        if (!@copy(htmlspecialchars_decode($src), $e))
-        {
-            $errors= error_get_last();
+        $regex="/^(.*)(\.webp)$/";
+        if(preg_match($regex, $src)){
+            $temp = $thumb_path. $id .'.webp';
+            if (!@copy(htmlspecialchars_decode($src), $temp))
+            {
+                $errors= error_get_last();
+                return;
+            }
+            $im = imagecreatefromwebp($temp);
+            imagejpeg($im, $e, 100);
+            imagedestroy($im);
+            @delete($temp);
         }
+        else {
+            if (!@copy(htmlspecialchars_decode($src), $e))
+            {
+                $errors= error_get_last();
+                return;
+            }
+        }
+        
         $image = new Apip_SimpleImage();
         $image->load($e);
         $image->resize(100, 150);
