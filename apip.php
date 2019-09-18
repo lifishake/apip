@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.3
+ * Version:     1.28.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -206,7 +206,9 @@ function apip_init()
     remove_action( 'wp_enqueue_scripts', 'wp_common_block_scripts_and_styles' );
     //0.13 替换human_time_diff函数中的英文单词
     add_filter( 'human_time_diff', 'apip_replaced_human_time_diff', 10, 1 );
-
+    //0.14 改善代码在feed里的表现
+    add_filter('the_content_feed', 'apip_code_highlight') ;
+    add_filter('the_content_feed', 'so_handle_038', 199, 1);
     /** 01 */
   //颜色目前没有函数
 
@@ -1383,16 +1385,10 @@ function apip_get_cavatar($source) {
     if( !apip_option_check('local_gravatar') )
     {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
-        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
+        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
         //gravatar.eqoe.cn
-        $src = array('www.gravatar.com', '0.gravatar.com', '1.gravatar.com', '2.gravatar.com','secure.gravatar.com');
-        if( is_ssl() ){
-            $replace = 'sdn.geekzu.org';
-        }
-        else{
-            $replace = 'fdn.geekzu.org';/*'gravatar.css.network'*/
-        }
-    $source = str_replace( $src, $replace, $source);
+
+    //$source = str_replace( $src, $replace, $source);
         return $source ;
     }
     $time = 1209600; //The time of cache(seconds)
