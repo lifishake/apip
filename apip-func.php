@@ -12,10 +12,16 @@ function apip_get_heweather( $style='')
     $ret = '';
     //$weather_result = array();
     $weather_result = get_post_meta(get_the_ID(),'apip_heweather',false);
-    if ( empty($weather_result) || null==($weather_result[0]['time']))
-    {
-        return $ret;
+    if (empty($weather_result)) {
+        return "NONE";
     }
+    if (!empty($weather_result[0]['error'])){
+        return "ERROR";
+    }
+    if (null==($weather_result[0]['time'])){
+        return "INVALID";
+    }
+
     $then = $weather_result[0]['result'];
     $cond_code = (int)($then['cond_code']);
     switch($cond_code) {
@@ -138,6 +144,10 @@ function apip_get_heweather( $style='')
     if ('notext'!=$style) {
         $ret .= '  <i class="wi wi-thermometer"></i> ';
         $ret .= $then['tmp'].'&#8451;';
+    }
+    if ('plain' == $style)
+    {
+        $ret = $then['cond_txt'].$wind_str.$then['tmp'].'&#8451;';
     }
     return $ret;
 }

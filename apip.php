@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.4
+ * Version:     1.28.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -383,6 +383,7 @@ function apip_init()
         //增加ajax回调函数
         add_action( 'wp_ajax_apip_accept_color', 'apip_accept_color' );
         add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
+        add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
     }
     //8.11 自定义图书格式
     add_shortcode('mybook', 'apip_book_detail');
@@ -934,8 +935,9 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), false, true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20181105', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20190930', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
+    wp_localize_script('apip-js-admin','heweatherkey',$apip_options['heweather_key']);
 }
 
 //0.2
@@ -2625,7 +2627,7 @@ function apip_save_heweather ( $post )
     @curl_close($req);
     if ( !$data )
     {
-        $weather["error"] = error_get_last();
+        return;
     }
     else {
         $cache = json_decode($data,true);
@@ -2680,6 +2682,41 @@ function apip_heweather_retrieve($postid)
         delete_post_meta($postid, 'apip_heweather');
         apip_save_heweather(get_post($postid));
     }
+}
+
+function apip_weather_meta_box( $post ){
+    if (get_post_type($post) != 'post') return false;
+
+    $value = get_post_meta($post->ID, 'apip_heweather', true);
+    if ( empty($value) )
+    {
+        $str = 'none';
+    }
+    else if(!empty($value[0]['error']))
+    {
+        $str = 'error';
+    }
+    else {
+        $str = apip_get_heweather('plain');
+    }
+    ?>
+        <div class="misc-pub-section">
+            <label>保存的和天气：<input type="text" name="heweather" value=" <?php echo $str; ?> "></label><button class="button"  type="button" name="apipweatherbtn" id="<?php echo $post->ID; ?>" wpnonce="<?php echo wp_create_nonce('apip-heweather-'.$post->ID);  ?>" >更新天气</button>
+        </div>
+    <?php
+    /*剩下的看js的了*/
+}
+
+function apip_weather_manual_update(){
+    if ( !wp_verify_nonce($_GET['nonce'],"apip-heweather-".$_GET['id']))
+        die();
+    $post_id = $_GET['id'];
+    $post = get_post($post_id);
+    delete_post_meta($post_id, 'apip_heweather');
+    apip_save_heweather($post);
+    $str = apip_get_heweather();
+    $resp = array('title' => 'here is the title', 'content' => $str) ;
+    wp_send_json($resp) ;
 }
 
 //8.8 留言前答题
@@ -2766,12 +2803,14 @@ apip_optimize_boxes 函数在admin_menu的钩子里调用。
 这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
 */
 function apip_optimize_boxes() {
-    //第二个参数必须传‘pos’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
+    //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
     remove_meta_box('authordiv', 'post', 'normal');//移除[author]，顺道。
     remove_meta_box('trackbacksdiv', 'post', 'normal');//移除[trackback]，顺道。
     remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
     remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
     remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+    //8.7
+    add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
     //8.9
     add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
     //8.10

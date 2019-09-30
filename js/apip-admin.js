@@ -78,6 +78,26 @@ jQuery(document).ready(function($) {
             }
         }
     })
+    $('button[name="apipweatherbtn"]').click(function(){
+        var parent = $(this).parent();
+        var mybar = parent[0].childNodes[1].childNodes[1];
+        var heweatherresult;
+        var data = {
+            action: 'apip_weather_manual_update',
+            nonce: this.getAttribute('wpnonce'),
+            id:this.getAttribute('id'),
+		};
+        $.ajax({
+            url: ajaxurl,
+			type: 'GET',
+            data: data,
+            cache: false,
+			timeout: 10000,
+            success:function(response){
+                mybar.value=response.content;
+            }
+        });
+    })
     $('button[name="apipcolorthirfbtn"]').click(function(){
         var parent = $(this).parent();
         var thisLabel = parent.find('.thumbnail-main-color-label');
