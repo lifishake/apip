@@ -92,10 +92,16 @@ jQuery(document).ready(function($) {
 			type: 'GET',
             data: data,
             cache: false,
-			timeout: 10000,
+            timeout: 10000,
+            beforeSend: function () {
+				mybar.value="获取中...";
+			},
             success:function(response){
                 mybar.value=response.content;
-            }
+            },
+            error: function() {
+                mybar.value="异常";
+			},
         });
     })
     $('button[name="apipcolorthirfbtn"]').click(function(){

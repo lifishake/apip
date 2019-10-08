@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.5
+ * Version:     1.28.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -935,9 +935,8 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), false, true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20190930', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20191008', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
-    wp_localize_script('apip-js-admin','heweatherkey',$apip_options['heweather_key']);
 }
 
 //0.2
@@ -2676,6 +2675,8 @@ function apip_heweather_retrieve($postid)
 
     if ( !current_user_can( 'edit_page', $postid ) ) return false;
 
+    if (!isset($_POST)) return false;
+
     if(empty($postid) || $_POST['post_type'] != 'post' ) return false;
 
     if(isset($_POST['apip_heweather'])){
@@ -2707,14 +2708,23 @@ function apip_weather_meta_box( $post ){
     /*剩下的看js的了*/
 }
 
+/**
+* 作用: 按下button后，触发apip-admin.js里的ajax函数，这里是ajax的回调。
+* 来源: 自作
+* API格式：https://free-api.heweather.com/s6/weather/now?location=地点信息&key=key
+* 资料：https://www.heweather.com/documents/api/s6/weather-now --和风天气时事天气API文档
+* 资料：https://codex.wordpress.org/Post_Status_Transitions -- WP钩子说明
+*/
 function apip_weather_manual_update(){
     if ( !wp_verify_nonce($_GET['nonce'],"apip-heweather-".$_GET['id']))
         die();
+    /*注意，这个时候没有全局的$post！*/
     $post_id = $_GET['id'];
     $post = get_post($post_id);
     delete_post_meta($post_id, 'apip_heweather');
     apip_save_heweather($post);
-    $str = apip_get_heweather();
+    $str = apip_get_heweather('plain', $post_id);
+    /*把取得的字符串再传给ajax的success，让它动态更新天气框*/
     $resp = array('title' => 'here is the title', 'content' => $str) ;
     wp_send_json($resp) ;
 }
@@ -2851,6 +2861,8 @@ function save_my_thumbnail_url($post_id) {
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
         return;
     if ( !current_user_can( 'edit_post', $post_id ) )
+        return;
+    if (!isset($_POST['my_thumbnail_url']))
         return;
     if ($_POST['my_thumbnail_url'] && !empty($_POST['my_thumbnail_url'])) {
         update_post_meta($post_id, '_thumbnail_id', $_POST['my_thumbnail_url']);

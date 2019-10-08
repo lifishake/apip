@@ -7,11 +7,16 @@
  * 来源: 自产
  * URL:
  */
-function apip_get_heweather( $style='')
+function apip_get_heweather( $style='', $post_id=0)
 {
     $ret = '';
     //$weather_result = array();
-    $weather_result = get_post_meta(get_the_ID(),'apip_heweather',false);
+    if ( 0 == $post_id) {
+        $weather_result = get_post_meta(get_the_ID(),'apip_heweather',false);
+    }
+    else {
+        $weather_result = get_post_meta($post_id,'apip_heweather',false);
+    }
     if (empty($weather_result)) {
         return "NONE";
     }
