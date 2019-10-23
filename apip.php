@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.7
+ * Version:     1.28.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -521,6 +521,7 @@ $options
     0.8                                 移除后台的作者列
     0.9                                 版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
     0.A                                 移除无用的钩子
+	0.B 								移除核心升级提示
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable         阻止自动版本
@@ -1116,6 +1117,13 @@ function apip_replaced_human_time_diff( $since ) {
     $since = str_replace( $search, $replace, $since );
     return $since;
 }
+//0.B
+//来源:https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
+function remove_core_updates(){
+	global $wp_version;
+	return (object) array('last_checked'=> time(),'version_checked'=> $wp_version,);
+}
+add_filter('pre_site_transient_update_core','remove_core_updates');
 
 
 /*                                          00终了                             */
