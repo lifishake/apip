@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.6
+ * Version:     1.28.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -51,7 +51,8 @@ function apip_plugin_activation()
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN 1
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 2
     ELSE 3 END AS `term_level`,
-    CASE WHEN tax.`taxonomy` = 'post_tag' THEN FLOOR(4096/COUNT(rel.`term_taxonomy_id`))
+    CASE WHEN COUNT(rel.`term_taxonomy_id`) = 1 THEN 1024
+    WHEN tax.`taxonomy` = 'post_tag' THEN FLOOR(4096/COUNT(rel.`term_taxonomy_id`))
     WHEN tax.`parent` = 0 THEN 10
     WHEN tax.`parent` = 2599 THEN 1024
     WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN CEIL(1024/COUNT(rel.`term_taxonomy_id`))
@@ -1923,7 +1924,7 @@ function apip_keep_quary(){
     }
     $apip_aq->keep_query();
     delete_transient($key);//先删除,否则保存的是上一次的状态
-    set_transient($key, $apip_aq, 600);//更新失效时间
+    set_transient($key, $apip_aq, 900);//更新失效时间
 }
 //8.4 邮件回复
 /**
@@ -2856,21 +2857,6 @@ function apip_colorthief_meta_box( $post ){
     <?php
     /*剩下的看js的了*/
 }
-
-function save_my_thumbnail_url($post_id) {
-    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
-        return;
-    if ( !current_user_can( 'edit_post', $post_id ) )
-        return;
-    if (!isset($_POST['my_thumbnail_url']))
-        return;
-    if ($_POST['my_thumbnail_url'] && !empty($_POST['my_thumbnail_url'])) {
-        update_post_meta($post_id, '_thumbnail_id', $_POST['my_thumbnail_url']);
-}
-    //TODO: Handle empty featured image url.
-}
-
-add_action( 'save_post', 'save_my_thumbnail_url', 99);
 
 /**
  * 作用: 按下按钮后，更新保存图片主颜色的回调函数。

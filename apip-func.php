@@ -247,6 +247,49 @@ function apip_sameday_post()
 }
 
 /**
+ * 作用: 取得历史同日的N篇文章
+ * 来源: 自产
+ * 参数: limit: 条数    order:DESC 新文章在先, ASC 旧文章在先, NEARBY 临近文章在先
+ * 返回值: array('object_id','year') 文章ID和年份
+ */
+function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
+    global $wpdb;
+    $month = get_post_time('m');
+    $day = get_post_time('j');
+    $year = get_post_time('Y');
+    $id = get_the_ID() ;
+    $ret = array();
+    $realorder = $order;
+    if ( "NEARBY" === $order ){
+        $realorder = "DESC";
+    }
+    global $apip_options;
+
+    $sql = "select ID, year(post_date) as h_year, post_title FROM
+            {$wpdb->posts} WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish'
+            AND month(post_date)='{$month}' AND day(post_date)='{$day}' AND ID != '{$id}'
+            order by post_date {$realorder} LIMIT {$limit}";
+    $history_posts = $wpdb->get_results($sql);
+    $rcount = $limit - count( $history_posts ) ;
+    foreach ($history_posts as $post):
+        $temp = array();
+        $temp['object_id'] = $post->ID;
+        $temp['year'] = $post->h_year;
+        if ( empty($ret) ) {
+            array_push($ret, $temp);
+        }
+        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) > abs($year - $post->h_year)){
+            $ta = array($temp);
+            $ret = array_splice($ret,0,0,$ta);
+        }
+        else{
+            array_push($ret, $temp);
+        }
+    endforeach;
+    return $ret;
+}
+
+/**
  * 作用: 显示随机文章
  * 来源: 自产
  * URL:
@@ -260,6 +303,98 @@ function apip_random_post( $exclude, $count = 5 )
     }
     $random_posts = get_posts( array( 'exclude' => array($exclude,1), 'orderby' => 'rand', 'posts_per_page'=>$count ) ) ;
     return $random_posts ;
+}
+
+/**
+ * 作用: 取得关系最紧密的N篇文章
+ * 来源: 自产
+ * 返回值: array('object_id','evaluate') 文章ID和权重分
+ */
+function apip_get_related_posts( $limit = 5,$exclude=NULL) {
+    global $wpdb ;
+    $post_id = get_the_ID() ;
+    $tags = get_the_terms( $post_id, 'post_tag') ;
+    $cats = get_the_terms( $post_id, 'category') ;
+    $ret = array();
+    $exclude_str = " AND rel.`object_id` != '$post_id' ";
+    foreach ($exclude as $ex) {
+        $exclude_str .= " AND rel.`object_id` != '$ex' ";
+    }
+    if (!empty($tags)) {
+        $tags = array_merge( $tags, $cats ) ;
+    }
+    else {
+        $tags = $cats;
+    }
+    
+    if( $tags && count($tags) != 0 )
+    {
+        $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
+        $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
+        $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
+                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v, {$wpdb->posts} pp
+                WHERE rel.`term_taxonomy_id` IN ({$term_taxonomy_ids_str})
+                AND rel.`term_taxonomy_id` = v.`term_taxonomy_id`
+                {$exclude_str}
+                AND rel.`object_id` = pp.`ID`
+                AND pp.`post_status`  = 'publish'
+                GROUP BY rel.`object_id`
+                ORDER BY `evaluate` DESC,
+                rel.`object_id` DESC
+                LIMIT {$limit}";
+        $weights = $wpdb->get_results($query,OBJECT_K);
+        foreach ($weights as $result ):
+            $temp = array();
+            $temp['object_id'] = $result->object_id;
+            $temp['evaluate'] = $result->evaluate;
+            array_push($ret, $temp);
+        endforeach;
+    }
+    if (count( $ret )< $limit) {
+        $random_posts = apip_random_post( get_the_ID(), $limit - count( $ret ) ) ;
+        foreach ($random_posts as $id) :
+            $temp = array();
+            $temp['object_id'] = $id->ID;
+            $temp['evaluate'] = 0;
+            array_push($ret, $temp);
+        endforeach;
+    }
+    return $ret;
+}
+
+function apip_get_post_weigh( $ID=NULL)
+{
+    if ( NULL===$ID ) {
+        $ID = get_the_ID() ;
+    }
+    $tags = get_the_tags($ID);
+    $cats = get_the_category($ID) ;
+    $cats = array_merge($cats,$tags);
+    if ( count($cats) == 0 ){
+        return 0;
+    }
+    $cnt = 0;
+    if ( count($tags) > 0){
+        foreach ($tags as $tag){
+            if ($tag->count <=1){
+                $cnt++;
+            }
+        }
+    }
+    global $wpdb ;
+    $term_taxonomy_ids = wp_list_pluck( $cats, 'term_id' );
+    $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
+    $sql=" SELECT SUM(v.`term_weight`) AS `evaluate`
+            FROM `{$wpdb->prefix}v_taxonomy_summary` v
+            WHERE v.`term_taxonomy_id` IN ( {$term_taxonomy_ids_str})
+            AND v.`term_weight` != 4096 ";
+    $weights = $wpdb->get_results($sql);
+    if ( !empty($weights))
+    {
+        $weight = $weights[0]->evaluate;     
+        return $weight + $cnt*1024;
+    }
+    return 0;
 }
 
 /**
@@ -360,6 +495,44 @@ function apip_get_links()
             LIMIT $limit";
     $result = $wpdb->get_results($sql);
     return $result;
+}
+
+function apip_get_prev_post() {
+    return get_previous_post();
+    //20191010 暂时不调后面
+    if ( !class_exists('Apip_Query') ){
+        return get_previous_post();
+    }
+    $key = 'apip_aq_'.COOKIEHASH;
+    $apip_aq = get_transient($key);
+    if ( false === $apip_aq ){
+        return get_previous_post();
+    }
+    $ID = get_the_ID();
+    $prev_id = $apip_aq->get_prev($ID);
+    if ( !$prev_id ) {
+        return NULL;
+    }
+    return get_post($prev_id);
+}
+
+function apip_get_next_post() {
+    return get_next_post();
+    //20191010 暂时不调后面
+    if ( !class_exists('Apip_Query') ){
+        return get_next_post();
+    }
+    $key = 'apip_aq_'.COOKIEHASH;
+    $apip_aq = get_transient($key);
+    if ( false === $apip_aq ){
+        return get_next_post();
+    }
+    $ID = get_the_ID();
+    $next_id = $apip_aq->get_next($ID);
+    if ( !$next_id ) {
+        return NULL;
+    }
+    return get_post($next_id);
 }
 
 /*

@@ -63,7 +63,7 @@ class Apip_Query{
             if ( $desc != $this->desc ){
                 $this->desc = $desc;
                 $vars = $wp_query->query_vars;
-                $vars['posts_per_page'] = 9999;
+                $vars['posts_per_page'] = -1;
                 $myquery = new WP_Query( $vars );
                 if ($myquery->post_count == 1 && $myquery->max_num_pages == 1)
                     return;
@@ -100,5 +100,41 @@ class Apip_Query{
             $ret['next'] = $this->post_ids[$current_pos + 1];
         }
         return $ret;
+    }
+    public function get_prev( $ID ) {
+        $count = count($this->post_ids);
+        if ( 0 == $count ) {
+            $this->reset();
+            return NULL;
+        }
+        $current_pos = array_search($ID, $this->post_ids) ;
+        if ( FALSE === $current_pos ){
+            $this->reset();
+            return NULL;
+        }
+        if ( $current_pos != 0 ) {
+            return $this->post_ids[$current_pos - 1];
+        }
+        else {
+            return NULL;
+        }
+    }
+    public function get_next( $ID ) {
+        $count = count($this->post_ids);
+        if ( 0 == $count ) {
+            $this->reset();
+            return NULL;
+        }
+        $current_pos = array_search($ID, $this->post_ids) ;
+        if ( FALSE === $current_pos ){
+            $this->reset();
+            return NULL;
+        }
+        if ( $current_pos < $count - 1 ) {
+            return $this->post_ids[$current_pos + 1];
+        }
+        else {
+            return NULL;
+        }
     }
 }
