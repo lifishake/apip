@@ -362,41 +362,6 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
     return $ret;
 }
 
-function apip_get_post_weigh( $ID=NULL)
-{
-    if ( NULL===$ID ) {
-        $ID = get_the_ID() ;
-    }
-    $tags = get_the_tags($ID);
-    $cats = get_the_category($ID) ;
-    $cats = array_merge($cats,$tags);
-    if ( count($cats) == 0 ){
-        return 0;
-    }
-    $cnt = 0;
-    if ( count($tags) > 0){
-        foreach ($tags as $tag){
-            if ($tag->count <=1){
-                $cnt++;
-            }
-        }
-    }
-    global $wpdb ;
-    $term_taxonomy_ids = wp_list_pluck( $cats, 'term_id' );
-    $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
-    $sql=" SELECT SUM(v.`term_weight`) AS `evaluate`
-            FROM `{$wpdb->prefix}v_taxonomy_summary` v
-            WHERE v.`term_taxonomy_id` IN ( {$term_taxonomy_ids_str})
-            AND v.`term_weight` != 4096 ";
-    $weights = $wpdb->get_results($sql);
-    if ( !empty($weights))
-    {
-        $weight = $weights[0]->evaluate;     
-        return $weight + $cnt*1024;
-    }
-    return 0;
-}
-
 /**
  * 作用: 显示相关
  * 来源: 自产

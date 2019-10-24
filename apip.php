@@ -325,9 +325,9 @@ function apip_init()
 
     /** 08 */
     //头部动作，一般用于附加css的加载
-    //add_action('get_header','apip_header_actions') ;
+    add_action('get_header','apip_header_actions') ;
     //8.1 prettyprint脚本激活
-    add_action('get_footer','apip_footer_actions') ;
+    //add_action('get_footer','apip_footer_actions') ;
 
     //8.2 lazyload
     if ( apip_option_check('apip_lazyload_enable') )  {
@@ -511,6 +511,16 @@ function apip_header_actions()
         add_filter('the_content', 'apip_code_highlight') ;
         wp_enqueue_style( 'prettify_style', APIP_PLUGIN_URL . 'css/apip-prettify.css' );
     }*/
+	global $apip_options ;
+    //9.1
+    if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') )
+    {
+?>
+        <script type="text/javascript">
+            window.onload = function(){prettyPrint();};
+        </script>
+<?php
+    }
 }
 
 /*
@@ -1875,6 +1885,7 @@ function apip_archive_page() {
  */
 function apip_footer_actions()
 {
+	/*
     global $apip_options ;
     //9.1
     if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') )
@@ -1884,7 +1895,7 @@ function apip_footer_actions()
             window.onload = function(){prettyPrint();};
         </script>
 <?php
-    }
+    }*/
 }
 /**
  * 作用: 过滤引号
