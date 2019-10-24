@@ -595,7 +595,7 @@ function apip_scripts()
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
          ( is_page('my_links') && apip_option_check('apip_link_enable') ) ||
-         (is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs') ) && apip_option_check('apip_douban_enable') ) ||
+         (is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs') || in_category('nightlygames') ) && apip_option_check('apip_douban_enable') ) ||
          has_tag('testcode') )
     {
         $css .= "   @font-face {
