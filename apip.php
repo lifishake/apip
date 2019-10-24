@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.8
+ * Version:     1.28.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -210,6 +210,11 @@ function apip_init()
     //0.14 改善代码在feed里的表现
     add_filter('the_content_feed', 'apip_code_highlight') ;
     add_filter('the_content_feed', 'so_handle_038', 199, 1);
+    //0.15 移除后台界面的WP版本升级提示
+    add_filter('pre_site_transient_update_core','remove_core_updates');
+    //0.16 修改AdminBar
+    add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
+
     /** 01 */
   //颜色目前没有函数
 
@@ -520,8 +525,12 @@ $options
     0.7                                 调整默认的TagCloud Widget
     0.8                                 移除后台的作者列
     0.9                                 版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
-    0.A                                 移除无用的钩子
-	0.B 								移除核心升级提示
+    0.11                                移除无用的钩子
+    0.12                                禁用古腾堡（5.0）后
+    0.13                                替换human_time_diff函数中的英文单词
+    0.14                                改善代码在feed里的表现
+    0.15                                移除后台界面的WP版本升级提示
+    
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable         阻止自动版本
@@ -1117,13 +1126,29 @@ function apip_replaced_human_time_diff( $since ) {
     $since = str_replace( $search, $replace, $since );
     return $since;
 }
-//0.B
+//0.15
 //来源:https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
 function remove_core_updates(){
 	global $wp_version;
 	return (object) array('last_checked'=> time(),'version_checked'=> $wp_version,);
 }
-add_filter('pre_site_transient_update_core','remove_core_updates');
+
+//0.16 优化AdminBar
+function apip_admin_bar() {
+    global $wp_admin_bar;
+    $wp_admin_bar->remove_menu('wp-logo'); //移除Logo
+    $wp_admin_bar->remove_menu('updates');
+    if (!is_admin()){
+        $wp_admin_bar->remove_menu('customize'); 
+        $wp_admin_bar->add_menu( array(
+            'id' => 'custom_plugin',
+            'title' => 'Plugins',
+            'href' => home_url('/',is_ssl()?'https':'http').'wp-admin/plugins.php',
+            'parent' => 'site-name',
+            )
+        );
+    }
+}
 
 
 /*                                          00终了                             */
@@ -1842,7 +1867,7 @@ function apip_archive_page() {
 /******************************************************************************/
 /*        08.比较复杂的设置                                                      */
 /******************************************************************************/
-//8.1codehighlight相关
+//8.1 codehighlight相关（0.14）
 /**
  * 作用: 在页脚激活JS
  * 来源: 自产
