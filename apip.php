@@ -687,35 +687,39 @@ function apip_scripts()
     //7.1
     if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
     {
-        $tagcloud_link_color = isset( $apip_options['tagcloud_link_color'] ) ? $apip_options['tagcloud_link_color'] : "#ece5df";
-        $tagcloud_bg_color =  isset( $apip_options['tagcloud_bg_color'] ) ? $apip_options['tagcloud_bg_color'] : "#ece5df";
         $link_colors = array();
         $bg_colors = array();
-        $link_colors = apip_get_link_colors($tagcloud_link_color);
-        $bg_colors = apip_get_bg_colors($tagcloud_bg_color);
+        $link_colors = apip_get_link_colors($color_link);
+        $bg_colors = apip_get_bg_colors($color_bg);
         $css .= '   ul.tagcloud, ul.tagcloud li {
                         font-size: 1em;
                         list-style-type: none;
                         padding: 0;
                         margin: 0;
+                        text-align:center;
                     }
                     ul.tagcloud li {
                         display: inline;
                         line-height: 2.8em;
+                        white-space: nowrap;
                     }
                     ul.tagcloud a {
                         text-decoration: none;
-                        margin: 5px;
-                        border-radius: 3px;
+                        border-radius: 100%;
+                        -webkit-box-shadow: none;
+                        box-shadow: none;
+                        margin:-7px;
                     }
-                    ul.tagcloud a:hover {
-                        color:#ea3382;
+                    ul.tagcloud a:hover,
+                    ul.tagcloud a:focus,
+                    ul.tagcloud a:active{
+                        box-shadow:none;
                     }
                     a.tagged1 {
                         font-size: 1.00em;
                         color: '.$link_colors[0].';
                         font-weight: 300;
-                        padding: 6px 11px;
+                        padding: 0.5em;
                         background: '.$bg_colors[0].';
                         }
 
@@ -723,28 +727,28 @@ function apip_scripts()
                         font-size: 1.20em;
                         color: '.$link_colors[1].';
                         font-weight: 400;
-                        padding: 9px 14px;
+                        padding: 1.2em;
                         background:'.$bg_colors[1].';
                         }
                     a.tagged3 {
                         font-size: 1.50em;
                         color'.$link_colors[2].';
                         font-weight: 400;
-                        padding: 12px 17px;
+                        padding: 2.1em;
                         background: '.$bg_colors[2].';
                     }
                     a.tagged4 {
                         font-size: 1.80em;
                         color:'.$link_colors[3].';
                         font-weight: 500;
-                        padding: 15px 20px;
+                        padding: 3.3em;
                         background: '.$bg_colors[3].';
                         }
                     a.tagged5 {
                         font-size: 2.20em;
                         color:'.$link_colors[4].';
                         font-weight: 700;
-                        padding: 18px 23px;
+                        padding: 4.6em;
                         background:'.$bg_colors[4].';
                         }';
     }
@@ -759,7 +763,7 @@ function apip_scripts()
                     .apip-links > li {
                         display: inline;
                         float: left;
-                        line-height: 80px;
+                        margin-bottom: 1em;
                         text-align: center;
                         width: 128px;
                     }
@@ -779,7 +783,6 @@ function apip_scripts()
                     }
 
                     .commenter-link img {
-                        border: 2px solid '.$color_link.';
                         border-radius: 100%;
                     }
         ';

@@ -1,5 +1,15 @@
 <?php
 
+function apip_debug_page($val,$name)
+{
+    if (is_array($val)) {
+        echo '<meta name="apip-debug-name'.$name.'" content="{'.print_r($val, true).'}">';
+    }
+    else{
+        echo '<meta name="apip-debug-name'.$name.'" content="{'.$val.'}">';
+    }
+}
+
 /**
  * 作用: 显示heweather情报所包含的文字。
  * 资源: CSS和图标来自，http://erikflowers.github.io/weather-icons，图标字体使用 SIL OFL 1.1 -  http://scripts.sil.org/OFL授权；
@@ -270,7 +280,6 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
             AND month(post_date)='{$month}' AND day(post_date)='{$day}' AND ID != '{$id}'
             order by post_date {$realorder} LIMIT {$limit}";
     $history_posts = $wpdb->get_results($sql);
-    $rcount = $limit - count( $history_posts ) ;
     foreach ($history_posts as $post):
         $temp = array();
         $temp['object_id'] = $post->ID;
@@ -280,7 +289,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         }
         else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) > abs($year - $post->h_year)){
             $ta = array($temp);
-            $ret = array_splice($ret,0,0,$ta);
+            $ret = array_merge($ta,$ret);
         }
         else{
             array_push($ret, $temp);
@@ -766,8 +775,9 @@ function apip_get_link_colors( $color_str)
     $hsv = rgb2hsv($rgb);
     $ret = array();
     $hsv_temp = $hsv;
+    $h_start = $hsv[1];
     for($i=4; $i>=0; $i--) {
-        if ($hsv[1]<50){
+        if ($h_start<50){
             $hsv_temp[1] = $hsv[1]+$i*8;
         }
         else {
@@ -778,17 +788,20 @@ function apip_get_link_colors( $color_str)
     }
         return $ret;
 }
-function apip_get_bg_colors($color_str,$trancy = 0.6)
+function apip_get_bg_colors($color_str,$trancy = 0.3)
 {
     $rgb = hex2rgb($color_str);
     $hsv = rgb2hsv($rgb);
     $ret = array();
     $hsv_temp = $hsv;
+    $h_start = $hsv[1];
     for($i=4; $i>=0; $i--) {
-        $hsv_temp[1] = $hsv[1]+100-5*$i;
-        if ($hsv_temp[1]>100)
+        if ($h_start >50)
         {
-            $hsv_temp[1] -= 100;
+            $hsv_temp[1] = $hsv[1]-9*$i;
+        }
+        else{
+            $hsv_temp[1] = $hsv[1]+9*$i;
         }
         $rgb_temp = hsv2rgb($hsv_temp);
         $ret[] =sprintf("RGBA(%d,%d,%d,%1.1f)",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2],$trancy) ;
