@@ -30,17 +30,27 @@ span.suffix {
     border-bottom: 1px solid #e7e7e7;
 }
 
+.doulist-subject::before,
 .doulist-subject::after {
     position: absolute;
     content: '\f02e';
-    width: 2em;
-    left: -0.5em;
-    top: -0.5em;
-    height: 2em;
     z-index: 1;
     font-family: 'FontAwesome';
-    color: #b2b7b3;
     font-size: 1.5em;
+    width: 2em;
+    height: 2em;
+}
+
+.doulist-subject::before {   
+    left: -0.4em;
+    top: -0.4em;  
+    color: #f99b01;
+}
+
+.doulist-subject::after {
+    left: -0.5em;
+    top: -0.5em;
+    color: #b2b7b3;    
 }
 
 .doulist-subject .apiplist-post {
