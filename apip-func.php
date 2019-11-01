@@ -287,7 +287,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         if ( empty($ret) ) {
             array_push($ret, $temp);
         }
-        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) > abs($year - $post->h_year)){
+        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - $post->h_year)){
             $ta = array($temp);
             $ret = array_merge($ta,$ret);
         }
