@@ -1970,7 +1970,7 @@ function apip_keep_query(){
         }
         if ($new_tax != $old_tax) {
             $vars = $wp_query->query_vars;
-            $vars['posts_per_page'] = -1;
+            $vars['posts_per_page'] = 9999;
             $myquery = new WP_Query( $vars );
             if ($myquery->post_count == 1 && $myquery->max_num_pages == 1){
                 wp_reset_postdata();
