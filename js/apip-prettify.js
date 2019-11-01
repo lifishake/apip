@@ -31,3 +31,4 @@ h={};g()}};typeof define==="function"&&define.amd&&define("google-code-prettify"
 jQuery(document).ready(function($){
     $('pre').addClass("prettyprint");
 });
+window.onload = function() {prettyPrint();};

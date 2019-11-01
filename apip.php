@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.28.9
+ * Version:     1.29.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -325,7 +325,7 @@ function apip_init()
 
     /** 08 */
     //头部动作，一般用于附加css的加载
-    add_action('get_header','apip_header_actions') ;
+    //add_action('wp_head','apip_header_actions') ;
     //8.1 prettyprint脚本激活
     //add_action('get_footer','apip_footer_actions') ;
 
@@ -337,20 +337,7 @@ function apip_init()
 
     //8.3 结果集内跳转
     if ( apip_option_check('range_jump_enable') ) {
-        if ( !class_exists('Apip_Query') ) {
-            //包跳转类含头文件
-            require_once ( APIP_PLUGIN_DIR.'/class/apip-query.php') ;
-        }
-        $key = 'apip_aq_'.COOKIEHASH;//根据cookie生成标识
-        $apip_aq = get_transient($key);
-        if ( false === $apip_aq ){
-            $apip_aq = new Apip_Query();
-        }
-        if ( !$apip_aq->isloaded() ){
-            $apip_aq->init();
-        }
-        set_transient( $key, $apip_aq, 1200);//保留20分钟
-        add_action('template_redirect', 'apip_keep_quary', 9 );//优先级比直接跳转到文章的略高。
+        add_action('template_redirect', 'apip_keep_query', 9 );
     }
     //8.4 留言邮件回复
     if ( apip_option_check('notify_comment_reply') )  {
@@ -495,32 +482,16 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'run_shortcode' );
         apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'autoembed' );
     }
+
+    //8.3 结果集内跳转的先决条件
+    if( !session_id() )
+    {
+        session_start();
+    }
 }
 
 function apip_header_actions()
 {
-    global $apip_options ;
-    //7.1
-    /*if ( is_page('my-tag-cloud') && $apip_options['apip_tagcloud_enable']== 1 )
-    {
-    wp_enqueue_style( 'apip_tagcloud_style', APIP_PLUGIN_URL . 'css/apip-tagcloud.css' );
-    }*/
-    //8.1
-    /*if ( in_category('code_share') && $apip_options['apip_codehighlight_enable'] == 1 )
-    {
-        add_filter('the_content', 'apip_code_highlight') ;
-        wp_enqueue_style( 'prettify_style', APIP_PLUGIN_URL . 'css/apip-prettify.css' );
-    }*/
-	global $apip_options ;
-    //9.1
-    if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') )
-    {
-?>
-        <script type="text/javascript">
-            window.onload = function(){prettyPrint();};
-        </script>
-<?php
-    }
 }
 
 /*
@@ -624,13 +595,12 @@ function apip_scripts()
 
     //0.1 Ctrl+Enter 提交
     if (comments_open() && is_singular() ) {
-        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), false, true);
+        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20191101", true);
     }
     //07
     if  ( is_singular() && apip_option_check('social_share_enable') )
     {
-        wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), false, true);
-        //wp_enqueue_style( 'apip-style-social', APIP_PLUGIN_URL . 'css/apip-social.css' );
+        wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), "20191101", true);
         $css .= '   #sharebar{
                         clear:both;
                         background: none repeat scroll 0 0 #EEFAF6;
@@ -828,7 +798,7 @@ function apip_scripts()
         wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), false, true);
     }
     //8.1
-    if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
+    if ( /*is_single() &&*/ (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
     {
         add_filter('the_content', 'apip_code_highlight') ;
         add_filter('the_content', 'so_handle_038', 199, 1);
@@ -885,7 +855,7 @@ function apip_scripts()
                     li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
                         list-style-type: none;
                         }';
-    wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20181208", true);
+    wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20191101", true);
     }
     //8.2
     if ( apip_option_check('apip_lazyload_enable') ) {
@@ -896,7 +866,7 @@ function apip_scripts()
                         -o-transition: opacity .3s ease-in;
                         transition: opacity .3s ease-in;
                         }';
-    wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), false, true);
+    wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20191101', true);
     }
 
     //8.5
@@ -958,8 +928,8 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
-    wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), false, true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20191008', true);
+    wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20191101', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
 }
 
@@ -1267,7 +1237,7 @@ function apip_block_open_sans ($styles)
  * URL:
  */
 function redirect_single_post() {
-    if (is_search()||is_archive()) {
+    if (is_search()||is_archive()||is_category()||is_tag()) {
         global $wp_query;
         if ($wp_query->post_count == 1 && $wp_query->max_num_pages == 1) {
             wp_redirect( get_permalink( $wp_query->posts['0']->ID ) );
@@ -1880,7 +1850,7 @@ function apip_archive_page() {
 /******************************************************************************/
 /*        08.比较复杂的设置                                                      */
 /******************************************************************************/
-//8.1 codehighlight相关（0.14）
+//8.1 codehighlight相关（0.14）20191101修正，改为js内自行调用函数
 /**
  * 作用: 在页脚激活JS
  * 来源: 自产
@@ -1900,6 +1870,7 @@ function apip_footer_actions()
 <?php
     }*/
 }
+
 /**
  * 作用: 过滤引号
  * 来源: 自产
@@ -1963,15 +1934,70 @@ function apip_lazyload_filter( $content )
  * 来源: 自产
  * URL:
  */
-function apip_keep_quary(){
-    $key = 'apip_aq_'.COOKIEHASH;
-    $apip_aq = get_transient($key);
-    if ( false === $apip_aq || !$apip_aq->isloaded() ){
-        return;
+function apip_keep_query(){
+    global $wp_query;
+
+    if (isset($_SESSION['last_tax'])) {
+        $old_tax = $_SESSION['last_tax'];
     }
-    $apip_aq->keep_query();
-    delete_transient($key);//先删除,否则保存的是上一次的状态
-    set_transient($key, $apip_aq, 900);//更新失效时间
+    else {
+        $old_tax = '';
+    }
+    $new_tax='';
+    if (is_search()||is_archive()) {
+        if ( is_search() ){
+            $new_tax = "搜索结果:" . get_search_query( false ) ;
+        }
+        else if ( is_category() ){
+            $new_tax = "分类:" . single_cat_title( '', false );
+        }
+        else if ( is_tag() ){
+            $new_tax = "标签:" . single_tag_title( '', false );
+        }
+        else if ( is_year() ) {
+            $new_tax = "年:" . get_the_date('Y') ;
+        }
+        else if ( is_month() ) {
+            $new_tax = "月:" . get_the_date('F Y');
+        }
+        else if ( is_day() ) {
+            $new_tax = "日:" . get_the_date(get_option('date_format'));
+        }
+        else {
+            $_SESSION['last_tax'] = '';
+            $_SESSION['tax_ids'] = array();
+            return;
+        }
+        if ($new_tax != $old_tax) {
+            $vars = $wp_query->query_vars;
+            $myquery = new WP_Query( $vars );
+            if ($myquery->post_count == 1 && $myquery->max_num_pages == 1){
+                wp_reset_postdata();
+                $_SESSION['last_tax'] = '';
+                $_SESSION['tax_ids'] = array();
+                return;
+            }
+            $_SESSION['last_tax'] = $new_tax;
+            $_SESSION['tax_ids'] = wp_list_pluck( $myquery->posts, 'ID' );
+            wp_reset_postdata();
+        }
+    }
+    else if (!is_single()) {
+        $_SESSION['last_tax'] = '';
+        $_SESSION['tax_ids'] = array();
+    }
+    else {
+        //single
+        $ID = get_the_ID();
+        if (empty($old_tax)||!isset($_SESSION['tax_ids'])||count($_SESSION['tax_ids']) == 0) {
+            return;
+        }      
+        if (FALSE===array_search($ID, $_SESSION['tax_ids'])) {
+            $_SESSION['last_tax'] = '';
+            $_SESSION['tax_ids'] = array();
+            return;
+        }
+    }
 }
 //8.4 邮件回复
 /**

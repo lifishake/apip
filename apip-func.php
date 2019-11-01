@@ -472,41 +472,43 @@ function apip_get_links()
 }
 
 function apip_get_prev_post() {
-    return get_previous_post();
-    //20191010 暂时不调后面
-    if ( !class_exists('Apip_Query') ){
+    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids']) && count($_SESSION['tax_ids'])>1) {
+        $ID = get_the_ID();
+        $pos = array_search($ID, $_SESSION['tax_ids']);
+        if ( FALSE === $pos ) {
+            return NULL;
+        }
+        $count = count($_SESSION['tax_ids']);
+        if ( $pos > 0) {
+            return get_post($_SESSION['tax_ids'][$pos -1]);
+        }
+        else {
+            return NULL;
+        }
+    }
+    else{
         return get_previous_post();
-    }
-    $key = 'apip_aq_'.COOKIEHASH;
-    $apip_aq = get_transient($key);
-    if ( false === $apip_aq ){
-        return get_previous_post();
-    }
-    $ID = get_the_ID();
-    $prev_id = $apip_aq->get_prev($ID);
-    if ( !$prev_id ) {
-        return NULL;
-    }
-    return get_post($prev_id);
+    }  
 }
 
 function apip_get_next_post() {
-    return get_next_post();
-    //20191010 暂时不调后面
-    if ( !class_exists('Apip_Query') ){
+    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids'])&& count($_SESSION['tax_ids'])>1) {       
+        $ID = get_the_ID();
+        $pos = array_search($ID, $_SESSION['tax_ids']);
+        if ( FALSE === $pos ) {
+            return NULL;
+        }
+        $count = count($_SESSION['tax_ids']);
+        if ( $pos < $count - 1) {
+            return get_post($_SESSION['tax_ids'][$pos +1]);
+        }
+        else {
+            return NULL;
+        }
+    }
+    else{
         return get_next_post();
-    }
-    $key = 'apip_aq_'.COOKIEHASH;
-    $apip_aq = get_transient($key);
-    if ( false === $apip_aq ){
-        return get_next_post();
-    }
-    $ID = get_the_ID();
-    $next_id = $apip_aq->get_next($ID);
-    if ( !$next_id ) {
-        return NULL;
-    }
-    return get_post($next_id);
+    } 
 }
 
 /*
@@ -520,37 +522,58 @@ function apip_get_post_navagation($args=array()){
         'next_text'          => '%title',
         'screen_reader_text' => '文章导航',
     ) );
-    //只在singlular的时候有效，因为只有singlular的时候能取到get_the_ID()。
-    if ( !is_singular() ){
-        return;
-    }
-    if ( !class_exists('Apip_Query') ){
-        the_post_navigation($args);
-        return;
-    }
-    $key = 'apip_aq_'.COOKIEHASH;
-    $apip_aq = get_transient($key);
-    if ( false === $apip_aq ){
-        the_post_navigation($args);
-        return;
-    }
-    $ID = get_the_ID();
-    $result = $apip_aq->get_neighbor($ID);
-    if ( !$result || !$result['got'] ){
-        the_post_navigation($args);
+    /*
+    'in_same_term'       => false,
+    'excluded_terms'     => '',
+    'taxonomy'           => 'category',
+    这三个参数被忽略。
+     */
+
+    if ( !is_single() ){
         return;
     }
 
-    //仿照the_post_navigation的格式显示
-    if ( $result['prev'] > 0 ) {
-         $previous = str_replace( '%title', get_the_title( $result['prev'] ), $args['prev_text'] );		 		 $previous = '<a href="'.get_permalink( $result['prev'] ).'" rel="prev">'.$previous.'</a>';
-         $previous = '<div class="nav-previous">'.$previous.'</div>';
+    $ID = get_the_ID();
+    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids'])&& count($_SESSION['tax_ids'])>1) {      
+        $pos = array_search($ID, $_SESSION['tax_ids']);
+        if ( FALSE === $pos ) {
+            the_post_navigation($args);
+            return;
+        }
+        $count = count($_SESSION['tax_ids']);
+        $next_id = 0;
+        $previous_id = 0;
+        $previous="";
+        $next="";
+        if ( $pos < $count - 1) {
+            $next_id = $_SESSION['tax_ids'][$pos +1];
+        }
+        if ($pos > 0 ) {
+            $previous_id = $_SESSION['tax_ids'][$pos -1];
+        }
+        if ($previous_id > 0)
+        {
+            $previous = str_replace( '%title', get_the_title( $previous_id ), $args['prev_text'] );
+            $previous = '<a href="'.get_permalink( $previous_id).'" rel="prev">'.$previous.'</a>';
+            $previous = '<div class="nav-previous">'.$previous.'</div>';
+        }
+        if ($next_id > 0)
+        {
+            $next = str_replace( '%title', get_the_title( $next_id ), $args['next_text'] );		 		
+            $next = '<a href="'.get_permalink( $next_id ).'" rel="next">'.$next.'</a>';        
+            $next = '<div class="nav-next">'.$next.'</div>';
+        }
+        if ( "" === $desc = $_SESSION['last_tax'] )
+        {
+            $desc = $args['screen_reader_text'];
+        }
+        $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
+        echo $navigation;
     }
-    if ( $result['next'] > 0 ) {			$next = str_replace( '%title', get_the_title( $result['next'] ), $args['next_text'] );		 		$next = '<a href="'.get_permalink( $result['next'] ).'" rel="next">'.$next.'</a>';        $next = '<div class="nav-next">'.$next.'</div>';
-    }
-    if ( "" === $desc = $apip_aq->get_title() ) $desc = $args['screen_reader_text'];
-    $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
-    echo $navigation;
+    else{
+        the_post_navigation($args);
+        return;
+    } 
 }
 
 /*
