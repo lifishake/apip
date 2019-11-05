@@ -1030,10 +1030,11 @@ function apip_quicktags()
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
-        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie"]', 'p' );
+        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no"]', 'p' );
         QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" ]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""]', 'p' );
+        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
         QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater=""]', 'p' );
     </script>
 <?php
@@ -2047,17 +2048,90 @@ function apip_comment_inserted($comment_id, $comment_object) {
 * URL: http://fatesinger.com/74915
 */
 function apip_dou_detail( $atts, $content = null ) {
-    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no' ), $atts ) );
     $items =  explode(',', $id);
     $output = "";
     foreach ( $items as $item )  {
         if ($type == 'music') {
                 $output .= apip_dou_music_detail($item);
         }
+        if ($type == 'book') {
+            $output .= apip_dou_book_detail($item);
+        }
         else{ //movie
-                $output .= apip_dou_movie_detail($item, $atts['score']);
+                $output .= apip_dou_movie_detail($item, $atts['score'], $atts['nipple']);
         }
     }
+    return $output;
+}
+
+function apip_dou_book_detail($id){
+
+    $data = apip_get_dou_content($id,$type = 'book');
+    if(apip_is_local_mode()) {
+        $data = array(
+            "rating"=>array(
+                    "max"=>10,
+                    "numRaters"=>43,
+                    "average"=>"8.0",
+                    "min"=>0),
+            "subtitle"=>"",
+            "author"=>array("[法]爱德华·路易斯（Édouard Louis）",),
+            "pubdate"=>"2019-9-1",
+            "tags"=>array(array("count"=>32,"name"=>"LGBT","title"=>"LGBT"),
+                    array("count"=>27,"name"=>"法国","title"=>"法国"),
+                    array("count"=>24,"name"=>"外国文学","title"=>"外国文学"),
+                    array("count"=>23,"name"=>"同性","title"=>"同性"),
+                    array("count"=>21,"name"=>"跨性别者成长纪实","title"=>"跨性别者成长纪实"),
+                    array("count"=>15,"name"=>"偏见","title"=>"偏见"),
+                    array("count"=>13,"name"=>"2019","title"=>"2019"),
+                    array("count"=>11,"name"=>"自传","title"=>"自传")),
+            "origin_title"=>"En finir avec Eddy Bellegueule",
+            "image"=>"https=>//img9.doubanio.com\/view\/subject\/m\/public\/s33461756.jpg",
+            "binding"=>"平装",
+            "translator"=>array("赵玥",),
+            "catalog"=>"庇卡底\n相逢\n父亲\n举止\n在学校\n痛苦\n男人的角色\n我母亲早晨的画像\n母亲的生活掠影\n父母的卧室\n女孩、母亲和祖母们的生活\n村里的故事\n良好的教育\n父亲的另一面\n男人们对医疗的抗拒\n希尔万（见证）\n失败与逃避\n棚子事件\n棚子事件之后\n变化\n劳拉\n身体的反抗\n恋爱的终极尝试：萨布丽娜\n恶心\ndi一次尝试逃走\n窄门\n尾声",
+            "pages"=>"200",
+            "images"=>array("small"=>"https=>//img9.doubanio.com\/view\/subject\/s\/public\/s33461756.jpg","large"=>"https=>//img9.doubanio.com\/view\/subject\/l\/public\/s33461756.jpg","medium"=>"https=>//img9.doubanio.com\/view\/subject\/m\/public\/s33461756.jpg"),
+            "alt"=>"https=>\/\/book.douban.com\/subject\/34782539\/",
+            "id"=>"34782539",
+            "publisher"=>"四川文艺出版社",
+            "isbn10"=>"7541154814",
+            "isbn13"=>"9787541154812",
+            "title"=>"艾迪的告别",
+            "url"=>"https=>\/\/api.douban.com\/v2\/book\/34782539",
+            "alt_title"=>"En finir avec Eddy Bellegueule",
+            "author_intro"=>"【作者】\n爱德华•路易斯（Édouard Louis），原名艾迪•贝勒格勒，小说家、编辑，1992年出生在法国，《艾迪的告别》是他首部自传体小说。已出版作品还有《暴力史》《谁杀了我父亲》。\n【译者】\n赵玥，巴黎索邦大学法国文学博士，目前在四川大学外国语学院法语专业任教。翻译的作品有《世界上可爱的东西太多，我不能什么都想要》《局外人》《鼠疫》等。",
+            "summary"=>"开始不会想到逃，因为还不知道存在着别处。\n这是当代法国一个封闭落后的小镇，这里住着一群终日醉醺醺的“硬汉”和疲惫不堪的“悍妇”。这里的孩子全都野蛮生长，男孩以打架、逃学，早早当上硬汉，去工厂做工为荣。女孩则以早早结婚生子为己任。但艾迪却是个天生敏感脆弱的异类，一个“一点不像男孩”的男孩。他的存在，仿佛挑畔了整个家族和小镇的价值观，成了众矢之的。\n日复一日，艾迪默默忍受着同学的霸凌，邻里的讥讽，甚至亲人的嫌弃。所有渴求都得不到回应，每个早晨都在巨大的焦虑中开始胆战心惊的一天……为了摆脱孤立，得到认同，他竭尽全力回归“正轨”，模仿“硬汉”，骂脏话、踢足球、交女友。然而，改变天性就意味着必须泯灭本性，放逐自我，活成另一个人，这甚至比遭受唾弃更令他绝望。最后，似乎只剩下一条几乎行不通的路可走，那就是逃离……",
+            "price"=>"39.80元"
+        );
+    }
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
+    $output .= '<div class="abstract">作者 : ';
+    $authors = $data["author"];
+    if (count($authors)>1){
+        $output .= implode('/', $authors);
+    }
+    else {
+        $output .= $authors[0];
+    }
+
+    $translator = $data["translator"];
+    if (!empty($translator)) {
+        $output .= '<br>译者 : ';
+        if (count($translator)>1){
+            $output .= implode('/', $translator);
+        }
+        else {
+            $output .= $translator[0];
+        }
+    }
+
+    $output .= '<br>出版年份 : ' . $data["pubdate"] ;
+    $output .= '<br>出版社 : ' . $data["publisher"] ;
+    $output .= '<br>定价 : '. $data["price"];
+    $output .= '</div></div></div></div>';
     return $output;
 }
 
@@ -2084,7 +2158,7 @@ function apip_dou_music_detail($id){
 
     $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
     $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
-    $output .= '</div></div></div></div></br><p></p>';
+    $output .= '</div></div></div></div>';
     return $output;
 }
 
@@ -2092,7 +2166,7 @@ function apip_dou_music_detail($id){
 * 作用: 显示电影详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
 */
-function apip_dou_movie_detail($id, $score) {
+function apip_dou_movie_detail($id, $score, $nipple) {
     $data = apip_get_dou_content($id,$type = 'movie');
     if ( apip_is_local_mode() ){
         $data = array(
@@ -2265,9 +2339,9 @@ function apip_get_dou_content( $id, $type )  {
         }
     }
     if ( $type == 'movie') {
-        $link = "http://api.douban.com/v2/movie/subject/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        $link = "https://api.douban.com/v2/movie/subject/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
     } elseif ( $type == 'book' ) {
-        /*$link = "http://api.douban.com/v2/book/" . $id;*/
+        $link = "https://api.douban.com/v2/book/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
         //$link = "http://isbn.szmesoft.com/isbn/query?isbn=" . $id;
         //$link = "https://www.googleapis.com/books/v1/volumes?q=isbn:" . $id;
         //20190507因为豆瓣图书API已经关闭，所以废掉了。
