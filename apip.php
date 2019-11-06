@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.0
+ * Version:     1.29.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -571,7 +571,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20190203' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20191106' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -762,8 +762,7 @@ function apip_scripts()
     {
         $css .= '   .apip-no-disp {
                         display: none !important;
-                        -webkit-transition: display 0.2s;
-                        transition: display 0.2s;
+
                     }
                     .achp-expanded {
                         font-weight:800;
@@ -795,7 +794,7 @@ function apip_scripts()
                         display: inherit;
                     }';
 
-        wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), false, true);
+        wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), "20191105", true);
     }
     //8.1
     if ( /*is_single() &&*/ (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
@@ -2056,16 +2055,16 @@ function apip_dou_detail( $atts, $content = null ) {
                 $output .= apip_dou_music_detail($item);
         }
         if ($type == 'book') {
-            $output .= apip_dou_book_detail($item);
+            $output .= apip_dou_book_detail($item, $score);
         }
         else{ //movie
-                $output .= apip_dou_movie_detail($item, $atts['score'], $atts['nipple']);
+                $output .= apip_dou_movie_detail($item, $score, $nipple);
         }
     }
     return $output;
 }
 
-function apip_dou_book_detail($id){
+function apip_dou_book_detail($id, $score){
 
     $data = apip_get_dou_content($id,$type = 'book');
     if(apip_is_local_mode()) {
@@ -2106,8 +2105,15 @@ function apip_dou_book_detail($id){
             "price"=>"39.80元"
         );
     }
+    if (!$data) {
+        return '';
+    }
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    if ( $score !== '' ) {
+        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+    }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
+    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
     $output .= '<div class="abstract">作者 : ';
     $authors = $data["author"];
     if (count($authors)>1){
@@ -2144,6 +2150,9 @@ function apip_dou_music_detail($id){
     $data = apip_get_dou_content($id,$type = 'music');
 
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    if ( $score !== '' ) {
+        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+    }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
     $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
     $output .= '<div class="abstract">表演者 : ';
@@ -2272,7 +2281,11 @@ function apip_dou_movie_detail($id, $score, $nipple) {
     if ( empty($data) ) {
         return '';
     }
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
+    $meta_class='';
+    if ("yes"===$nipple) {
+        $meta_class="has-nipple";
+    }
+    $output = '<div class="apip-item"><div class="mod  '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
     if ( $score !== '' ) {
         $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
     }

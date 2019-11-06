@@ -41,6 +41,17 @@ span.suffix {
     height: 2em;
 }
 
+.mod.has-nipple::after {
+    background: url(../img/bottle.png) right top no-repeat;
+    position: absolute;
+    content:'';
+    z-index: 1;
+    right:0.5em;
+    bottom: 15%;
+    width:50px;
+    height:50px;
+}
+
 .doulist-subject::before {   
     left: -0.4em;
     top: -0.4em;  
@@ -69,24 +80,24 @@ span.suffix {
 }
 
 .apip-score-10 {
-    color:#FF6868;
+    color:#CC6666;
 }
 
 .apip-score-9,
 .apip-score-8 {
-    color:#FF9068;
+    color:#CC7F66;
 }
 
 .apip-score-7,
 .apip-score-6,
 .apip-score-5 {
-    color:#68FFAE;
+    color:#66CC93;
 }
 
 .apip-score-4,
 .apip-score-3,
 .apip-score-2 {
-    color:#68D4FF;
+    color:#66A8CC;
 }
 
 .apip-score-1,

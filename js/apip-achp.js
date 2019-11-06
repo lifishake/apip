@@ -6,11 +6,11 @@ function jqueryArchiveListAnimate(clickedObj, listElements)
     var symbol = '';
     if ( listElements.hasClass("apip-no-disp") ) {
         symbol = '[-]';
-        listElements.slideToggle(500);
+        listElements.fadeToggle(500);
     }
     else {
         symbol = '[+]';
-        listElements.fadeToggle(300);
+        listElements.fadeToggle(500);
     }
     listElements.toggleClass("apip-no-disp");
     jQuery(clickedObj).children(".achp-symbol").html(symbol);
