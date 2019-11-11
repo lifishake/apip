@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.1
+ * Version:     1.29.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1971,6 +1971,7 @@ function apip_keep_query(){
         if ($new_tax != $old_tax) {
             $vars = $wp_query->query_vars;
             $vars['posts_per_page'] = 9999;
+            $vars['order'] = "ASC";
             $myquery = new WP_Query( $vars );
             if ($myquery->post_count == 1 && $myquery->max_num_pages == 1){
                 wp_reset_postdata();
