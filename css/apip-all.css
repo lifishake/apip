@@ -69,6 +69,10 @@ span.suffix {
     margin-right:20px;
 }
 
+.doulist-subject .apiplist-post a img {
+    box-shadow: 0 0 0 2px #666;
+}
+
 .doulist-subject .apiplist-score {
     margin-right:20px;
     font-size:60px;
