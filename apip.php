@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.2
+ * Version:     1.29.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -214,7 +214,8 @@ function apip_init()
     add_filter('pre_site_transient_update_core','remove_core_updates');
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
-
+    //0.17 针对苹果旧设备的访问，减少404
+    add_filter('site_icon_meta_tags','apip_add_apple_touch_icon');
     /** 01 */
   //颜色目前没有函数
 
@@ -280,7 +281,7 @@ function apip_init()
 
     /** 04 */
   //4.1 头像替换
-    add_filter('get_avatar','apip_get_cavatar');
+    //add_filter('get_avatar','apip_get_cavatar');
     //4.2 表情链接替换
     add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
 
@@ -399,7 +400,7 @@ register_deactivation_hook( __FILE__, 'apip_disable_embeds_flush_rewrite_rules' 
 
 add_action('init', 'apip_init_actions', 999);
 function apip_init_actions()
-{
+{   
     //0.A    移除没用的过滤项
     remove_action('wp_head','feed_links_extra',3);
     remove_action('wp_head','rsd_link' );
@@ -488,6 +489,7 @@ function apip_init_actions()
     {
         session_start();
     }
+    include (plugin_dir_path( __FILE__ )."apip-local-debug.php");
 }
 
 function apip_header_actions()
@@ -571,7 +573,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20191106' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20191220' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -1131,6 +1133,15 @@ function apip_admin_bar() {
             )
         );
     }
+}
+
+//0.17 减少苹果旧设备访问的404错误
+function apip_add_apple_touch_icon($meta_tags){
+    $icon_180 = get_site_icon_url( 180 );
+	if ( $icon_180 ) {
+		$meta_tags[] = sprintf( '<link rel="apple-touch-icon" href="%s" />', esc_url( $icon_180 ) );
+    }
+    return $meta_tags;
 }
 
 
@@ -2010,10 +2021,14 @@ function apip_keep_query(){
 function apip_comment_inserted($comment_id, $comment_object) {
     if ($comment_object->comment_parent > 0) {
         global $apip_options;
-        $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
+        /*$color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
         $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
         $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
-        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
+        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";*/
+        $color_border = "#EDEFED";
+        $color_link = "#660000";
+        $color_font = "#000200";
+        $color_bg = "#F7FCF8";
         $comment_parent = get_comment($comment_object->comment_parent);
         $bg_head = '<div style="border:3px solid '.$color_border.'; border-radius: 5px; margin: 1em 2em; background:'.$color_bg.'; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: '.$color_font.'; ">' ;
         $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed '.$color_border.'; border-radius: 5px;">' ;
@@ -2048,15 +2063,18 @@ function apip_comment_inserted($comment_id, $comment_object) {
 * URL: http://fatesinger.com/74915
 */
 function apip_dou_detail( $atts, $content = null ) {
-    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no', 'link'=>'', 'count'=>'0', 'total'=>'0', 'alt'=>'', 'series'=>'' ), $atts ) );
     $items =  explode(',', $id);
     $output = "";
     foreach ( $items as $item )  {
         if ($type == 'music') {
                 $output .= apip_dou_music_detail($item);
         }
-        if ($type == 'book') {
+        else if ($type == 'book') {
             $output .= apip_dou_book_detail($item, $score);
+        }
+        else if ($type == 'book_series') {
+            $output .= apip_dou_book_list($item, $link, $count, $total, $alt, $series);
         }
         else{ //movie
                 $output .= apip_dou_movie_detail($item, $score, $nipple);
@@ -2068,43 +2086,8 @@ function apip_dou_detail( $atts, $content = null ) {
 function apip_dou_book_detail($id, $score){
 
     $data = apip_get_dou_content($id,$type = 'book');
-    if(apip_is_local_mode()) {
-        $data = array(
-            "rating"=>array(
-                    "max"=>10,
-                    "numRaters"=>43,
-                    "average"=>"8.0",
-                    "min"=>0),
-            "subtitle"=>"",
-            "author"=>array("[法]爱德华·路易斯（Édouard Louis）",),
-            "pubdate"=>"2019-9-1",
-            "tags"=>array(array("count"=>32,"name"=>"LGBT","title"=>"LGBT"),
-                    array("count"=>27,"name"=>"法国","title"=>"法国"),
-                    array("count"=>24,"name"=>"外国文学","title"=>"外国文学"),
-                    array("count"=>23,"name"=>"同性","title"=>"同性"),
-                    array("count"=>21,"name"=>"跨性别者成长纪实","title"=>"跨性别者成长纪实"),
-                    array("count"=>15,"name"=>"偏见","title"=>"偏见"),
-                    array("count"=>13,"name"=>"2019","title"=>"2019"),
-                    array("count"=>11,"name"=>"自传","title"=>"自传")),
-            "origin_title"=>"En finir avec Eddy Bellegueule",
-            "image"=>"https=>//img9.doubanio.com\/view\/subject\/m\/public\/s33461756.jpg",
-            "binding"=>"平装",
-            "translator"=>array("赵玥",),
-            "catalog"=>"庇卡底\n相逢\n父亲\n举止\n在学校\n痛苦\n男人的角色\n我母亲早晨的画像\n母亲的生活掠影\n父母的卧室\n女孩、母亲和祖母们的生活\n村里的故事\n良好的教育\n父亲的另一面\n男人们对医疗的抗拒\n希尔万（见证）\n失败与逃避\n棚子事件\n棚子事件之后\n变化\n劳拉\n身体的反抗\n恋爱的终极尝试：萨布丽娜\n恶心\ndi一次尝试逃走\n窄门\n尾声",
-            "pages"=>"200",
-            "images"=>array("small"=>"https=>//img9.doubanio.com\/view\/subject\/s\/public\/s33461756.jpg","large"=>"https=>//img9.doubanio.com\/view\/subject\/l\/public\/s33461756.jpg","medium"=>"https=>//img9.doubanio.com\/view\/subject\/m\/public\/s33461756.jpg"),
-            "alt"=>"https=>\/\/book.douban.com\/subject\/34782539\/",
-            "id"=>"34782539",
-            "publisher"=>"四川文艺出版社",
-            "isbn10"=>"7541154814",
-            "isbn13"=>"9787541154812",
-            "title"=>"艾迪的告别",
-            "url"=>"https=>\/\/api.douban.com\/v2\/book\/34782539",
-            "alt_title"=>"En finir avec Eddy Bellegueule",
-            "author_intro"=>"【作者】\n爱德华•路易斯（Édouard Louis），原名艾迪•贝勒格勒，小说家、编辑，1992年出生在法国，《艾迪的告别》是他首部自传体小说。已出版作品还有《暴力史》《谁杀了我父亲》。\n【译者】\n赵玥，巴黎索邦大学法国文学博士，目前在四川大学外国语学院法语专业任教。翻译的作品有《世界上可爱的东西太多，我不能什么都想要》《局外人》《鼠疫》等。",
-            "summary"=>"开始不会想到逃，因为还不知道存在着别处。\n这是当代法国一个封闭落后的小镇，这里住着一群终日醉醺醺的“硬汉”和疲惫不堪的“悍妇”。这里的孩子全都野蛮生长，男孩以打架、逃学，早早当上硬汉，去工厂做工为荣。女孩则以早早结婚生子为己任。但艾迪却是个天生敏感脆弱的异类，一个“一点不像男孩”的男孩。他的存在，仿佛挑畔了整个家族和小镇的价值观，成了众矢之的。\n日复一日，艾迪默默忍受着同学的霸凌，邻里的讥讽，甚至亲人的嫌弃。所有渴求都得不到回应，每个早晨都在巨大的焦虑中开始胆战心惊的一天……为了摆脱孤立，得到认同，他竭尽全力回归“正轨”，模仿“硬汉”，骂脏话、踢足球、交女友。然而，改变天性就意味着必须泯灭本性，放逐自我，活成另一个人，这甚至比遭受唾弃更令他绝望。最后，似乎只剩下一条几乎行不通的路可走，那就是逃离……",
-            "price"=>"39.80元"
-        );
+    if(apip_is_debug_mode()) {
+        $data = apip_debug_book_content();
     }
     if (!$data) {
         return '';
@@ -2139,6 +2122,80 @@ function apip_dou_book_detail($id, $score){
     $output .= '<br>出版社 : ' . $data["publisher"] ;
     $output .= '<br>定价 : '. $data["price"];
     $output .= '</div></div></div></div>';
+    return $output;
+}
+
+/**
+* 作用: 显示丛书中所有书籍的子函数，输入参是丛书id。
+* 来源: 自创
+*/
+function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
+    $books = array();
+    $serial_name='';
+    if ( 'x' == $id ) {
+        $series_ids = explode(',', $series);
+        $count = min($count, count($series_ids));
+        $i = 0;
+        for($i =0; $i<$count; ++$i) {
+            if (apip_is_debug_mode()) {
+                $books[$i] = apip_debug_book_content();
+            }else{
+                $books[$i] = apip_get_dou_content($series_ids[$i],$type = 'book');
+            }
+            
+            if (!$books[$i]) {
+                $count--;
+                $i--;
+                continue;
+            }
+        }
+        if (0==$count){
+            return '';
+        }
+        $serial_name = $alt;
+    }
+    else{
+        if (apip_is_debug_mode()) {
+            $cache = apip_debug_book_series_content();
+        } else {
+            $cache = apip_get_dou_content($id,$type = 'book_series');
+        }
+        if (!$cache) {
+            return '';
+        }
+        $link = "//book.douban.com/series/".$id;
+        $count = $cache['count'];
+        $total = $cache['total'];
+        $books = $cache['books'];
+        $serial_name = $books[0]['series']['title'];
+    }
+    $start_time = $books[0]['pubdate'];
+    $finish_time = $books[$count-1]['pubdate'];
+    if (''==$start_time) {
+        $start_time = '未知';
+    }
+    if (''==$finish_time) {
+        $finish_time = '未知';
+    }
+    $pubdate = $start_time." 至 ".$finish_time;
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject">';
+    $output .= '<div class="title"><a href="'. $link .'" class="cute" target="_blank" rel="external nofollow">'. $serial_name .'</a></div>';
+    $output .= '<div class="abstract-left">作者 : ';
+    $authors = $books[0]["author"];
+    if (count($authors)>1){
+        $output .= implode('/', $authors);
+    }
+    else {
+        $output .= $authors[0];
+    }
+    $output .= '<br>出版年份 : ' . $pubdate ;
+    $output .= '<br>出版社 : ' . $books[0]["publisher"] ;
+    $output .= '<br> 全套共（ ' . $total ." ）册";
+    $output .= '</div>';//abstract
+    for ($i = 0; $i < $count; ++$i ) {
+        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
+    }
+    $output .= '</div></div></div>';
     return $output;
 }
 
@@ -2178,106 +2235,8 @@ function apip_dou_music_detail($id){
 */
 function apip_dou_movie_detail($id, $score, $nipple) {
     $data = apip_get_dou_content($id,$type = 'movie');
-    if ( apip_is_local_mode() ){
-        $data = array(
-  "rating"=>array(
-    "max"=>10,
-    "average"=>8.3,
-    "stars"=>"45",
-    "min"=>0
-  ),
-  "reviews_count"=>5736,
-  "wish_count"=>59987,
-  "douban_site"=>"",
-  "year"=>"2018",
-  "images"=>array(
-    "small"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg",
-    "large"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg",
-    "medium"=>"http://img3.doubanio.com/view/photo/s_ratio_poster/public/p2514119443.jpg"
-  ),
-  "alt"=>"https://movie.douban.com/subject/26861685/",
-  "id"=>"26861685",
-  "mobile_url"=>"https://movie.douban.com/subject/26861685/mobile",
-  "title"=>"红海行动",
-  "do_count"=>null,
-  "share_url"=>"http://m.douban.com/movie/subject/26861685",
-  "seasons_count"=>null,
-  "schedule_url"=>"",
-  "episodes_count"=>null,
-  "countries"=>array(
-    "中国大陆",
-    "香港"
-  ),
-  "genres"=>array(
-    "动作",
-    "战争"
-  ),
-  "collect_count"=>810900,
-  "casts"=>array(
-    array(
-      "alt"=>"https://movie.douban.com/celebrity/1274761/",
-      "avatars"=>array(
-        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg",
-        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg",
-        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1489386626.47.jpg"
-      ),
-      "name"=>"张译",
-      "id"=>"1274761"
-    ),
-    array(
-      "alt"=>"https://movie.douban.com/celebrity/1354442/",
-      "avatars"=>array(
-        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg",
-        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg",
-        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1515637640.69.jpg"
-      ),
-      "name"=>"黄景瑜",
-      "id"=>"1354442"
-    ),
-    array(
-      "alt"=>"https://movie.douban.com/celebrity/1272245/",
-      "avatars"=>array(
-        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg",
-        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg",
-        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p49399.jpg"
-      ),
-      "name"=>"海清",
-      "id"=>"1272245"
-    ),
-    array(
-      "alt"=>"https://movie.douban.com/celebrity/1322949/",
-      "avatars"=>array(
-        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg",
-        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg",
-        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1502100680.45.jpg"
-      ),
-      "name"=>"杜江",
-      "id"=>"1322949"
-    )
-  ),
-  "current_season"=>null,
-  "original_title"=>"红海行动",
-  "summary"=>"中东国家伊维亚共和国发生政变，武装冲突不断升级。刚刚在索马里执行完解救人质任务的海军护卫舰临沂号，受命前往伊维亚执行撤侨任务。舰长高云（张涵予 饰）派出杨锐（张译 饰）率领的蛟龙突击队登陆战区，护送华侨安全撤离。谁知恐怖组织扎卡却将撤侨部队逼入交火区，一场激烈的战斗在所难免。与此同时，法籍华人记者夏楠（海清 饰）正在伊维亚追查威廉·柏森博士贩卖核原料的事实，而扎卡则突袭柏森博士所在的公司，意图抢走核原料。混战中，一名隶属柏森博士公司的中国员工成为人质。为了解救该人质，八名蛟龙队员必须潜入有150名恐怖分子的聚集点，他们用自己的信念和鲜血铸成中国军人顽强不屈的丰碑！\n本片根据也门撤侨事件改编。©豆瓣",
-  "subtype"=>"movie",
-  "directors"=>array(
-    array(
-      "alt"=>"https://movie.douban.com/celebrity/1275075/",
-      "avatars"=>array(
-        "small"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg",
-        "large"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg",
-        "medium"=>"http://img3.doubanio.com/view/celebrity/s_ratio_celebrity/public/p1372934445.18.jpg"
-      ),
-      "name"=>"林超贤",
-      "id"=>"1275075"
-    )
-  ),
-  "comments_count"=>190376,
-  "ratings_count"=>583555,
-  "aka"=>array(
-    "刀锋·红海行动",
-    "Operation Red Sea"
-  )
-);
+    if ( apip_is_debug_mode() ){
+        $data = apip_debug_movie_content();
     }
     if ( empty($data) ) {
         return '';
@@ -2359,9 +2318,13 @@ function apip_get_dou_content( $id, $type )  {
         //$link = "http://isbn.szmesoft.com/isbn/query?isbn=" . $id;
         //$link = "https://www.googleapis.com/books/v1/volumes?q=isbn:" . $id;
         //20190507因为豆瓣图书API已经关闭，所以废掉了。
+        //20191219早已复活，使用搜索得到的API KEY
 
-    } else {
-        $link = "https://api.douban.com/v2/music/".$id;
+    } elseif ($type == 'book_series') {
+        $link = "https://api.douban.com/v2/book/series/".$id."books?apikey=0df993c66c0c636e29ecbb5344252a4a";
+    }
+    else {
+        $link = "https://api.douban.com/v2/music/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
     }
     delete_transient($cache_key);
     //从链接取数据
@@ -2385,7 +2348,7 @@ function apip_get_dou_content( $id, $type )  {
 */
 function apip_get_saved_images($id, $src, $dst )  {
 
-    if ( apip_is_local_mode() )
+    if ( apip_is_debug_mode() )
     {
         return APIP_GALLERY_URL.'douban_cache/26752106.jpg';
     }
@@ -2434,7 +2397,8 @@ function apip_get_saved_images($id, $src, $dst )  {
     return $url;
 }
 
-function apip_is_local_mode()
+
+function apip_is_debug_mode()
 {
     if (isset( $_SERVER['REDIRECT_TMP'] ) && strpos($_SERVER['REDIRECT_TMP'], "xampp" ) > 0)
     {
@@ -2454,33 +2418,8 @@ function apip_imbd_detail($atts, $content = null){
     $content = get_transient($cache_key);
     global $apip_options;
     //for local debug
-    if ( apip_is_local_mode() ){
-        $content = array(
-            "Title"=>"Guardians of the Galaxy Vol. 2",
-            "Year"=>"2017",
-            "Rated"=>"PG-13",
-            "Released"=>"05 May 2017",
-            "Runtime"=>"136 min",
-            "Genre"=>"Action, Adventure, Sci-Fi",
-            "Director"=>"James Gunn",
-            "Writer"=>"James Gunn, Dan Abnett (based on the Marvel comics by), Andy Lanning (based on the Marvel comics by), Steve Englehart (Star-lord created by), Steve Gan (Star-lord created by), Jim Starlin (Gamora and Drax created by), Stan Lee (Groot created by), Larry Lieber (Groot created by), Jack Kirby (Groot created by), Bill Mantlo (Rocket Raccoon created by), Keith Giffen (Rocket Raccoon created by), Steve Gerber (Howard the Duck created by), Val Mayerik (Howard the Duck created by)",
-            "Actors"=>"Chris Pratt, Zoe Saldana, Dave Bautista, Vin Diesel",
-            "Plot"=>"The Guardians must fight to keep their newfound family together as they unravel the mystery of Peter Quill's true parentage.",
-            "Language"=>"English",
-            "Country"=>"USA, New Zealand, Canada",
-            "Awards"=>"6 wins & 13 nominations.",
-            "Poster"=>"https://images-na.ssl-images-amazon.com/images/M/MV5BMTg2MzI1MTg3OF5BMl5BanBnXkFtZTgwNTU3NDA2MTI@._V1_SX300.jpg",
-            "Metascore"=>"67",
-            "imdbRating"=>"7.8",
-            "imdbVotes"=>"301,863",
-            "imdbID"=>"tt3896198",
-            "Type"=>"movie",
-            "DVD"=>"22 Aug 2017",
-            "BoxOffice"=>"$389,804,217",
-            "Production"=>"Walt Disney Pictures",
-            "Website"=>"https=>//marvel.com/guardians",
-            "Response"=>"True"
-        );
+    if ( apip_is_debug_mode() ){
+        $content = apip_debug_imdb_content();
     }
     if ( !$content )
     {
@@ -2506,7 +2445,7 @@ function apip_imbd_detail($atts, $content = null){
     }
     $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
     $img_url = $content['Poster'];
-    if ( !is_file($img_src) && !apip_is_local_mode() ) {
+    if ( !is_file($img_src) && !apip_is_debug_mode() ) {
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
             $errors= error_get_last();
