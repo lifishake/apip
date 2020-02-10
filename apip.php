@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.3
+ * Version:     1.29.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -216,6 +216,8 @@ function apip_init()
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
     //0.17 针对苹果旧设备的访问，减少404
     add_filter('site_icon_meta_tags','apip_add_apple_touch_icon');
+    //0.18 汉字标题自动转utf8字符
+    add_filter( 'sanitize_title', 'apip_slug', 1 );
     /** 01 */
   //颜色目前没有函数
 
@@ -281,7 +283,7 @@ function apip_init()
 
     /** 04 */
   //4.1 头像替换
-    //add_filter('get_avatar','apip_get_cavatar');
+    add_filter('get_avatar','apip_get_cavatar');
     //4.2 表情链接替换
     add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
 
@@ -756,8 +758,7 @@ function apip_scripts()
 
                     .commenter-link img {
                         border-radius: 100%;
-                    }
-        ';
+                    }';
     }
     //7.3
     if ( (is_page('archive')||is_page('archives')) && apip_option_check('apip_archive_enable') )
@@ -1032,7 +1033,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no"]', 'p' );
-        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" ]', 'p' );
+        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no"]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""]', 'p' );
         QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
@@ -1142,6 +1143,42 @@ function apip_add_apple_touch_icon($meta_tags){
 		$meta_tags[] = sprintf( '<link rel="apple-touch-icon" href="%s" />', esc_url( $icon_180 ) );
     }
     return $meta_tags;
+}
+
+//0.18 处理汉字slug
+//来源： https://so-wp.com/plugins/
+function apip_slug($strTitle) {
+    $PSL = get_option( 'slug_length', 100 );
+
+	$origStrTitle = $strTitle;
+    $containsChinese = false;
+    $strRet = "";
+    
+    if ( get_bloginfo( 'charset' ) !="UTF-8" ) {
+		$strTitle = iconv( get_bloginfo( "charset" ), "UTF-8", $strTitle );
+    }
+    
+    if ( $PSL>0 ) {
+		$strTitle=substr( $strTitle, 0, $PSL );
+    }
+    for ( $i = 0; $i < strlen( $strTitle ); $i++ ) {
+		$byte1st = ord( substr( $strTitle, $i, 1 ) );
+		if ( $byte1st >= 224 && $byte1st <= 239 ) {
+            $containsChinese = true;
+            $aChinese = sprintf("%02x%02x%02x-", ord(substr( $strTitle, $i, 1 )), ord(substr( $strTitle, $i+1, 1 )), ord(substr( $strTitle, $i+2, 1 )));
+            $i += 2;
+            $strRet .= $aChinese;
+		} else {
+			$strRet .= preg_replace( '/[^A-Za-z0-9\-]/', '$0', chr( $byte1st ) );
+		}
+	}
+
+	if (! $containsChinese ) { 
+		$strRet = $origStrTitle;
+    }
+    $strRet = rtrim($strRet, "-");
+
+	return $strRet;
 }
 
 
@@ -1414,16 +1451,17 @@ function apip_get_cavatar($source) {
     if( !apip_option_check('local_gravatar') )
     {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
-        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
+        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
+        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cn.gravatar.com/gravatar', $source);
         //gravatar.eqoe.cn
 
     //$source = str_replace( $src, $replace, $source);
         return $source ;
     }
-    $time = 1209600; //The time of cache(seconds)
+    $time = 864000; //The time of cache(seconds)
     preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
-    $abs =APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1].'.jpg';
-    $url = home_url('/','https').'wp-content/gallery/gravatar_cache/'.$tmp[1].'.jpg';
+    $abs =APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
+    $url = home_url('/','https').'wp-content/gallery/gravatar_cache/'.$tmp[1];
     $default =  home_url('/','https').'wp-content/gallery/gravatar_cache/'.'default.png';
     if (!is_file($abs)||(time()-filemtime($abs))>$time){
         copy('http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G',$abs);
@@ -2060,7 +2098,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
 /**
 * 作用: 显示来自豆瓣的音乐/电影/图书信息。本函数是主入口。
 * 来源: 大发(bigFa)
-* URL: http://fatesinger.com/74915
+* URL: https://github.com/bigfa/wp-douban
 */
 function apip_dou_detail( $atts, $content = null ) {
     extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no', 'link'=>'', 'count'=>'0', 'total'=>'0', 'alt'=>'', 'series'=>'' ), $atts ) );
@@ -2164,7 +2202,7 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
             return '';
         }
         $link = "//book.douban.com/series/".$id;
-        $count = $cache['count'];
+        $count = min($cache['count'],$cache['total']);
         $total = $cache['total'];
         $books = $cache['books'];
         $serial_name = $books[0]['series']['title'];
@@ -2193,7 +2231,7 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
     $output .= '<br> 全套共（ ' . $total ." ）册";
     $output .= '</div>';//abstract
     for ($i = 0; $i < $count; ++$i ) {
-        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
+        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
     }
     $output .= '</div></div></div>';
     return $output;
@@ -2321,7 +2359,8 @@ function apip_get_dou_content( $id, $type )  {
         //20191219早已复活，使用搜索得到的API KEY
 
     } elseif ($type == 'book_series') {
-        $link = "https://api.douban.com/v2/book/series/".$id."books?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        $link = "https://api.douban.com/v2/book/series/".$id."/books?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        apip_debug_page($link,'douapi');
     }
     else {
         $link = "https://api.douban.com/v2/music/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
@@ -2413,7 +2452,7 @@ function apip_is_debug_mode()
 * API格式： https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
 */
 function apip_imbd_detail($atts, $content = null){
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'' ), $atts ) );
+    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'','nipple'=>'no' ), $atts ) );
     $cache_key = 'imdb_'.$id;
     $content = get_transient($cache_key);
     global $apip_options;
@@ -2443,6 +2482,10 @@ function apip_imbd_detail($atts, $content = null){
             return false;
         }
     }
+    $meta_class='';
+    if ("yes"===$nipple) {
+        $meta_class="has-nipple";
+    }
     $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
     $img_url = $content['Poster'];
     if ( !is_file($img_src) && !apip_is_debug_mode() ) {
@@ -2458,12 +2501,12 @@ function apip_imbd_detail($atts, $content = null){
     }
     $imdb_url = "https://www.imdb.com/title/".$id;
     $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
+    $output = '<div class="apip-item"><div class="mod '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
     if ( $score !== '' ) {
         $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
     }
     $output .= '<div class="title"><a href="'. $imdb_url .'" class="cute" target="_blank" rel="external nofollow">'. $cname !== ''?$cname:$content["Title"] .' </a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $content["imdbRating"]*10 . '%"></span></span><span class="rating_nums"> ' . $content["imdbRating"]. ' </span><span>(' . $content["imdbVotes"]. '人评价)</span></div>';
+    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . floatval($content["imdbRating"])*10 . '%"></span></span><span class="rating_nums"> ' . $content["imdbRating"]. ' </span><span>(' . $content["imdbVotes"]. '人评价)</span></div>';
     $output .= '<div class="abstract">';
 
     if ( $cname !== '' ) {
