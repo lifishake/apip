@@ -340,6 +340,7 @@ function apip_get_heweather( $style='', $post_id=0)
             break;
         case	305	:	//	小雨
         case	306	:	//	中雨
+        case    399 :   //  雨
             $w_icon_str = 'wi-rain';
             break;
         case	307	:	//	大雨

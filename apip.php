@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.4
+ * Version:     1.29.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -106,18 +106,6 @@ function apip_plugin_activation()
         @mkdir ( $thumb_path, '511', true );
     }
 
-    //8.11
-    $thumb_path = APIP_GALLERY_DIR . "book_cover";
-    if (file_exists ($thumb_path)) {
-        if (! is_writeable ( $thumb_path )) {
-            @chmod ( $thumb_path, '511' );
-        }
-    } else {
-        @mkdir ( $thumb_path, '511', true );
-    }
-    if (!file_exists($thumb_path."/nocover.jpg")) {
-        @copy (APIP_PLUGIN_DIR."img/nocover.jpg", $thumb_path."/nocover.jpg");
-    }
 }
 
 /*插件反激活*/
@@ -381,8 +369,6 @@ function apip_init()
         add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
         add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
     }
-    //8.11 自定义图书格式
-    add_shortcode('mybook', 'apip_book_detail');
 
     //0X 暂时不用了
     //三插件冲突
@@ -554,7 +540,6 @@ $options
     8.8     apip_commentquiz_enable     回复前答题
     8.9     yandex_translate_key            手动翻译标题的按钮
     8.10    apip_colorthief_meta_box        取特色图片主色调相关内容
-    8.11    apip_book_detail                手动添加图书信息
 99.     local_widget_enable                  自定义小工具
     99.1    local_definition_count           自定义widget条目数
 */
@@ -575,7 +560,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20191220' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20200312' );
     $css = '';
     //所有要加载fontAowsem的情况
     if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
@@ -873,7 +858,7 @@ function apip_scripts()
 
     //8.5
      if (is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs') || has_tag('testcode')) && apip_option_check('apip_douban_enable') ) {
-         $css .= '.allstarlight:before,.allstardark:before {
+         $css .= '.allstarlight:before,.allstardark:before,.allstarfill:before,.allstarlack:before {
                       font-family:"FontAwesome" !important;
                       font-size:inherit;
                       font-style:normal;
@@ -882,8 +867,11 @@ function apip_scripts()
                       -moz-osx-font-smoothing: grayscale;
                     }
                     .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;}
-                    .allstarlight{position:absolute;left:0;color:#f99b01;height:18px;overflow:hidden}
-                    .allstarlight:before{content:"\f005\f005\f005\f005\f005"}
+                    .allstarlight,.allstarfill,.allstarlack{position:absolute;left:0;height:18px;overflow:hidden}
+                    .allstarlight{color:#f99b01;}
+                    .allstarfill{color:#F75C02;}
+                    .allstarlack{color:#A0EFB5;}
+                    .allstarlight:before,.allstarfill:before,.allstarlack:before{content:"\f005\f005\f005\f005\f005"}
                     .allstardark:before{content:"\f006\f006\f006\f006\f006"} ';
      }
      //8.8
@@ -1130,6 +1118,16 @@ function apip_admin_bar() {
             'id' => 'custom_plugin',
             'title' => 'Plugins',
             'href' => home_url('/',is_ssl()?'https':'http').'wp-admin/plugins.php',
+            'parent' => 'site-name',
+            )
+        );
+    }
+    else {
+        //后台增加直接跳到草稿
+        $wp_admin_bar->add_menu( array(
+            'id' => 'custom_drafts',
+            'title' => 'Drafts',
+            'href' => home_url('/',is_ssl()?'https':'http').'wp-admin/edit.php?post_status=draft&post_type=post',
             'parent' => 'site-name',
             )
         );
@@ -2131,11 +2129,36 @@ function apip_dou_book_detail($id, $score){
         return '';
     }
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    $delta_num = 0.0;
     if ( $score !== '' ) {
-        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+        $score_num = floatval($score);
+        $delta_num = $score_num - floatval($data["rating"]["average"]);
+        $pls=$delta_num>0?'+':'';
+        if ($delta_num>0.4) {
+            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
+        }
+        else if ($delta_num<-0.4) {
+            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
+        }
+        else {
+            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
+        }
+        
+    }
+    else  {
+        $score_num = floatval($data["rating"]["average"]);
     }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
+
+        //$output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
+
+    if ($delta_num>=0) {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
+    }
+    else {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
+    }
+    
     $output .= '<div class="abstract">作者 : ';
     $authors = $data["author"];
     if (count($authors)>1){
@@ -2247,10 +2270,31 @@ function apip_dou_music_detail($id){
 
     $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
     if ( $score !== '' ) {
-        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+        $score_num = floatval($score);
+        $delta_num = $score_num - floatval($data["rating"]["average"]);
+        $pls=$delta_num>0?'+':'';
+        if ($delta_num>0.4) {
+            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
+        }
+        else if ($delta_num<-0.4) {
+            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
+        }
+        else {
+            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
+        }
+        
+    }
+    else  {
+        $score_num = floatval($data["rating"]["average"]);
     }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
+    //$output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $score_num*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
+    if ($delta_num>=0) {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
+    }
+    else {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
+    }
     $output .= '<div class="abstract">表演者 : ';
     $authors = $data["author"];
     if (count($authors)>1){
@@ -2284,11 +2328,32 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $meta_class="has-nipple";
     }
     $output = '<div class="apip-item"><div class="mod  '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
+    $delta_num = 0.0;
     if ( $score !== '' ) {
-        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+        $score_num = floatval($score);
+        $delta_num = $score_num - floatval($data["rating"]["average"]);
+        $pls=$delta_num>0?'+':'';
+        if ($delta_num>0.4) {
+            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
+        }
+        else if ($delta_num<-0.4) {
+            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
+        }
+        else {
+            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
+        }
+        
+    }
+    else  {
+        $score_num = floatval($data["rating"]["average"]);
     }
     $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["ratings_count"]. '人评价)</span></div>';
+    if ($delta_num>=0) {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
+    }
+    else {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span>/div>';
+    }
     $output .= '<div class="abstract">导演 :';
     $directors = $data["directors"];
     if (count($directors) > 1){
@@ -2349,21 +2414,27 @@ function apip_get_dou_content( $id, $type )  {
         return $cache;
         }
     }
+    global $apip_options;
+    $apikey = $apip_options['douban_key'];
+    if( empty($apikey) )
+    {
+        return false;
+    }
     if ( $type == 'movie') {
-        $link = "https://api.douban.com/v2/movie/subject/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        $link = "https://api.douban.com/v2/movie/subject/".$id."?apikey=".$apikey;
     } elseif ( $type == 'book' ) {
-        $link = "https://api.douban.com/v2/book/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        $link = "https://api.douban.com/v2/book/".$id."?apikey=".$apikey;
         //$link = "http://isbn.szmesoft.com/isbn/query?isbn=" . $id;
         //$link = "https://www.googleapis.com/books/v1/volumes?q=isbn:" . $id;
         //20190507因为豆瓣图书API已经关闭，所以废掉了。
         //20191219早已复活，使用搜索得到的API KEY
 
     } elseif ($type == 'book_series') {
-        $link = "https://api.douban.com/v2/book/series/".$id."/books?apikey=0df993c66c0c636e29ecbb5344252a4a";
-        apip_debug_page($link,'douapi');
+        $link = "https://api.douban.com/v2/book/series/".$id."/books?apikey=".$apikey."&count=36";
+        //apip_debug_page($link,'douapi');
     }
     else {
-        $link = "https://api.douban.com/v2/music/".$id."?apikey=0df993c66c0c636e29ecbb5344252a4a";
+        $link = "https://api.douban.com/v2/music/".$id."?apikey=".$apikey;
     }
     delete_transient($cache_key);
     //从链接取数据
@@ -2502,12 +2573,34 @@ function apip_imbd_detail($atts, $content = null){
     $imdb_url = "https://www.imdb.com/title/".$id;
     $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
     $output = '<div class="apip-item"><div class="mod '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
+    $delta_num = 0.0;
+    $pls='';
     if ( $score !== '' ) {
-        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
+        $score_num = floatval($score);
+        $delta_num = $score_num - floatval($content["imdbRating"]);
+        $pls=$delta_num>0?'+':'';
+        if ($delta_num>0.4) {
+            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
+        }
+        else if ($delta_num<-0.4) {
+            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
+        }
+        else {
+            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
+        }        
     }
+    else {
+        $score_num = floatval($score);
+    }
+
     $output .= '<div class="title"><a href="'. $imdb_url .'" class="cute" target="_blank" rel="external nofollow">'. $cname !== ''?$cname:$content["Title"] .' </a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . floatval($content["imdbRating"])*10 . '%"></span></span><span class="rating_nums"> ' . $content["imdbRating"]. ' </span><span>(' . $content["imdbVotes"]. '人评价)</span></div>';
-    $output .= '<div class="abstract">';
+    if ($delta_num>=0) {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($content["imdbRating"])*10). '%"></span></span><span class="rating_nums">('.$content["imdbRating"].'+'.$delta_num. ') </span></div>';
+    }
+    else {
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($content["imdbRating"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$content["imdbRating"].$delta_num. ') </span></div>';
+    }
+        $output .= '<div class="abstract">';
 
     if ( $cname !== '' ) {
         $output .='中文名: '.$cname.'<br>';
@@ -3053,90 +3146,6 @@ function apip_mb_str2_hex($str) {
     return $ret;
 }
 
-//8.11图书信息
-/**
-* 作用: 201905开始豆瓣图书API不再开放，所以自己造数据格式。从豆瓣拷贝一张缩略图回来。
-*/
-function apip_book_detail($atts, $content = null) {
-    extract( shortcode_atts( array( 'id' => '0', 'name'=>'', 'year'=>'', 'media'=>'', 'publisher'=>'','author'=>'','cover'=>'', 'score'=>'0', 'subtitle'=>'', 'translater'=>'' ), $atts ) );
-    $nourl=0;
-    if( $id == 'x' ) {
-        $id = 'nodata'.apip_mb_str2_hex($name);
-        $nourl = 1;
-    }
-
-    $img_src = APIP_GALLERY_DIR . 'book_cover/'.$id.'.jpg';
-    //拷贝到本地
-    
-    if (  !is_file($img_src) ) {
-        if ($cover) {
-            $img_url = $cover;
-            if (!@copy(htmlspecialchars_decode($img_url), $img_src))
-            {
-                $errors= error_get_last();
-                $img_url = APIP_GALLERY_URL.'book_cover/nocover.jpg';
-            }
-            else {
-                $image = new Apip_SimpleImage();
-                $image->load($img_src);
-                $image->resize(100, 150);
-                $image->save($img_src);
-                $img_url = APIP_GALLERY_URL.'book_cover/'. $id .'.jpg';
-            }
-        }
-        else {
-            $img_url = APIP_GALLERY_URL.'book_cover/nocover.jpg';
-        }
-    } else {
-        $img_url = APIP_GALLERY_URL.'book_cover/'. $id .'.jpg';
-    }
-
-    if (is_ssl()) {
-        $douban_url="http://book.douban.com/subject/".$id."/";
-    } else {
-        $douban_url="https://book.douban.com/subject/".$id."/";
-    }
-    
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
-    if ( $nourl ) {
-        $output .= '<div class="title"><a href="'. $douban_url .'" class="cute" target="_blank" rel="external nofollow">'. $name .'</a></div>';
-    } else {
-        $output .= '<div class="title">'.$name.'</div>';
-    }
-    if ( $score !== '' ) {
-        $output .= '<div class="apiplist-score apip-score-'.$score.'">'.$score.'</div>';
-    }
-    
-    $output .= '<div class="abstract">';
-
-    if ( $author !== '' ) {
-        $output .='作者: '.$author.'</br>';
-    }
-
-    if ( $publisher !== '' ) {
-        $output .='出版社: '.$publisher.'</br>';
-    }
-
-    if ( $year !== '' ) {
-        $output .= '年份: '.$year.'</br>';
-    }
-    
-    if ( $subtitle !== '' ) {
-        $output .= '副标题: '.$subtitle.'</br>';
-    } 
-
-    if ( $translater !== '' ) {
-        $output .= '译者: '.$translater.'</br>';
-    } 
-
-    if ($media !=='') {
-        $output .= '媒介: '.$media.'</br>';
-    }
-
-    $output .= '</div></div></div></div></br>';
-    return $output;
-
-}
 /*                                          08终了                             */
 
  /**
