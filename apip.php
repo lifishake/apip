@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.5
+ * Version:     1.29.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -206,6 +206,8 @@ function apip_init()
     add_filter('site_icon_meta_tags','apip_add_apple_touch_icon');
     //0.18 汉字标题自动转utf8字符
     add_filter( 'sanitize_title', 'apip_slug', 1 );
+    //0.19 autop与shortcode冲突问题
+    add_filter( 'the_content', 'apip_fix_shortcodes');
     /** 01 */
   //颜色目前没有函数
 
@@ -870,7 +872,7 @@ function apip_scripts()
                     .allstarlight,.allstarfill,.allstarlack{position:absolute;left:0;height:18px;overflow:hidden}
                     .allstarlight{color:#f99b01;}
                     .allstarfill{color:#F75C02;}
-                    .allstarlack{color:#A0EFB5;}
+                    .allstarlack{color:RGBA(196,191,188,.5);}
                     .allstarlight:before,.allstarfill:before,.allstarlack:before{content:"\f005\f005\f005\f005\f005"}
                     .allstardark:before{content:"\f006\f006\f006\f006\f006"} ';
      }
@@ -1020,12 +1022,12 @@ function apip_quicktags()
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
-        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no"]', 'p' );
-        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no"]', 'p' );
-        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"]', 'p' );
-        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""]', 'p' );
-        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"]', 'p' );
-        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater=""]', 'p' );
+        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no"][/mydouban]', 'p' );
+        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no"][/myimdb]', 'p' );
+        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"][/mydouban]', 'p' );
+        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""][/mygame]', 'p' );
+        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"][/mydouban]', 'p' );
+        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater=""][/mybook]', 'p' );
     </script>
 <?php
 }
@@ -1179,7 +1181,17 @@ function apip_slug($strTitle) {
 	return $strRet;
 }
 
-
+//0.19 给短代码擦屁股
+//来源：https://www.wpexplorer.com/clean-up-wordpress-shortcode-formatting/
+function apip_fix_shortcodes($content){   
+    $array = array (
+        '<p>[' => '[', 
+        ']</p>' => ']', 
+        ']<br />' => ']'
+    );
+    $content = strtr($content, $array);
+    return $content;
+}
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -2170,7 +2182,7 @@ function apip_dou_book_detail($id, $score){
 
     $translator = $data["translator"];
     if (!empty($translator)) {
-        $output .= '<br>译者 : ';
+        $output .= '<br/>译者 : ';
         if (count($translator)>1){
             $output .= implode('/', $translator);
         }
@@ -2179,9 +2191,9 @@ function apip_dou_book_detail($id, $score){
         }
     }
 
-    $output .= '<br>出版年份 : ' . $data["pubdate"] ;
-    $output .= '<br>出版社 : ' . $data["publisher"] ;
-    $output .= '<br>定价 : '. $data["price"];
+    $output .= '<br/>出版年份 : ' . $data["pubdate"] ;
+    $output .= '<br/>出版社 : ' . $data["publisher"] ;
+    $output .= '<br/>定价 : '. $data["price"];
     $output .= '</div></div></div></div>';
     return $output;
 }
@@ -2249,9 +2261,9 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
     else {
         $output .= $authors[0];
     }
-    $output .= '<br>出版年份 : ' . $pubdate ;
-    $output .= '<br>出版社 : ' . $books[0]["publisher"] ;
-    $output .= '<br> 全套共（ ' . $total ." ）册";
+    $output .= '<br/>出版年份 : ' . $pubdate ;
+    $output .= '<br/>出版社 : ' . $books[0]["publisher"] ;
+    $output .= '<br/> 全套共（ ' . $total ." ）册";
     $output .= '</div>';//abstract
     for ($i = 0; $i < $count; ++$i ) {
         $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
@@ -2305,8 +2317,8 @@ function apip_dou_music_detail($id){
         $output .= $authors[0]['name'];
     }
 
-    $output .= '<br>年份 : ' . $data["attrs"]["pubdate"][0] ;
-    $output .= '<br>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
+    $output .= '<br/>年份 : ' . $data["attrs"]["pubdate"][0] ;
+    $output .= '<br/>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
     $output .= '</div></div></div></div>';
     return $output;
 }
@@ -2352,7 +2364,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
     }
     else {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span>/div>';
+        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
     }
     $output .= '<div class="abstract">导演 :';
     $directors = $data["directors"];
@@ -2364,7 +2376,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $directors[0]["name"];
     }
 
-    $output .= '<br >演员: ';
+    $output .= '<br/>演员: ';
     $casts = $data["casts"];
     if ( count($casts)>1 ) {
         $casts = wp_list_pluck($casts,'name');
@@ -2374,7 +2386,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $casts[0]["name"];
     }
 
-    $output .= '<br >类型: ';
+    $output .= '<br/>类型: ';
     $genres = $data["genres"];
     if (count($genres)>1){
         $output .= implode('/', $genres);
@@ -2383,7 +2395,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $genres[0];
     }
 
-    $output .= '<br >国家/地区: ';
+    $output .= '<br/>国家/地区: ';
     $countries = $data["countries"];
     if (count($countries)>1){
         $output .= implode('/', $countries);
@@ -2392,7 +2404,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $countries[0];
     }
 
-    $output .= '<br>年份: ' . $data["year"] .'</div></div></div></div>';
+    $output .= '<br/>年份: ' . $data["year"] .'</div></div></div></div>';
     return $output;
 }
 
@@ -2603,28 +2615,28 @@ function apip_imbd_detail($atts, $content = null){
         $output .= '<div class="abstract">';
 
     if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br>';
+        $output .='中文名: '.$cname.'<br/>';
     }
 
     $output .= '导演 : '.$content["Director"];
 
-    $output .= '<br >演员: ';
+    $output .= '<br/>演员: ';
 
     $casts = $content["Actors"];
     $casts = str_replace(',','/',$casts);
     $output .= $casts;
 
-    $output .= '<br >类型: ';
+    $output .= '<br/>类型: ';
     $genres = $content["Genre"];
     $genres = str_replace(',','/',$genres);
     $output .= $genres;
 
-    $output .= '<br >国家/地区: ';
+    $output .= '<br/>国家/地区: ';
     $countries = $content["Country"];
     $countries = str_replace(',','/',$countries);
     $output .= $countries;
 
-    $output .= '<br>年份: ' . $content["Year"] .'</div></div></div></div>';
+    $output .= '<br/>年份: ' . $content["Year"] .'</div></div></div></div>';
     return $output;
 }
 /*
@@ -2665,23 +2677,23 @@ function apip_imbd_detail($atts, $content = null){
     $output .= '<div class="abstract">';
 
     if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br>';
+        $output .='中文名: '.$cname.'<br/>';
     }
 
     $output .= '导演 :'.$content["director"];
 
-    $output .= '<br >演员: ';
+    $output .= '<br/>演员: ';
 
     $casts = $content["cast"];
     $casts = wp_list_pluck($casts,'name');
     $output .= implode('/', $casts);
 
-    $output .= '<br >';
+    $output .= '<br/>';
     $output .= '类型: ';
     $genres = $content["genre"];
     $output .= implode('/', $genres);
 
-    $output .= '<br>年份: ' . $content["year"] .'</div></div></div></div>';
+    $output .= '<br/>年份: ' . $content["year"] .'</div></div></div></div>';
     return $output;
 }
 */
@@ -2755,13 +2767,13 @@ function apip_game_detail($atts, $content = null) {
     $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. ($cname!=''?$cname:$data["name"]) .'</a></div>';
     $output .= '<div class="abstract">';
     if ( $cname !== '' ) {
-        $output .='英文名: '.$data["name"].'<br>';
+        $output .='英文名: '.$data["name"].'<br/>';
     }
     if ( $jname !== '' ) {
-        $output .='日文名: '.$jname.'<br>';
+        $output .='日文名: '.$jname.'<br/>';
     }
     if ( $alias !== '' ) {
-        $output .='别名: '.str_replace(',','/ ',$alias).'<br>';
+        $output .='别名: '.str_replace(',','/ ',$alias).'<br/>';
     }
 
     if ( $publisher !== '' ) {
@@ -2779,14 +2791,14 @@ function apip_game_detail($atts, $content = null) {
 
     }
 
-    $output .='<br>发售日期: ';
+    $output .='<br/>发售日期: ';
     if ( $year !== '' ) {
         $output .= $year;
     } else {
         $output .=substr($data['original_release_date'],0,10);
     }
 
-    $output .=' <br>类型: ';
+    $output .=' <br/>类型: ';
     if ($genres !=='') {
         $output .= $genres;
     } else{
@@ -2800,7 +2812,7 @@ function apip_game_detail($atts, $content = null) {
         }
     }
 
-    $output .=' <br>机种: ';
+    $output .=' <br/>机种: ';
     if ( $platform !== '' ) {
         $output .= $platform;
     }    else {
@@ -2817,7 +2829,7 @@ function apip_game_detail($atts, $content = null) {
     }
 
     if ( $download !== '' ){
-        $output .='<br><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
+        $output .='<br/><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
     }
 
     $output .= '</div></div></div></div></br>';
@@ -2994,12 +3006,12 @@ function apip_commentquiz_meta_box($post)
     $name = 'apipcommentquiz' . '[' . $index . ']';
 
     echo '<div style="margin-bottom:1em;padding-bottom:1em;border-bottom:1px solid #eee">';
-    echo '<label><strong>' . $title . ':</strong><br><input type="text" name="' . $name . '[text]" value="' . $text . '"></label>';
+    echo '<label><strong>' . $title . ':</strong><br/><input type="text" name="' . $name . '[text]" value="' . $text . '"></label>';
     for($i = 0; $i<3; $i++){
       $check = checked($i, isset($question['correct'])? intval($question['correct']) : 0, false);
       $value = isset($question['answer'][$i])? esc_attr($question['answer'][$i]) : '';
 
-      echo '<br><input type="text" name="' . $name . '[answer][' . $i . ']" placeholder="' . $answer . '" value="' . $value . '">';
+      echo '<br/><input type="text" name="' . $name . '[answer][' . $i . ']" placeholder="' . $answer . '" value="' . $value . '">';
       echo '<label><input type="radio" name="' . $name . '[correct]" value="' . $i . '"' . $check . '> ' . $correct . '</label>';
     }
     echo '</div>';
