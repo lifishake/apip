@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.29.6
+ * Version:     1.30.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -868,7 +868,7 @@ function apip_scripts()
                       -webkit-text-stroke-width: 0.2px;
                       -moz-osx-font-smoothing: grayscale;
                     }
-                    .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;}
+                    .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;letter-spacing:2px;}
                     .allstarlight,.allstarfill,.allstarlack{position:absolute;left:0;height:18px;overflow:hidden}
                     .allstarlight{color:#f99b01;}
                     .allstarfill{color:#F75C02;}
@@ -1022,12 +1022,12 @@ function apip_quicktags()
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
-        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no"][/mydouban]', 'p' );
-        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no"][/myimdb]', 'p' );
-        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music"][/mydouban]', 'p' );
-        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster=""][/mygame]', 'p' );
-        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book"][/mydouban]', 'p' );
-        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater=""][/mybook]', 'p' );
+        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no" /]', 'p' );
+        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no" /]', 'p' );
+        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music" /]', 'p' );
+        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
+        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book" /]', 'p' );
+        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater="" /]', 'p' );
     </script>
 <?php
 }
@@ -1468,16 +1468,29 @@ function apip_get_cavatar($source) {
     //$source = str_replace( $src, $replace, $source);
         return $source ;
     }
-    $time = 864000; //The time of cache(seconds)
     preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
-    $abs =APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
-    $url = home_url('/','https').'wp-content/gallery/gravatar_cache/'.$tmp[1];
-    $default =  home_url('/','https').'wp-content/gallery/gravatar_cache/'.'default.png';
-    if (!is_file($abs)||(time()-filemtime($abs))>$time){
-        copy('http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G',$abs);
+    $abs = APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
+    $dest = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1];
+    $default =  APIP_GALLERY_URL.'gravatar_cache/default.png';
+    $cache_key = 'gravatar_local_'.$tmp[1];
+
+    if (!is_file($abs)||1 != get_transient( $cache_key )){
+        $src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
+        $response = wp_remote_get( 
+            htmlspecialchars_decode($src), 
+            array( 
+                'timeout'  => 300, 
+                'stream'   => true, 
+                'filename' => $abs 
+            ) 
+        );
+        if (is_wp_error($response)) {
+            return '<img alt="" src="'.$default.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
+        }
+        delete_transient( $cache_key );
+        set_transient($cache_key, 1, 60*60*24*91);
     }
-    if (filesize($abs)<500) { copy($default,$abs); }
-    return '<img alt="" src="'.$url.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
+    return '<img alt="" src="'.$dest.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
 }
 //4.2
 /**
@@ -2135,7 +2148,7 @@ function apip_dou_book_detail($id, $score){
 
     $data = apip_get_dou_content($id,$type = 'book');
     if(apip_is_debug_mode()) {
-        $data = apip_debug_book_content();
+        //$data = apip_debug_book_content();
     }
     if (!$data) {
         return '';
@@ -2211,7 +2224,8 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
         $i = 0;
         for($i =0; $i<$count; ++$i) {
             if (apip_is_debug_mode()) {
-                $books[$i] = apip_debug_book_content();
+                //$books[$i] = apip_debug_book_content();
+                $books[$i] = apip_get_dou_content($series_ids[$i],$type = 'book');
             }else{
                 $books[$i] = apip_get_dou_content($series_ids[$i],$type = 'book');
             }
@@ -2229,7 +2243,8 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
     }
     else{
         if (apip_is_debug_mode()) {
-            $cache = apip_debug_book_series_content();
+            //$cache = apip_debug_book_series_content();
+            $cache = apip_get_dou_content($id,$type = 'book_series');
         } else {
             $cache = apip_get_dou_content($id,$type = 'book_series');
         }
@@ -2330,7 +2345,7 @@ function apip_dou_music_detail($id){
 function apip_dou_movie_detail($id, $score, $nipple) {
     $data = apip_get_dou_content($id,$type = 'movie');
     if ( apip_is_debug_mode() ){
-        $data = apip_debug_movie_content();
+        //$data = apip_debug_movie_content();
     }
     if ( empty($data) ) {
         return '';
@@ -2448,18 +2463,22 @@ function apip_get_dou_content( $id, $type )  {
     else {
         $link = "https://api.douban.com/v2/music/".$id."?apikey=".$apikey;
     }
-    delete_transient($cache_key);
-    //从链接取数据
-    $ch=@curl_init($link);
-    @curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $cexecute=@curl_exec($ch);
-    @curl_close($ch);
-    if ($cexecute) {
-        $cache = json_decode($cexecute,true);
-        set_transient($cache_key, $cache, 60*60*24*30*6);
-    } else {
+
+    $args = array(
+        'timeout' => 3000,
+        'sslverify' => false,
+        'headers' => array(
+          'Content-Type' => 'application/json;charset=UTF-8',
+          'Accept' => 'application/json',
+        ),);
+    $response = wp_remote_get($link);
+    if (is_wp_error( $response ))
+    {
         return false;
     }
+    delete_transient($cache_key);
+    $cache = json_decode(wp_remote_retrieve_body($response),true);
+    set_transient($cache_key, $cache, 60*60*24*30*6);
 
 	return $cache;
 }
@@ -2472,7 +2491,7 @@ function apip_get_saved_images($id, $src, $dst )  {
 
     if ( apip_is_debug_mode() )
     {
-        return APIP_GALLERY_URL.'douban_cache/26752106.jpg';
+        //return APIP_GALLERY_URL.'douban_cache/26752106.jpg';
     }
     if ( 'douban'===$dst ) {
         $thumb_path = APIP_GALLERY_DIR . 'douban_cache/';
@@ -2480,30 +2499,38 @@ function apip_get_saved_images($id, $src, $dst )  {
         $thumb_path = APIP_GALLERY_DIR . 'game_poster/';
     }
 
-    $e = $thumb_path. $id .'.jpg';
+    $e = $thumb_path. $id .'.jpg'; 
+    $imagetype = substr(strrchr($src,'.'),0);
+    $e_temp = $thumb_path. $id .$imagetype;
+
+    if (is_file($e) && filesize($e) == 0)
+    {
+        unlink($e);
+    }
 
     if ( !is_file($e) ) {
-        $regex="/^(.*)(\.webp)$/";
-        if(preg_match($regex, $src)){
-            $temp = $thumb_path. $id .'.webp';
-            if (!@copy(htmlspecialchars_decode($src), $temp))
-            {
-                $errors= error_get_last();
-                return;
-            }
-            $im = imagecreatefromwebp($temp);
+        
+        $response = wp_remote_get( 
+            htmlspecialchars_decode($src), 
+            array( 
+                'timeout'  => 300, 
+                'stream'   => true, 
+                'filename' => $e_temp 
+            ) 
+        );
+        if ( is_wp_error( $response ) )
+        {
+            $url = APIP_PLUGIN_URL."/nocover.jpg";
+            return $url;
+        }
+        if ( ".webp"===$imagetype )
+        {
+            $im = imagecreatefromwebp($e_temp);
             imagejpeg($im, $e, 100);
             imagedestroy($im);
-            @delete($temp);
+            unlink($e_temp);
         }
-        else {
-            if (!@copy(htmlspecialchars_decode($src), $e))
-            {
-                $errors= error_get_last();
-                return;
-            }
-        }
-        
+ 
         $image = new Apip_SimpleImage();
         $image->load($e);
         $image->resize(100, 150);
@@ -2541,7 +2568,7 @@ function apip_imbd_detail($atts, $content = null){
     global $apip_options;
     //for local debug
     if ( apip_is_debug_mode() ){
-        $content = apip_debug_imdb_content();
+        //$content = apip_debug_imdb_content();
     }
     if ( !$content )
     {
@@ -2551,19 +2578,17 @@ function apip_imbd_detail($atts, $content = null){
             return false;
         }
         $url = "https://www.omdbapi.com/?i=".$id."&apikey=".$apikey;
+
+
         delete_transient($cache_key);
-        //从链接取数据
-        $response = file_get_contents($url, false);
-        if ($response) {
-            $content = json_decode($response,true);
-            if ($content["Response"] == "False")
-            {
-                return false;
-            }
-            set_transient($cache_key, $content, 60*60*24*30*6);
-        } else {
+
+        $response = wp_remote_get($url);
+        if (is_wp_error($response))
+        {
             return false;
         }
+        $content = json_decode(wp_remote_retrieve_body($response),true);
+        set_transient($cache_key, $content, 60*60*24*30*6);
     }
     $meta_class='';
     if ("yes"===$nipple) {
@@ -2571,12 +2596,26 @@ function apip_imbd_detail($atts, $content = null){
     }
     $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
     $img_url = $content['Poster'];
-    if ( !is_file($img_src) && !apip_is_debug_mode() ) {
+    if ( !is_file($img_src) /*&& !apip_is_debug_mode()*/ ) {
+        $response = wp_remote_get( 
+            htmlspecialchars_decode($img_url), 
+            array( 
+                'timeout'  => 300, 
+                'stream'   => true, 
+                'filename' => $img_src 
+            ) 
+        );
+        if ( is_wp_error( $response ) )
+        {
+            return false;
+        }
+        /*
         if (!@copy(htmlspecialchars_decode($img_url), $img_src))
         {
             $errors= error_get_last();
             return false;
         }
+        */
         $image = new Apip_SimpleImage();
         $image->load($img_src);
         $image->resize(100, 150);
@@ -2711,6 +2750,7 @@ function apip_game_detail($atts, $content = null) {
     if (!$token) {
         return;
     }
+    $nodata = 0;
     if( $id == 'x' ) {
         $id = 'nodata_'.get_the_ID();
         $nodata = 1;
@@ -2718,6 +2758,24 @@ function apip_game_detail($atts, $content = null) {
 
     $cache_key = 'game_'.$id;
     $content = get_transient($cache_key);
+    /*
+    $arg = array();
+    //20200325 增加对代理的使用
+    $proxy = new WP_HTTP_Proxy();
+    $proxy_str = "";
+    if ($proxy->is_enabled()) {
+        $proxy_str = $proxy->host().":".$proxy->port();
+    }
+    $arg['http'] = array('user_agent' => 'API Test UA');
+    if ($proxy_str !== "")
+    {
+        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA','proxy' => $proxy_str]]);
+    }
+    else{
+        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+    }
+    */
+    $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
     if ( !$content )
     {
         if ( $nodata  ) {
@@ -2727,10 +2785,9 @@ function apip_game_detail($atts, $content = null) {
             $content['results']["name"] = $ename!=''?$ename:($cname!=''?$cname: get_the_title());
         } else {
             $url = "http://www.giantbomb.com/api/game/".$id."?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
-
+           
             delete_transient($cache_key);
-            //从链接取数据
-            $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+            //从链接取数据            
             $response = file_get_contents($url, false, $context);
             if ($response) {
                 $content = json_decode($response,true);
@@ -2738,6 +2795,28 @@ function apip_game_detail($atts, $content = null) {
             } else {
                 return false;
             }
+
+            /*此处为igdb备用代码，未完成。因为giantbomb禁止wordpress访问API，所以此处代码暂不使用wp_remote_get。20200325
+            $url = "https://api-v3.igdb.com/games/";
+            $args = array(
+                'timeout' => 3000,
+                'sslverify' => false,
+                'headers' => array(
+                    'Accept' => 'application/json',
+                    'user-key' => "3f704634aa13b081b29e2e469502f444",
+                ),
+                'body' => array(
+                    'fields' =>'*',
+                    'id' => '1942',
+                ),
+);
+            $response = wp_remote_get($url, $args);
+            if (is_wp_error( $response )) {
+                return false;
+            }
+            $cache = json_decode(wp_remote_retrieve_body($response),true);
+            */
+        
         }
     }//content
     if ( $content['error'] != 'OK' ) {
@@ -2748,7 +2827,6 @@ function apip_game_detail($atts, $content = null) {
     $img_url = $data['image']['thumb_url'];
     //拷贝到本地，该网站需要验证用户信息，所以不能直接使用@copy
     if (  !is_file($img_src) ) {
-        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
         $imageString = file_get_contents($img_url, false, $context);
         $save = file_put_contents($img_src, $imageString);
         if ( $nodata ) {
@@ -2861,25 +2939,20 @@ function apip_save_heweather ( $post )
     }
     $weather = array();
     $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
+    $args = array(
+        'sslverify' => false,
+        'headers' => array(
+          'Content-Type' => 'application/json;charset=UTF-8',
+          'Accept' => 'application/json',
+        ),);
+    $response = wp_remote_get($addr,$args);
 
-    $req=@curl_init();
-    @curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
-    @curl_setopt($req, CURLOPT_URL,$addr);
-    @curl_setopt($req, CURLOPT_TIMEOUT,3);
-    @curl_setopt($req, CURLOPT_CONNECTTIMEOUT,10);
-    $headers=array( "Accept: application/json", "Content-Type: application/json;charset=UTF-8" );
-    @curl_setopt($req, CURLOPT_HTTPHEADER, $headers);
-
-    @curl_setopt($req, CURLOPT_SSL_VERIFYPEER, false);
-    @curl_setopt($req, CURLOPT_SSL_VERIFYHOST, false);
-    $data = @curl_exec($req);
-    @curl_close($req);
-    if ( !$data )
+    if ( is_wp_error($response) )
     {
         return;
     }
     else {
-        $cache = json_decode($data,true);
+        $cache = json_decode(wp_remote_retrieve_body($response),true);
     }
 
     $got = $cache["HeWeather6"][0];
