@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.0
+ * Version:     1.30.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -408,6 +408,13 @@ function apip_init_actions()
     ////0A.1屏蔽ngg带来的无用钩子
     if( class_exists('M_Third_Party_Compat') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
+        apip_remove_anonymous_object_hook( 'the_post', 'M_Third_Party_Compat', 'add_ngg_pro_page_parameter' );
+        apip_remove_anonymous_object_hook( 'wp', 'M_Third_Party_Compat', 'check_for_jquery_lightbox' );
+        apip_remove_anonymous_object_hook( 'wp', 'M_Third_Party_Compat', 'bjlazyload' );
+        apip_remove_anonymous_object_hook( 'plugins_loaded', 'M_Third_Party_Compat', 'wpml' );
+        apip_remove_anonymous_object_hook( 'plugins_loaded', 'M_Third_Party_Compat', 'wpml_translation_management' );
+        apip_remove_anonymous_object_hook( 'init', 'M_Third_Party_Compat', 'colorbox' );
+        apip_remove_anonymous_object_hook( 'init', 'M_Third_Party_Compat', 'flattr' );
     }
     if( class_exists('C_NextGen_Shortcode_Manager') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
@@ -431,10 +438,14 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
         apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
     }
+    if (class_exists('M_WordPress_Routing')) {
+        apip_remove_anonymous_object_hook( 'template_redirect', 'M_WordPress_Routing', 'restore_request_uri' );
+    }
     if( class_exists('C_NextGEN_Bootstrap') )  {
         //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
         //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
         //apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+        apip_remove_anonymous_object_hook( 'wp', 'C_NextGEN_Bootstrap', 'schedule_cron_jobs' );
     }
     if( class_exists('C_Lightbox_Library_Manager') )  {
         //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
@@ -999,11 +1010,10 @@ function apip_addi_feed($content)
     {
         return $content ;
     }
-    $addi = sprintf( '<div style="max-width: 520px; margin:0 auto; padding:5px 30px;margin: 15px; border-top: 1px solid #CCC;"><span style="margin-left: 2px; display:block;">《%1$s》采用<a rel="license" href="//creativecommons.org/licenses/by-nc-nd/3.0/cn/deed.zh">署名-非商业性使用-禁止演绎</a>许可协议进行许可。 『%2$s』期待与您交流。</span><div style="display:table;">%3$s %4$s</div></div>',
+    $addi = sprintf( '<div style="max-width: 520px; margin:0 auto; padding:5px 30px;margin: 15px; border-top: 1px solid #CCC;"><span style="margin-left: 2px; display:block;">《%1$s》采用<a rel="license" href="//creativecommons.org/licenses/by-nc-nd/3.0/cn/deed.zh">署名-非商业性使用-禁止演绎</a>许可协议进行许可。 『%2$s』期待与您交流。</span><div style="display:table;">%3$s</div></div>',
                         sprintf( '<a href="%1$s">%2$s</a>' , get_permalink(get_the_ID()), get_the_title() ),
                         sprintf( '<a href="%1$s">%2$s</a>' , get_bloginfo('url'), get_bloginfo('name') ),
-                        sprintf('<div style="margin: 5px 25px; display:table-cell; max-width:300px; "><h3 style="font-size:16px; font-weight:800;" >相关推荐:</h3>%s</div>', apip_related_post() ),
-                        sprintf('<div style="margin: 5px 25px; display:table-cell; max-width:300px; "><h3 style="font-size:16px; font-weight:800;" >历史同日文章:</h3>%s</div>', apip_sameday_post() )
+                        sprintf('<div style="margin: 5px 25px; display:table-cell; max-width:500px; "><h3 style="font-size:16px; font-weight:800;" >相关推荐:</h3>%s</div>', apip_related_post() )
                         );
 
     $content.=$addi ;
@@ -1468,14 +1478,18 @@ function apip_get_cavatar($source) {
     //$source = str_replace( $src, $replace, $source);
         return $source ;
     }
-    preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source,$tmp);
+    $pos_sch = strpos( $source, 'http' );
+    $src = substr( $source, $pos_sch, strpos( $source, '\'', $pos_sch ) - $pos_sch );
+    $tmp = array();
+    preg_match('/avatar\/([a-z0-9]+)\?s=(\d+)/',$source, $tmp);  
     $abs = APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
     $dest = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1];
     $default =  APIP_GALLERY_URL.'gravatar_cache/default.png';
     $cache_key = 'gravatar_local_'.$tmp[1];
 
     if (!is_file($abs)||1 != get_transient( $cache_key )){
-        $src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
+        //$src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
+        //$src = $g;
         $response = wp_remote_get( 
             htmlspecialchars_decode($src), 
             array( 
@@ -2195,7 +2209,7 @@ function apip_dou_book_detail($id, $score){
 
     $translator = $data["translator"];
     if (!empty($translator)) {
-        $output .= '<br/>译者 : ';
+        $output .= '<br />译者 : ';
         if (count($translator)>1){
             $output .= implode('/', $translator);
         }
@@ -2204,9 +2218,9 @@ function apip_dou_book_detail($id, $score){
         }
     }
 
-    $output .= '<br/>出版年份 : ' . $data["pubdate"] ;
-    $output .= '<br/>出版社 : ' . $data["publisher"] ;
-    $output .= '<br/>定价 : '. $data["price"];
+    $output .= '<br />出版年份 : ' . $data["pubdate"] ;
+    $output .= '<br />出版社 : ' . $data["publisher"] ;
+    $output .= '<br />定价 : '. $data["price"];
     $output .= '</div></div></div></div>';
     return $output;
 }
@@ -2276,9 +2290,9 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
     else {
         $output .= $authors[0];
     }
-    $output .= '<br/>出版年份 : ' . $pubdate ;
-    $output .= '<br/>出版社 : ' . $books[0]["publisher"] ;
-    $output .= '<br/> 全套共（ ' . $total ." ）册";
+    $output .= '<br />出版年份 : ' . $pubdate ;
+    $output .= '<br />出版社 : ' . $books[0]["publisher"] ;
+    $output .= '<br /> 全套共（ ' . $total ." ）册";
     $output .= '</div>';//abstract
     for ($i = 0; $i < $count; ++$i ) {
         $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
@@ -2332,8 +2346,8 @@ function apip_dou_music_detail($id){
         $output .= $authors[0]['name'];
     }
 
-    $output .= '<br/>年份 : ' . $data["attrs"]["pubdate"][0] ;
-    $output .= '<br/>唱片公司 : ' . $data["attrs"]["publisher"][0] ;
+    $output .= '<br />年份 : ' . $data["attrs"]["pubdate"][0] ;
+    $output .= '<br />唱片公司 : ' . $data["attrs"]["publisher"][0] ;
     $output .= '</div></div></div></div>';
     return $output;
 }
@@ -2391,7 +2405,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $directors[0]["name"];
     }
 
-    $output .= '<br/>演员: ';
+    $output .= '<br />演员: ';
     $casts = $data["casts"];
     if ( count($casts)>1 ) {
         $casts = wp_list_pluck($casts,'name');
@@ -2401,7 +2415,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $casts[0]["name"];
     }
 
-    $output .= '<br/>类型: ';
+    $output .= '<br />类型: ';
     $genres = $data["genres"];
     if (count($genres)>1){
         $output .= implode('/', $genres);
@@ -2410,7 +2424,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $genres[0];
     }
 
-    $output .= '<br/>国家/地区: ';
+    $output .= '<br />国家/地区: ';
     $countries = $data["countries"];
     if (count($countries)>1){
         $output .= implode('/', $countries);
@@ -2419,7 +2433,7 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= $countries[0];
     }
 
-    $output .= '<br/>年份: ' . $data["year"] .'</div></div></div></div>';
+    $output .= '<br />年份: ' . $data["year"] .'</div></div></div></div>';
     return $output;
 }
 
@@ -2499,42 +2513,66 @@ function apip_get_saved_images($id, $src, $dst )  {
         $thumb_path = APIP_GALLERY_DIR . 'game_poster/';
     }
 
-    $e = $thumb_path. $id .'.jpg'; 
+    /*
+    $e = $thumb_path. $id .'.jpg';
+    $regen = 0;
+    if (!is_file($e)) {
+        $regen = 1;
+    }
+    else {
+        $imglocal = new Apip_SimpleImage();
+        $imglocal->load($e);
+        if ($imglocal->getWidth() != 100) {
+            unlink($e);
+            $regen = 1;
+        }
+    }
+    
+    if ( $regen) {
+        $imgstream = new Apip_SimpleImage();
+        $imgstream->load($src);
+        $imgstream->resize(100, 150);
+        $imgstream->save($e);
+    }
+    */
+
     $imagetype = substr(strrchr($src,'.'),0);
+    $e = $thumb_path. $id .'.jpg';
     $e_temp = $thumb_path. $id .$imagetype;
 
-    if (is_file($e) && filesize($e) == 0)
+    if (is_file($e))
     {
-        unlink($e);
+        $imglocal = new Apip_SimpleImage();
+        $imglocal->load($e);
+        if ($imglocal->getWidth() != 100) {
+            unlink($e);
+        }
     }
 
     if ( !is_file($e) ) {
-        
         $response = wp_remote_get( 
             htmlspecialchars_decode($src), 
             array( 
-                'timeout'  => 300, 
+                'timeout'  => 5000, 
                 'stream'   => true, 
                 'filename' => $e_temp 
             ) 
         );
         if ( is_wp_error( $response ) )
         {
-            $url = APIP_PLUGIN_URL."/nocover.jpg";
+            if (is_file($e_temp)) {
+                unlink($e_temp);
+            }
+            $url = APIP_PLUGIN_URL."nocover.jpg";
             return $url;
-        }
-        if ( ".webp"===$imagetype )
-        {
-            $im = imagecreatefromwebp($e_temp);
-            imagejpeg($im, $e, 100);
-            imagedestroy($im);
-            unlink($e_temp);
-        }
- 
+        } 
         $image = new Apip_SimpleImage();
-        $image->load($e);
+        $image->load($e_temp);
         $image->resize(100, 150);
         $image->save($e);
+        if ($imagetype != ".jpg") {
+            unlink($e_temp);
+        }
     }
 
     if ( 'douban'===$dst ) {
@@ -2654,28 +2692,28 @@ function apip_imbd_detail($atts, $content = null){
         $output .= '<div class="abstract">';
 
     if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br/>';
+        $output .='中文名: '.$cname.'<br />';
     }
 
     $output .= '导演 : '.$content["Director"];
 
-    $output .= '<br/>演员: ';
+    $output .= '<br />演员: ';
 
     $casts = $content["Actors"];
     $casts = str_replace(',','/',$casts);
     $output .= $casts;
 
-    $output .= '<br/>类型: ';
+    $output .= '<br />类型: ';
     $genres = $content["Genre"];
     $genres = str_replace(',','/',$genres);
     $output .= $genres;
 
-    $output .= '<br/>国家/地区: ';
+    $output .= '<br />国家/地区: ';
     $countries = $content["Country"];
     $countries = str_replace(',','/',$countries);
     $output .= $countries;
 
-    $output .= '<br/>年份: ' . $content["Year"] .'</div></div></div></div>';
+    $output .= '<br />年份: ' . $content["Year"] .'</div></div></div></div>';
     return $output;
 }
 /*
@@ -2758,24 +2796,31 @@ function apip_game_detail($atts, $content = null) {
 
     $cache_key = 'game_'.$id;
     $content = get_transient($cache_key);
-    /*
+    
     $arg = array();
     //20200325 增加对代理的使用
     $proxy = new WP_HTTP_Proxy();
-    $proxy_str = "";
-    if ($proxy->is_enabled()) {
+        if ($proxy->is_enabled()) {
         $proxy_str = $proxy->host().":".$proxy->port();
-    }
-    $arg['http'] = array('user_agent' => 'API Test UA');
-    if ($proxy_str !== "")
-    {
-        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA','proxy' => $proxy_str]]);
-    }
-    else{
-        $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
-    }
-    */
-    $context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+        $stream_default_opts = array(
+            'http'=>array(
+                'proxy'=>$proxy_str,
+                'request_fulluri' => true,
+                'user_agent'=>'API Test UA',
+            ),
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ),
+            );
+            $cxContext = stream_context_create($stream_default_opts);
+        }
+        else {
+            $cxContext = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+        }
+    
+    //$context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
     if ( !$content )
     {
         if ( $nodata  ) {
@@ -2788,7 +2833,7 @@ function apip_game_detail($atts, $content = null) {
            
             delete_transient($cache_key);
             //从链接取数据            
-            $response = file_get_contents($url, false, $context);
+            $response = file_get_contents($url, false, $cxContext);
             if ($response) {
                 $content = json_decode($response,true);
                 set_transient($cache_key, $content, 60*60*24*30*6);
@@ -2827,7 +2872,7 @@ function apip_game_detail($atts, $content = null) {
     $img_url = $data['image']['thumb_url'];
     //拷贝到本地，该网站需要验证用户信息，所以不能直接使用@copy
     if (  !is_file($img_src) ) {
-        $imageString = file_get_contents($img_url, false, $context);
+        $imageString = file_get_contents($img_url, false, $cxContext);
         $save = file_put_contents($img_src, $imageString);
         if ( $nodata ) {
             $image = new Apip_SimpleImage();
@@ -2845,13 +2890,13 @@ function apip_game_detail($atts, $content = null) {
     $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. ($cname!=''?$cname:$data["name"]) .'</a></div>';
     $output .= '<div class="abstract">';
     if ( $cname !== '' ) {
-        $output .='英文名: '.$data["name"].'<br/>';
+        $output .='英文名: '.$data["name"].'<br />';
     }
     if ( $jname !== '' ) {
-        $output .='日文名: '.$jname.'<br/>';
+        $output .='日文名: '.$jname.'<br />';
     }
     if ( $alias !== '' ) {
-        $output .='别名: '.str_replace(',','/ ',$alias).'<br/>';
+        $output .='别名: '.str_replace(',','/ ',$alias).'<br />';
     }
 
     if ( $publisher !== '' ) {
@@ -2869,14 +2914,14 @@ function apip_game_detail($atts, $content = null) {
 
     }
 
-    $output .='<br/>发售日期: ';
+    $output .='<br />发售日期: ';
     if ( $year !== '' ) {
         $output .= $year;
     } else {
         $output .=substr($data['original_release_date'],0,10);
     }
 
-    $output .=' <br/>类型: ';
+    $output .=' <br />类型: ';
     if ($genres !=='') {
         $output .= $genres;
     } else{
@@ -2890,7 +2935,7 @@ function apip_game_detail($atts, $content = null) {
         }
     }
 
-    $output .=' <br/>机种: ';
+    $output .=' <br />机种: ';
     if ( $platform !== '' ) {
         $output .= $platform;
     }    else {
@@ -2907,10 +2952,10 @@ function apip_game_detail($atts, $content = null) {
     }
 
     if ( $download !== '' ){
-        $output .='<br/><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
+        $output .='<br /><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
     }
 
-    $output .= '</div></div></div></div></br>';
+    $output .= '</div></div></div></div>';
     return $output;
 }
 
@@ -2938,7 +2983,7 @@ function apip_save_heweather ( $post )
         return;
     }
     $weather = array();
-    $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070211";
+    $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070209";
     $args = array(
         'sslverify' => false,
         'headers' => array(
@@ -3079,12 +3124,12 @@ function apip_commentquiz_meta_box($post)
     $name = 'apipcommentquiz' . '[' . $index . ']';
 
     echo '<div style="margin-bottom:1em;padding-bottom:1em;border-bottom:1px solid #eee">';
-    echo '<label><strong>' . $title . ':</strong><br/><input type="text" name="' . $name . '[text]" value="' . $text . '"></label>';
+    echo '<label><strong>' . $title . ':</strong><br /><input type="text" name="' . $name . '[text]" value="' . $text . '"></label>';
     for($i = 0; $i<3; $i++){
       $check = checked($i, isset($question['correct'])? intval($question['correct']) : 0, false);
       $value = isset($question['answer'][$i])? esc_attr($question['answer'][$i]) : '';
 
-      echo '<br/><input type="text" name="' . $name . '[answer][' . $i . ']" placeholder="' . $answer . '" value="' . $value . '">';
+      echo '<br /><input type="text" name="' . $name . '[answer][' . $i . ']" placeholder="' . $answer . '" value="' . $value . '">';
       echo '<label><input type="radio" name="' . $name . '[correct]" value="' . $i . '"' . $check . '> ' . $correct . '</label>';
     }
     echo '</div>';

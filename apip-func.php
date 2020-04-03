@@ -205,8 +205,9 @@ function apip_debug_page($val,$name)
 function apip_festival($post_id=0) {
     $chinese_festivals=array(
         "正月初一"=>"春节",
+        "正月十三"=>"海神娘娘生日",
         "正月十五"=>"元宵节",
-        "三月初三"=>"百花节",
+        "三月初三"=>"歌节",
         "四月初八"=>"浴佛节",
         "五月初五"=>"端午节",
         "七月十五"=>"中元节",
@@ -218,16 +219,20 @@ function apip_festival($post_id=0) {
     );
     $solar_festivals=array(
         "02/14"=>"圣瓦伦丁日",
-        "04/01" =>"愚人节",
+        "04/01"=>"愚人节",
         "04/05"=>"清明",
+        "04/30"=>"魔女之夜",
         "11/26"=>"破袜子日",
+        "12/06"=>"圣尼可拉斯节",
         "12/22"=>"冬至",
         "12/24"=>"耶诞节",
     );
     $chistian_festivals=array(
         "5_2_7"=>"母亲节",
         "6_3_7"=>"父亲节",
+        "7_3_1"=>"海之日",
     );
+    //仲夏夜 6/19至25之间的星期五
 
     $ret = '';
     if ( 0 == $post_id) {
@@ -245,16 +250,19 @@ function apip_festival($post_id=0) {
     if (array_key_exists($lunar_day[1], $chinese_festivals)) {
         $ret .= $chinese_festivals[$lunar_day[1]];
     }
-    $ret .= $lunar->isChuxi($year,$month,$day);
+    $ret .= $lunar->isChuxi($lunar_day[0],$lunar_day[2],$lunar_day[3]);
     if ($ret !== "") {
-        $ret = " /".$ret;
+        $ret = " / ".$ret;
     }
     $solar = $month."/".$day;
     if (array_key_exists($solar, $solar_festivals)) {
         if ($ret !== "") {
-            $ret .="/";
+            $ret .=" / ";
         }
         $ret .= $solar_festivals[$solar];
+    }
+    if ($ret) {
+        $ret = '<span class="festival">'.$ret."</span>";
     }
     return $ret;
 }
@@ -481,27 +489,19 @@ function apip_sameday_post()
     global $apip_options;
     $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
     $ret = '<ul class = "apip-history-content">' ;
-    $sql = "select ID, year(post_date) as h_year, post_title FROM
-            $wpdb->posts WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish'
-            AND month(post_date)='$month' AND day(post_date)='$day' AND ID != '$id'
-            order by post_date LIMIT $limit";
-    $history_posts = $wpdb->get_results($sql);
-    $rcount = $limit - count( $history_posts ) ;
-    if ( $rcount > 0 )
-    {
-        $random_posts = apip_random_post( get_the_ID(), $rcount ) ;
+
+    $samedays = apip_get_sameday_his_posts($limit);
+    if (0 === count($samedays)) {
+        return "";
     }
-    foreach ( $history_posts as $history_post ) :
-    $ret = $ret.'<li><span class="func-before suffix">['.$history_post->h_year.']</span><a class="sameday-post" href="'.get_permalink( $history_post->ID ).'">' ;
-    $ret = $ret.$history_post->post_title.'</a></li>' ;
-    endforeach;
-    if ( $rcount > 0 )
-    {
-        foreach ( $random_posts as $random_post ) :
-        $ret .= '<li><span class="func-before suffix">[RAND]</span><a class="sameday-post" href="'.get_permalink( $random_post->ID ).'">' ;
-        $ret .= $random_post->post_title.'</a></li>' ;
-        endforeach;
+
+
+    foreach ( $samedays as $history_post ) {
+        $post_id = $history_post['object_id'];
+        $ret = $ret.'<li><span class="func-before suffix">['.$history_post['year'].']</span><a class="sameday-post" href="'.get_permalink( $post_id ).'">' ;
+        $ret = $ret.get_the_title($post_id).'</a></li>' ;
     }
+        
     $ret .= '</ul>' ;
     return $ret;
 }
@@ -524,27 +524,40 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         $realorder = "DESC";
     }
     global $apip_options;
+    $args = array(
+        'post_type' => 'post',
+        'posts_per_page' => -1,
+        'orderby' => 'post_date',
+        'order'   => $realorder,
+        'post_status' => 'public',
+        'ignore_sticky_posts' => 1,
+        'post__not_in' => array(
+            $id,
+        ),
+        'date_query' => array(
+            array(
+                'month' => $month,
+                'day'   => $day,
+            ),
+        ),
+    );
+    $the_query = new WP_Query($args);
 
-    $sql = "select ID, year(post_date) as h_year, post_title FROM
-            {$wpdb->posts} WHERE post_password = '' AND post_type = 'post' AND post_status = 'publish'
-            AND month(post_date)='{$month}' AND day(post_date)='{$day}' AND ID != '{$id}'
-            order by post_date {$realorder} LIMIT {$limit}";
-    $history_posts = $wpdb->get_results($sql);
-    foreach ($history_posts as $post):
+    foreach ($the_query->posts as $post) {
         $temp = array();
         $temp['object_id'] = $post->ID;
-        $temp['year'] = $post->h_year;
+        $temp['year'] = get_post_time('Y',$post);
         if ( empty($ret) ) {
             array_push($ret, $temp);
         }
-        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - $post->h_year)){
+        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - get_post_time('Y',$post))){
             $ta = array($temp);
             $ret = array_merge($ta,$ret);
         }
         else{
             array_push($ret, $temp);
         }
-    endforeach;
+    }
     return $ret;
 }
 
@@ -564,6 +577,26 @@ function apip_random_post( $exclude, $count = 5 )
     return $random_posts ;
 }
 
+function apip_get_post_evaluate($post_id, $standard){
+    $tags = get_the_terms( $post_id, 'post_tag') ;
+    $cats = get_the_terms( $post_id, 'category') ;
+    $myVal = array_sum($standard);
+    $evaluate = 0.0;
+    if (is_array($tags) && count($tags) >0) {
+        foreach ($tags as $tag) {
+            if ( array_key_exists($tag->term_taxonomy_id, $standard)) {
+                $evaluate += $standard[$tag->term_taxonomy_id];
+            }
+        }
+    }   
+    foreach ($cats as $cat) {
+        if ( array_key_exists($cat->term_taxonomy_id, $standard)) {
+            $evaluate += $standard[$cat->term_taxonomy_id];
+        }
+    }
+    return intval(($evaluate * 100) / $myVal);
+}
+
 /**
  * 作用: 取得关系最紧密的N篇文章
  * 来源: 自产
@@ -575,49 +608,102 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
     $tags = get_the_terms( $post_id, 'post_tag') ;
     $cats = get_the_terms( $post_id, 'category') ;
     $ret = array();
-    $exclude_str = " AND rel.`object_id` != '$post_id' ";
-    foreach ($exclude as $ex) {
-        $exclude_str .= " AND rel.`object_id` != '$ex' ";
-    }
-    if (!empty($tags)) {
-        $tags = array_merge( $tags, $cats ) ;
+    $tag_taxonomy_ids = array();
+    $cat_taxonomy_ids = array();
+    $standard = array();
+    if (is_array($exclude)) {
+        $exclude[] = $post_id;
     }
     else {
-        $tags = $cats;
+        $exclude = array();
+        $exclude[] = $post_id;
     }
     
-    if( $tags && count($tags) != 0 )
-    {
-        $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
-        $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
-        $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
-                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v, {$wpdb->posts} pp
-                WHERE rel.`term_taxonomy_id` IN ({$term_taxonomy_ids_str})
-                AND rel.`term_taxonomy_id` = v.`term_taxonomy_id`
-                {$exclude_str}
-                AND rel.`object_id` = pp.`ID`
-                AND pp.`post_status`  = 'publish'
-                GROUP BY rel.`object_id`
-                ORDER BY `evaluate` DESC,
-                rel.`object_id` DESC
-                LIMIT {$limit}";
-        $weights = $wpdb->get_results($query,OBJECT_K);
-        foreach ($weights as $result ):
-            $temp = array();
-            $temp['object_id'] = $result->object_id;
-            $temp['evaluate'] = $result->evaluate;
-            array_push($ret, $temp);
-        endforeach;
+    
+    if (count($tags) > 0) {
+        foreach ($tags as $tag) {
+            $fVal = 0.0;
+            if ($tag->count > 1) {
+                $fVal = 169/$tag->count; 
+                $tag_taxonomy_ids[] = $tag->term_taxonomy_id;
+            }
+            else {
+                $fVal = 1.69; 
+            }
+            $standard[$tag->term_taxonomy_id] = $fVal;       
+        }
     }
+    
+    if (count($cats) > 0) {
+        foreach ($cats as $cat) {
+            $fVal = 0.0;
+            $ancestors = get_ancestors( $cat->term_taxonomy_id, "category" );
+            $gen = count($ancestors);
+            $fVal = pow(1.3, $gen) * $gen;
+            $cat_taxonomy_ids[] = $cat->term_taxonomy_id;
+            $standard[$cat->term_taxonomy_id] = $fVal; 
+            if ($gen>0) {
+                $i = $gen - 1;
+                foreach ($ancestors as $ancestor) {
+                    $fVal = pow(1.3, $i) * $i;
+                    $standard[$ancestor] = $fVal;
+                    if ($i > 1) {
+                        $cat_taxonomy_ids[] = $ancestor;
+                    }                  
+                }
+            }
+        }
+    }
+
+    $myVal = array_sum($standard);
+
+    //https://wordpress.stackexchange.com/questions/155937/wp-query-mixing-category-in-and-tag-in-together
+    $args = array(
+        'post_type' => 'post',
+        'posts_per_page' => -1,
+        'ignore_sticky_posts' => 1,
+        'orderby' => 'modified',
+        'post_status' => 'public',
+        'post__not_in' => $exclude,
+        'tax_query' => array(
+            'relation' => 'OR',
+            array(
+                'taxonomy' => 'category',
+                'field' => 'term_taxonomy_id',
+                'terms' => $cat_taxonomy_ids,
+                'include_children' => false ,
+            ),
+            array(
+                'taxonomy' => 'post_tag',
+                'field' => 'term_taxonomy_id',
+                'terms' => $tag_taxonomy_ids,
+            )
+        )
+    );
+    
+    $the_query = new WP_Query( $args );
+    foreach ($the_query->posts as $p) {
+        $eva = apip_get_post_evaluate($p->ID, $standard);
+        $temp = array();
+        $temp['object_id'] = $p->ID;
+        $temp['evaluate'] = $eva;
+        array_push($ret, $temp);
+    }
+    wp_reset_postdata();
+
     if (count( $ret )< $limit) {
         $random_posts = apip_random_post( get_the_ID(), $limit - count( $ret ) ) ;
-        foreach ($random_posts as $id) :
+        foreach ($random_posts as $p) {
             $temp = array();
-            $temp['object_id'] = $id->ID;
+            $temp['object_id'] = $p->ID;
             $temp['evaluate'] = 0;
             array_push($ret, $temp);
-        endforeach;
+        }
     }
+
+    $e = array_column($ret, 'evaluate');
+    array_multisort($e, SORT_DESC, $ret);
+    $ret = array_slice($ret, 0, $limit);
     return $ret;
 }
 
@@ -630,67 +716,19 @@ function apip_related_post()
 {
     global $apip_options;
     $limit = ($apip_options['local_definition_count'] > 0 )? $apip_options['local_definition_count'] : 5 ;
-    global $wpdb ;
-    $object_ids = array();
-    $post_id = get_the_ID() ;
-    $tags = get_the_terms( $post_id, 'post_tag') ;
-    $cats = get_the_terms( $post_id, 'category') ;
-    if( $tags && count($tags) != 0 )
-    {
-        if (  count($tags) > 1 )
-        {
-            $tags = array_merge( $tags, $cats ) ;
-        }
-        $term_taxonomy_ids = wp_list_pluck( $tags, 'term_taxonomy_id' );
-        $term_taxonomy_ids_str = implode( ",", $term_taxonomy_ids  );
-        $query = "SELECT rel.`object_id`, SUM(v.`term_weight`) AS `evaluate`
-                FROM {$wpdb->term_relationships} rel, `{$wpdb->prefix}v_taxonomy_summary` v, {$wpdb->posts} pp
-                WHERE rel.`term_taxonomy_id` IN ({$term_taxonomy_ids_str})
-                AND rel.`term_taxonomy_id` = v.`term_taxonomy_id`
-                AND rel.`object_id` != '$post_id'
-                AND rel.`object_id` = pp.`ID`
-                AND pp.`post_status`  = 'publish'
-                GROUP BY rel.`object_id`
-                ORDER BY `evaluate` DESC,
-                rel.`object_id` DESC";
-        $weights = $wpdb->get_results($query,OBJECT_K);
-        $object_ids = wp_list_pluck( $weights, 'object_id','object_id' );
-    }
-
-    if ( count( $object_ids )< $limit )
-    {
-        $random_posts = apip_random_post( get_the_ID(), $limit - count( $object_ids ) + 1 ) ;
-        if ( count($random_posts) > 0 )
-        {
-            $random_ids = wp_list_pluck( $random_posts, 'ID','ID' );
-            $object_ids = array_merge( $object_ids, $random_ids ) ;
-        }
-    }
-    while( count($object_ids) > $limit )
-    {
-        array_pop($object_ids) ;
-    }
+    $relats = apip_get_related_posts($limit);
 
     $ret = '<ul class = "apip-ralated-content">' ;
-    foreach ( $object_ids as $id ) :
+    foreach ( $relats as $rel ) :
     $ret .= sprintf("<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37;]</span></li>",
-            get_permalink( $id ),
-            get_the_title( $id ),
-            isset($weights[$id]) ? floor(100*$weights[$id]->evaluate/4096) : 0 );
+            get_permalink( $rel['object_id'] ),
+            get_the_title( $rel['object_id'] ),
+            $rel['evaluate'] );
     endforeach;
     $ret .= '</ul>' ;
     return $ret;
 }
 
-function apip_is_important_taxonomy( $id ) {
-  global $wpdb ;
-  $query = "SELECT `term_taxonomy_id`
-                  FROM `{$wpdb->prefix}v_taxonomy_summary`
-                  WHERE  `term_taxonomy_id` = $id
-                  AND  `term_weight` > 1000 ";
-  $val = $wpdb->get_col($query);
-  return !empty($val);
-}
 /*
  * 作用: 显示作者最愿意回复的n个留言者的链接
  * 来源: 自产

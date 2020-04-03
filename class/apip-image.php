@@ -11,8 +11,30 @@ class Apip_SimpleImage {
    var $image_type;
 
    function load($filename) {
-
+      if(strtolower(substr($filename, 0, 4))=='http'){
+         //url  
+         $cxContext = stream_context_create();
+         $proxy = new WP_HTTP_Proxy();
+         if ($proxy->is_enabled()) {
+            $proxy_str = $proxy->host().":".$proxy->port();
+            $stream_default_opts = array(
+               'http'=>array(
+                 'proxy'=>$proxy_str,
+                 'request_fulluri' => true,
+               ),
+               'ssl' => array(
+                  'verify_peer' => false,
+                  'verify_peer_name' => false,
+                  'allow_self_signed' => true
+               ),
+             );
+             $cxContext = stream_context_create($stream_default_opts);
+         }
+         file_put_contents("./temp", file_get_contents($filename,false, $cxContext));
+         $filename = "./temp";
+      }
       $image_info = getimagesize($filename);
+      
       $this->image_type = $image_info[2];
       if( $this->image_type == IMAGETYPE_JPEG ) {
 
@@ -23,6 +45,12 @@ class Apip_SimpleImage {
       } elseif( $this->image_type == IMAGETYPE_PNG ) {
 
          $this->image = imagecreatefrompng($filename);
+      } elseif( $this->image_type == IMAGETYPE_WEBP ) {
+         
+         $this->image = imagecreatefromwebp($filename);
+      }
+      if ($filename==="./temp") {
+         unlink("./temp");
       }
    }
    function save($filename, $image_type=IMAGETYPE_JPEG, $compression=75, $permissions=null) {
