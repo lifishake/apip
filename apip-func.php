@@ -543,14 +543,14 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
     );
     $the_query = new WP_Query($args);
 
-    foreach ($the_query->posts as $post) {
+    foreach ($the_query->posts as $p) {
         $temp = array();
-        $temp['object_id'] = $post->ID;
-        $temp['year'] = get_post_time('Y',$post);
+        $temp['object_id'] = $p->ID;
+        $temp['year'] = get_post_time('Y',false,$p->ID);
         if ( empty($ret) ) {
             array_push($ret, $temp);
         }
-        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - get_post_time('Y',$post))){
+        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - get_post_time('Y',false,$p->ID))){
             $ta = array($temp);
             $ret = array_merge($ta,$ret);
         }
@@ -558,6 +558,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
             array_push($ret, $temp);
         }
     }
+    $ret = array_slice($ret, 0, $limit);
     return $ret;
 }
 
