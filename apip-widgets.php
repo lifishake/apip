@@ -123,7 +123,7 @@ class APIP_Widget_Related extends WP_Widget {
   }
 
 }
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Related" );' ) );
+//add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Related" );' ) );
 
 
  class APIP_Widget_Sameday_Post extends WP_Widget {
@@ -213,7 +213,7 @@ add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_
 
      }
 
-     add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Sameday_Post" );' ) );
+     //add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Sameday_Post" );' ) );
 
 class APIP_Widget_Recent extends WP_Widget {
 
@@ -290,7 +290,7 @@ class APIP_Widget_Recent extends WP_Widget {
 
      }
 
- add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Recent" );' ) );
+ //add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Recent" );' ) );
 
 /**
  * Custom Meta class
@@ -358,7 +358,7 @@ class APIP_Widget_Meta extends WP_Widget {
     }
 }
 
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Meta" );' ) );
+//add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Meta" );' ) );
 
 /**
  * 自定义显示当前页面上filter用class
@@ -441,4 +441,18 @@ class APIP_Widget_Hook_List extends WP_Widget {
 	}
 }
 
-add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) );
+function apip_widget_register() {
+     $names = array(
+          "APIP_Widget_Related",
+          "APIP_Widget_Sameday_Post",
+          "APIP_Widget_Recent",
+          "APIP_Widget_Meta",
+          "APIP_Widget_Hook_List",
+     );
+     foreach ($names as $wd) {
+          register_widget($wd);
+     }
+}
+
+//add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) );
+add_action( 'widgets_init', 'apip_widget_register' );

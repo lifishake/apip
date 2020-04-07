@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.1
+ * Version:     1.30.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -42,23 +42,6 @@ function apip_plugin_activation()
      AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
      FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'
      GROUP BY year, month ORDER BY year, month DESC ; ";
-    $wpdb->query($sql);
-
-    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_taxonomy_summary`
-     AS SELECT rel.`term_taxonomy_id`, COUNT(rel.`term_taxonomy_id`) AS `term_count`, tax.`taxonomy`, {$wpdb->prefix}terms.`name` AS `term_name`,
-    CASE WHEN tax.`taxonomy` = 'post_tag' THEN 10
-    WHEN tax.`parent` = 0 THEN 0
-    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN 1
-    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 2
-    ELSE 3 END AS `term_level`,
-    CASE WHEN COUNT(rel.`term_taxonomy_id`) = 1 THEN 1024
-    WHEN tax.`taxonomy` = 'post_tag' THEN FLOOR(4096/COUNT(rel.`term_taxonomy_id`))
-    WHEN tax.`parent` = 0 THEN 10
-    WHEN tax.`parent` = 2599 THEN 1024
-    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 ) THEN CEIL(1024/COUNT(rel.`term_taxonomy_id`))
-    WHEN tax.`parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` IN (SELECT `term_taxonomy_id` FROM `{$wpdb->prefix}term_taxonomy` WHERE `parent` = 0 )) THEN 1000
-    ELSE 1580 END AS `term_weight`
-    FROM `{$wpdb->prefix}term_relationships` rel, `{$wpdb->prefix}term_taxonomy` tax, `{$wpdb->prefix}terms` WHERE rel.term_taxonomy_id = tax.term_taxonomy_id AND tax.taxonomy in ('category','post_tag') AND `{$wpdb->prefix}terms`.`term_id` = rel.term_taxonomy_id GROUP BY rel.term_taxonomy_id ORDER BY term_count DESC";
     $wpdb->query($sql);
 
     $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
@@ -116,8 +99,6 @@ function apip_plugin_deactivation()
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_yearly` ; ";
     $wpdb->query($sql);
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_monthly` ; ";
-    $wpdb->query($sql);
-    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_taxonomy_summary` ; ";
     $wpdb->query($sql);
     $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_boring_summary` ; ";
     $wpdb->query($sql);
@@ -408,13 +389,6 @@ function apip_init_actions()
     ////0A.1屏蔽ngg带来的无用钩子
     if( class_exists('M_Third_Party_Compat') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
-        apip_remove_anonymous_object_hook( 'the_post', 'M_Third_Party_Compat', 'add_ngg_pro_page_parameter' );
-        apip_remove_anonymous_object_hook( 'wp', 'M_Third_Party_Compat', 'check_for_jquery_lightbox' );
-        apip_remove_anonymous_object_hook( 'wp', 'M_Third_Party_Compat', 'bjlazyload' );
-        apip_remove_anonymous_object_hook( 'plugins_loaded', 'M_Third_Party_Compat', 'wpml' );
-        apip_remove_anonymous_object_hook( 'plugins_loaded', 'M_Third_Party_Compat', 'wpml_translation_management' );
-        apip_remove_anonymous_object_hook( 'init', 'M_Third_Party_Compat', 'colorbox' );
-        apip_remove_anonymous_object_hook( 'init', 'M_Third_Party_Compat', 'flattr' );
     }
     if( class_exists('C_NextGen_Shortcode_Manager') ) {
         apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
@@ -438,14 +412,10 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
         apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
     }
-    if (class_exists('M_WordPress_Routing')) {
-        apip_remove_anonymous_object_hook( 'template_redirect', 'M_WordPress_Routing', 'restore_request_uri' );
-    }
     if( class_exists('C_NextGEN_Bootstrap') )  {
         //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
         //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
         //apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
-        apip_remove_anonymous_object_hook( 'wp', 'C_NextGEN_Bootstrap', 'schedule_cron_jobs' );
     }
     if( class_exists('C_Lightbox_Library_Manager') )  {
         //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
@@ -3045,7 +3015,7 @@ function apip_heweather_retrieve($postid)
 
     if (!isset($_POST)) return false;
 
-    if(empty($postid) || $_POST['post_type'] != 'post' ) return false;
+    if(empty($postid) || !isset($_POST['post_type']) || $_POST['post_type'] != 'post' ) return false;
 
     if(isset($_POST['apip_heweather'])){
         delete_post_meta($postid, 'apip_heweather');
