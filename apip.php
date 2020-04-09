@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.3
+ * Version:     1.30.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1003,7 +1003,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
         QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no" /]', 'p' );
-        QTags.addButton( 'eg_myimbd', 'imbd', '[myimdb id="', '" cname="" nipple="no" /]', 'p' );
+        QTags.addButton( 'eg_myimdb', 'imdb', '[myimdb id="', '" cname="" nipple="no" /]', 'p' );
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music" /]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
         QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book" /]', 'p' );
@@ -2440,6 +2440,60 @@ function apip_dou_movie_detail($id, $score, $nipple) {
 }
 
 /**
+* 作用: 取得的内容太多，影响数据库效率，只保留有效字段。
+* 来源: 自作
+*/
+function apip_slim_dou_cache($cache, $type) {
+    $ret = array();
+    $keys_movie = array('msg','code','request','id','images','rating','alt','title','directors','casts','genres','year',);
+    $keys_imdb = array('Poster','imdbRating','Title','Director','Actors','Genre','Country','Year');
+    $keys_book = array('msg','code','request','image','id','rating','alt','title','author','translator','pubdate','publisher','price');
+    $keys_book_series = array('msg','code','request','count','total','books');
+    $keys_music = array('msg','code','request','image','id','rating','alt','title','author','attrs');
+    $keys_use = array();
+    switch ($type) {
+        case 'movie':
+            $keys_use = $keys_movie;
+            break;
+        case "imdb":
+            $keys_use = $keys_imdb;
+            break;
+        case "book":
+            $keys_use = $keys_book;
+            break;
+        case "book_series":
+            $keys_use = $keys_book_series;
+            break;
+        case "music":
+            $keys_use = $keys_music;
+            break;
+        default:
+            $ret = $cache;
+            break;
+    }
+    if (!empty($keys_use)) {
+        for ($i=0; $i<count($keys_use); $i++ ) {
+            if (array_key_exists($keys_use[$i], $cache)) {
+                if ("books"===$keys_use[$i]) {
+                    $book_content = array();
+                    for ($j=0; $j<count($cache["books"]); $j++) {
+                        $book_content[$j] = apip_slim_dou_cache($cache["books"][$j],"book");
+                    }
+                    $ret["books"] = $book_content;
+                }
+                else {
+                    $ret[$keys_use[$i]] = $cache[$keys_use[$i]];
+                }
+                
+            } else {
+                $ret[$keys_use[$i]] = 0;
+            }
+        }
+    }
+    return $ret;
+}
+
+/**
 * 作用: 从doubanapi取得数据的子函数。
 * 来源: 大发
 */
@@ -2494,6 +2548,7 @@ function apip_get_dou_content( $id, $type )  {
     }
     delete_transient($cache_key);
     $cache = json_decode(wp_remote_retrieve_body($response),true);
+    $cache = apip_slim_dou_cache($cache, $type);
     set_transient($cache_key, $cache, 60*60*24*30*6);
 
 	return $cache;
@@ -2628,6 +2683,7 @@ function apip_imbd_detail($atts, $content = null){
             return false;
         }
         $content = json_decode(wp_remote_retrieve_body($response),true);
+        $content = apip_slim_dou_cache($content, "imdb");
         set_transient($cache_key, $content, 60*60*24*30*6);
     }
     $meta_class='';
