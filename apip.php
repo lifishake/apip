@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.2
+ * Version:     1.30.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2137,7 +2137,7 @@ function apip_dou_book_detail($id, $score){
     if (!$data) {
         return '';
     }
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'" /></div>';
     $delta_num = 0.0;
     if ( $score !== '' ) {
         $score_num = floatval($score);
@@ -2169,22 +2169,27 @@ function apip_dou_book_detail($id, $score){
     }
     
     $output .= '<div class="abstract">作者 : ';
-    $authors = $data["author"];
-    if (count($authors)>1){
-        $output .= implode('/', $authors);
-    }
-    else {
-        $output .= $authors[0];
-    }
-
-    $translator = $data["translator"];
-    if (!empty($translator)) {
-        $output .= '<br />译者 : ';
-        if (count($translator)>1){
-            $output .= implode('/', $translator);
+    if (array_key_exists("author", $data) && is_array($data["author"])) {
+        $authors = $data["author"];
+        if (count($authors)>1){
+            $output .= implode('/', $authors);
+        } else {
+            $output .= $authors[0];
         }
-        else {
-            $output .= $translator[0];
+    } else {
+        $output .= "未知";
+    }
+    
+    if (array_key_exists("translator", $data) && is_array($data["translator"])) {
+        $translator = $data["translator"];
+        if (!empty($translator)) {
+            $output .= '<br />译者 : ';
+            if (count($translator)>1){
+                $output .= implode('/', $translator);
+            }
+            else {
+                $output .= $translator[0];
+            }
         }
     }
 
@@ -2265,7 +2270,7 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
     $output .= '<br /> 全套共（ ' . $total ." ）册";
     $output .= '</div>';//abstract
     for ($i = 0; $i < $count; ++$i ) {
-        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'"></a></div>';
+        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'" /></a></div>';
     }
     $output .= '</div></div></div>';
     return $output;
@@ -2279,7 +2284,7 @@ function apip_dou_music_detail($id){
 
     $data = apip_get_dou_content($id,$type = 'music');
 
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'"></div>';
+    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'" /></div>';
     if ( $score !== '' ) {
         $score_num = floatval($score);
         $delta_num = $score_num - floatval($data["rating"]["average"]);
@@ -2338,7 +2343,12 @@ function apip_dou_movie_detail($id, $score, $nipple) {
     if ("yes"===$nipple) {
         $meta_class="has-nipple";
     }
-    $output = '<div class="apip-item"><div class="mod  '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'"></div>';
+    if ( array_key_exists('msg', $data) && "movie_not_found" === $data['msg']) {
+        $output = '<div class="apip-item"><div class="mod "><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  APIP_PLUGIN_URL.'img/nocover.jpg" /></div>';
+        $output .= '<div class="title">惨遭和谐的豆瓣资源：【'. $id .'】</div></div></div></div>';
+        return $output;
+    }
+    $output = '<div class="apip-item"><div class="mod  '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'" /></div>';
     $delta_num = 0.0;
     if ( $score !== '' ) {
         $score_num = floatval($score);
@@ -2366,42 +2376,64 @@ function apip_dou_movie_detail($id, $score, $nipple) {
         $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
     }
     $output .= '<div class="abstract">导演 :';
-    $directors = $data["directors"];
-    if (count($directors) > 1){
-        $directors = wp_list_pluck($directors,'name');
-        $output .= implode('/', $directors);
-    }
-    else {
-        $output .= $directors[0]["name"];
+    if (array_key_exists("directors", $data) && is_array($data["directors"])) {
+        $directors = $data["directors"];
+        if (count($directors) > 1){
+            $directors = wp_list_pluck($directors,'name');
+            $output .= implode('/', $directors);
+        } else if (!empty($directors)) {
+            $output .= $directors[0]["name"];
+        } else {
+            $output .= "未知";
+        }
+    } else {
+        $output .= "未知";
     }
 
     $output .= '<br />演员: ';
-    $casts = $data["casts"];
-    if ( count($casts)>1 ) {
-        $casts = wp_list_pluck($casts,'name');
-        $output .= implode('/', $casts);
-    }
-    else {
-        $output .= $casts[0]["name"];
+    if (array_key_exists("casts", $data) && is_array($data["casts"])) {
+        $casts = $data["casts"];
+        if ( count($casts)>1 ) {
+            $casts = wp_list_pluck($casts,'name');
+            $output .= implode('/', $casts);
+        } else if (!empty($casts)) {
+            $output .= $casts[0]["name"];
+        } else {
+            $output .= "未知";
+        }
+    } else {
+        $output .= "未知";
     }
 
     $output .= '<br />类型: ';
-    $genres = $data["genres"];
-    if (count($genres)>1){
-        $output .= implode('/', $genres);
-    }
-    else {
-        $output .= $genres[0];
+    if (array_key_exists("genres", $data) && is_array($data["genres"])) {
+        $genres = $data["genres"];
+        if (count($genres)>1){
+            $output .= implode('/', $genres);
+        } else if (!empty($genres)){
+            $output .= $genres[0];
+        } else {
+            $output .= "未知";
+        }
+    } else {
+        $output .= "未知";
     }
 
+    //20200409 豆瓣API把返回值中的国家去掉了
+    /*
     $output .= '<br />国家/地区: ';
-    $countries = $data["countries"];
-    if (count($countries)>1){
-        $output .= implode('/', $countries);
+    if (array_key_exists("contries", $data) && is_array($data["countries"])) {
+        $countries = $data["countries"];
+        if (count($countries)>1){
+            $output .= implode('/', $countries);
+        } else {
+            $output .= $countries[0];
+        }
+    } else {
+        $output .= "未知";
     }
-    else {
-        $output .= $countries[0];
-    }
+    */
+    
 
     $output .= '<br />年份: ' . $data["year"] .'</div></div></div></div>';
     return $output;
@@ -2449,7 +2481,7 @@ function apip_get_dou_content( $id, $type )  {
     }
 
     $args = array(
-        'timeout' => 3000,
+        'timeout' => 15000,
         'sslverify' => false,
         'headers' => array(
           'Content-Type' => 'application/json;charset=UTF-8',
@@ -2533,7 +2565,7 @@ function apip_get_saved_images($id, $src, $dst )  {
             if (is_file($e_temp)) {
                 unlink($e_temp);
             }
-            $url = APIP_PLUGIN_URL."nocover.jpg";
+            $url = APIP_PLUGIN_URL."img/nocover.jpg";
             return $url;
         } 
         $image = new Apip_SimpleImage();
@@ -2873,13 +2905,16 @@ function apip_game_detail($atts, $content = null) {
         $output .='发行商: '.str_replace(',','/ ',$publisher);
     } else {
         $output .='发行商: ';
-        $publishers = $data["publishers"];
-        if ( count($publishers)>1 ){
-            $publishers = wp_list_pluck($publishers,'name');
-            $output .= implode('/ ', $publishers);
-        }
-        else {
-            $output .= $publishers[0]['name'];
+        if (array_key_exists("publishers", $data) && is_array($data["publishers"])) {
+            $publishers = $data["publishers"];
+            if ( count($publishers)>1 ){
+                $publishers = wp_list_pluck($publishers,'name');
+                $output .= implode('/ ', $publishers);
+            } else {
+                $output .= $publishers[0]['name'];
+            }
+        } else {
+            $output .= "不明";
         }
 
     }
@@ -2888,35 +2923,47 @@ function apip_game_detail($atts, $content = null) {
     if ( $year !== '' ) {
         $output .= $year;
     } else {
-        $output .=substr($data['original_release_date'],0,10);
+        if (array_key_exists("original_release_date",$data)) {
+            $output .=substr($data['original_release_date'],0,10);
+        } else {
+            $output .="不明";
+        }
+        
     }
 
     $output .=' <br />类型: ';
     if ($genres !=='') {
         $output .= $genres;
     } else{
-        $genres = $data['genres'];
-        if ( count($genres) >1 ) {
-            $genres = wp_list_pluck($genres,'name');
-            $output .= implode('/ ', $genres);
-        }
-        else {
-            $output .= $genres[0]['name'];
-        }
+        if (array_key_exists('genres',$data) && is_array($data['genres'])){
+            $genres = $data['genres'];
+            if ( count($genres) >1 ) {
+                $genres = wp_list_pluck($genres,'name');
+                $output .= implode('/ ', $genres);
+            }
+            else {
+                $output .= $genres[0]['name'];
+            }
+        } else {
+            $output .= "不明";
+        }        
     }
 
     $output .=' <br />机种: ';
     if ( $platform !== '' ) {
         $output .= $platform;
-    }    else {
-        $platforms = $data['platforms'];
-        if (count($platforms)>1){
-            $platforms = wp_list_pluck($platforms,'abbreviation');
-            $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
-            $output .= implode('/ ', $platform_str);
-        }
-        else {
-            $output .= $platforms[0]['abbreviation'];
+    } else {
+        if (array_key_exists('platforms',$data) && is_array($data['platforms'])){
+            $platforms = $data['platforms'];
+            if (count($platforms)>1){
+                $platforms = wp_list_pluck($platforms,'abbreviation');
+                $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
+                $output .= implode('/ ', $platform_str);
+            } else {
+                $output .= $platforms[0]['abbreviation'];
+            }
+        } else {
+            $output .= "不明";
         }
 
     }

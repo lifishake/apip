@@ -529,7 +529,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         'posts_per_page' => -1,
         'orderby' => 'post_date',
         'order'   => $realorder,
-        'post_status' => 'public',
+        'post_status' => 'publish',
         'ignore_sticky_posts' => 1,
         'post__not_in' => array(
             $id,
@@ -664,7 +664,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
         'posts_per_page' => -1,
         'ignore_sticky_posts' => 1,
         'orderby' => 'modified',
-        'post_status' => 'public',
+        'post_status' => 'publish',
         'post__not_in' => $exclude,
         'tax_query' => array(
             'relation' => 'OR',
