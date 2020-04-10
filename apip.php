@@ -1460,7 +1460,7 @@ function apip_get_cavatar($source) {
     if (!is_file($abs)||1 != get_transient( $cache_key )){
         //$src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
         //$src = $g;
-        $response = wp_remote_get( 
+        $response = @wp_remote_get( 
             htmlspecialchars_decode($src), 
             array( 
                 'timeout'  => 300, 
@@ -1875,6 +1875,7 @@ function apip_archive_page() {
         $ret .= "</ul></li>";//achp_years
     }//for years
     $ret .= '</ul>';//ul achp-widget
+    
     /* 时间归档 */
     $all_cats = get_categories(
             array(
@@ -2541,7 +2542,7 @@ function apip_get_dou_content( $id, $type )  {
           'Content-Type' => 'application/json;charset=UTF-8',
           'Accept' => 'application/json',
         ),);
-    $response = wp_remote_get($link);
+    $response = @wp_remote_get($link);
     if (is_wp_error( $response ))
     {
         return false;
@@ -2607,7 +2608,7 @@ function apip_get_saved_images($id, $src, $dst )  {
     }
 
     if ( !is_file($e) ) {
-        $response = wp_remote_get( 
+        $response = @wp_remote_get( 
             htmlspecialchars_decode($src), 
             array( 
                 'timeout'  => 5000, 
@@ -2677,7 +2678,7 @@ function apip_imbd_detail($atts, $content = null){
 
         delete_transient($cache_key);
 
-        $response = wp_remote_get($url);
+        $response = @wp_remote_get($url);
         if (is_wp_error($response))
         {
             return false;
@@ -2693,7 +2694,7 @@ function apip_imbd_detail($atts, $content = null){
     $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
     $img_url = $content['Poster'];
     if ( !is_file($img_src) /*&& !apip_is_debug_mode()*/ ) {
-        $response = wp_remote_get( 
+        $response = @wp_remote_get( 
             htmlspecialchars_decode($img_url), 
             array( 
                 'timeout'  => 300, 
@@ -2891,7 +2892,7 @@ function apip_game_detail($atts, $content = null) {
            
             delete_transient($cache_key);
             //从链接取数据            
-            $response = file_get_contents($url, false, $cxContext);
+            $response = @file_get_contents($url, false, $cxContext);
             if ($response) {
                 $content = json_decode($response,true);
                 set_transient($cache_key, $content, 60*60*24*30*6);
@@ -2930,7 +2931,7 @@ function apip_game_detail($atts, $content = null) {
     $img_url = $data['image']['thumb_url'];
     //拷贝到本地，该网站需要验证用户信息，所以不能直接使用@copy
     if (  !is_file($img_src) ) {
-        $imageString = file_get_contents($img_url, false, $cxContext);
+        $imageString = @file_get_contents($img_url, false, $cxContext);
         $save = file_put_contents($img_src, $imageString);
         if ( $nodata ) {
             $image = new Apip_SimpleImage();
@@ -3063,7 +3064,7 @@ function apip_save_heweather ( $post )
           'Content-Type' => 'application/json;charset=UTF-8',
           'Accept' => 'application/json',
         ),);
-    $response = wp_remote_get($addr,$args);
+    $response = @wp_remote_get($addr,$args);
 
     if ( is_wp_error($response) )
     {
