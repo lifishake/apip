@@ -252,8 +252,6 @@ function apip_blocked_commenters_render()
   ?>
   <span>    垃圾关键字列表：</span><br />
     <textarea rows='4' cols='40' name='apip_settings[blocked_commenters]' ><?php echo htmlspecialchars(stripslashes($options['blocked_commenters'])); ?></textarea>
-    <span>    启用用户留言评分(js)：</span>
-  <input type='checkbox' name='apip_settings[commentator_rating_enable]' <?php checked( $options['commentator_rating_enable'], 1 ); ?> value='1'><br />
   <?php
 }
 

@@ -31,29 +31,6 @@ function apip_log(  $any )
 function apip_plugin_activation()
 {
     global $wpdb;
-    /*因为是视图，所以每次都创建也无所谓*/
-    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_yearly`
-     AS SELECT DISTINCT YEAR(post_date) AS `year`, COUNT(ID) AS `count`
-    FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'
-    GROUP BY year ORDER BY year DESC ; ";
-    $wpdb->query($sql);
-
-    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_posts_count_monthly`
-     AS SELECT DISTINCT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, COUNT(ID) AS `count`, GROUP_CONCAT(ID) AS `posts`
-     FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'
-     GROUP BY year, month ORDER BY year, month DESC ; ";
-    $wpdb->query($sql);
-
-    $sql = "CREATE OR REPLACE VIEW `{$wpdb->prefix}v_boring_summary`
-         AS SELECT `comment_author_email`, SUM(`meta_value`) AS `boring_value`
-    FROM `{$wpdb->prefix}comments`
-    LEFT JOIN `wp_commentmeta` ON `{$wpdb->prefix}comments`.`comment_ID` = `{$wpdb->prefix}commentmeta`.`comment_id`
-    WHERE `user_id` = 0 AND `meta_key` = '_boring_rank'
-    AND DATE_SUB( CURDATE( ) , INTERVAL 6 MONTH ) <= `comment_date_gmt`
-    GROUP BY comment_author_email
-    ORDER BY comment_author_email ASC ";
-    $wpdb->query($sql);
-
     //4.1
     $thumb_path = APIP_GALLERY_DIR . "gravatar_cache";
     if (file_exists ($thumb_path)) {
@@ -94,14 +71,7 @@ function apip_plugin_activation()
 /*插件反激活*/
 function apip_plugin_deactivation()
 {
-    global $wpdb;
-    /*因为是视图，所以每次都删除也无所谓*/
-    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_yearly` ; ";
-    $wpdb->query($sql);
-    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_posts_count_monthly` ; ";
-    $wpdb->query($sql);
-    $sql = "DROP VIEW IF EXISTS `{$wpdb->prefix}v_boring_summary` ; ";
-    $wpdb->query($sql);
+
 }
 
 /*配置画面*/
@@ -141,8 +111,6 @@ function apip_init()
 {
     /** 00 */
     global $wpdb;
-    //wpdb->apipvpcy = $wpdb->prefix.'v_posts_count_yearly';
-    //wpdb->apipvpcm = $wpdb->prefix.'v_posts_count_monthly';
     //wpdb->apipvts = $wpdb->prefix.'v_taxonomy_summary';
 
     //0.1 插件自带脚本控制
@@ -263,21 +231,8 @@ function apip_init()
     add_filter('preprocess_comment', 'hm_check_user',1);
     add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
     add_filter( 'comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
-    //5.2 用户留言等级评分
-    if ( apip_option_check('commentator_rating_enable') ) {
-        //后台动作增加
-        add_filter( 'comment_row_actions', 'apip_show_commentator_rate', 11, 2 );
-        //增加ajax回调函数
-        add_action( 'wp_ajax_set_boring_comment_rank', 'apip_set_boring_comment_rank' );
-        //在comment模板的合适地方增加filter'apip_placeholder_text'后才有效。
-        add_filter( 'apip_placeholder_text', 'apip_replace_placeholder_text');
-        //在comment模板的合适地方增加filter'apip_submit_status'后才有效。
-        add_filter( 'apip_submit_status', 'apip_check_submit_status');
-        //如果使用传统comment_form,则下面一行生效。
-        add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
-        //针对废话的css惩罚
-        add_filter('comment_class', 'apip_add_boring_comment_style');
-    }
+    add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
+
     /** 06*/
     //social没有添加项,需要外部手动调用
     /** 07 */
@@ -506,7 +461,6 @@ $options
     4.2     replace_emoji                        替换emoji地址
 05.    留言者控制
    5.1  blocked_commenters                 替换广告留言用户名和网址
-   5.2     apip_show_commentator_rate  为留言评分
 06.     social_share_enable                     社会化分享使能
 07.     自定义的shortcode
     7.1     apip_tagcloud_enable            更好看的标签云
@@ -566,8 +520,9 @@ function apip_scripts()
     }
 
     //0.1 Ctrl+Enter 提交
-    if (comments_open() && is_singular() ) {
-        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20191101", true);
+    if (is_singular() ) {
+        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20200413", true);
+        wp_localize_script( 'apip-js-singular', 'enable-lazyload', true);
     }
     //07
     if  ( is_singular() && apip_option_check('social_share_enable') )
@@ -836,7 +791,7 @@ function apip_scripts()
                         -o-transition: opacity .3s ease-in;
                         transition: opacity .3s ease-in;
                         }';
-    wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20191101', true);
+        wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
     }
 
     //8.5
@@ -1558,91 +1513,10 @@ function apip_show_advertise_comment_details( $actions, $comment ){
     return $actions;
 }
 
-//5.2 根据用户留言质量评定用户水平，并进行相应操作
-function apip_show_commentator_rate( $actions, $comment ) {
-    $desc = null;
-    $level = 0;
-    $n = 0;
-    $query = '';
-    //$comment->comment_author_email;
-    $n = intval(get_comment_meta($comment->comment_ID, '_boring_rank', true));
-
-    $boring_nonce = wp_create_nonce( "boring-comment_".$comment->comment_ID );
-    $selector = '<select id="set-boring-rank" name="boring-rank">
-    <option value="0">正常</option><option value="2">哦</option><option value="3">呵呵</option><option value="6">SoWhat</option></select>';
-    $format = '<span data-comment-id="%d" data-post-id="%d" wp_nonce="%s" class="%s" ><span class="set-boring-rank-label">无聊等级&nbsp;(%d)&nbsp;</span>%s</span>';
-    $actions['boringrank'] = sprintf($format, $comment->comment_ID, $comment->comment_post_ID, $boring_nonce, 'boring-level', $n, $selector );
-
-    return $actions;
-}
-
-function apip_replace_placeholder_text( $text ) {
-    $commenter = wp_get_current_commenter();
-    global $wpdb;
-    if ( isset($commenter) ) {
-        $email = esc_attr($commenter['comment_author_email']);
-    }
-    if ( !$email || $email == '' ) {
-        return $text;
-    }
-    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
-    $vals = $wpdb->get_col( $sql );
-    if ( count($vals) >= 1 ) {
-        if ( $vals[0] > 12 ) {
-            $text = '你留下的废话太多，博主已经决定跟你断绝往来。';
-        }
-        else if ( $vals[0] >= 6 ) {
-            $text = '你最近六个月的回复已经惹得博主不高兴了。请用心回复，谨防友尽。';
-        }
-    }
-    return $text;
-}
-
-function apip_check_submit_status( $type ) {
-    $commenter = wp_get_current_commenter();
-    global $wpdb;
-    if ( isset($commenter) ) {
-        $email = esc_attr($commenter['comment_author_email']);
-    }
-    if ( !$email || $email == '' ) {
-        return $type;
-    }
-    $sql = "SELECT `boring_value` FROM {$wpdb->prefix}v_boring_summary WHERE `comment_author_email` = '{$email}' ";
-    $vals = $wpdb->get_col( $sql );
-    if ( count($vals) >= 1 && $vals[0] > 12 ) {
-        $type = 'hidden';
-    }
-    return $type;
-}
-
-function apip_set_boring_comment_rank() {
-    $comment_id = $_POST['id'];
-    if ( !wp_verify_nonce($_POST['nonce'],"boring-comment_".$comment_id))
-        die();
-    $old = get_comment_meta($comment_id, '_boring_rank', true);
-    if ( $_POST['level'] == 0 ) {
-        delete_comment_meta($comment_id, '_boring_rank');
-    }
-    else if ( is_null($old) || ""=== $old ) {
-        add_comment_meta($comment_id, '_boring_rank', $_POST['level'], true);
-    }
-    else {
-        update_comment_meta($comment_id, '_boring_rank', $_POST['level']);
-    }
-
-}
-
 function apip_replace_triditional_comment_placeholder_text( $default ) {
-    $text = apip_replace_placeholder_text('请不要留下无趣的东西浪费大家时间。');
+    $text = '请不要留下无趣的东西浪费大家时间。';
     $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
     return $default;
-}
-
-function apip_add_boring_comment_style( $class ) {
-    $comment_id = get_comment_ID();
-
-    $sql = "";
-    return $class;
 }
 
 /*                                          05终了                             */
@@ -1835,48 +1709,65 @@ function apip_archive_page() {
 
     //
     /* 日期归档 */
+    $sql_total_count = "SELECT YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as `count`, GROUP_CONCAT(ID) AS `posts` FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish' GROUP BY YEAR(post_date), MONTH(post_date) ORDER BY post_date DESC LIMIT 99999";
+
     $ret = '<h2 class="apip-h2">日期归档</h2><ul class="achp-widget">';
-    $years = $wpdb->get_results("SELECT `year`, `count` FROM `{$wpdb->prefix}v_posts_count_yearly`");
-    foreach( $years as $year ){
-        $yearLink = get_year_link($year->year);
-        $ret .= "<li class=\"achp-parent\">".
-                "<a class=\"achp-sig\" title=\"{$year->year}\" href=\"#\">".
-                "<span class=\"achp-symbol suffix\">[+]</span>".
-                "</a><a href=\"{$yearLink}\" title=\"{$year->year}\">".
-                "{$year->year} ({$year->count})".
-                "</a><ul class=\"achp-child apip-no-disp\">";
-        $months = $wpdb->get_results("SELECT `year`, `month`, `count`, `posts` FROM `{$wpdb->prefix}v_posts_count_monthly` WHERE `year` = '{$year->year}'");
-        foreach ($months as $month) {
-            $monthLink = get_month_link($month->year, $month->month);
-            $monthFormat = $month->month < 10 ? '0'.$month->month : $month->month;
-            $ret .= "<li class=\"achp-parent apip-no-disp\" >" .
-                    "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol suffix\">[+]</span></a>".
-                    "<a href=\"{$monthLink}\" title=\"{$monthFormat}\">{$monthFormat}({$month->count})</a>";
-            $ret .= "<ul class = \"achp-child apip-no-disp\">";
-            $includes = explode(",",$month->posts);
-            $getpostsargs = array();
-            $getpostsargs['posts_per_page'] = -1;
-            $getpostsargs['orderby'] = 'date';
-            $getpostsargs['order'] = 'ASC';
-            $getpostsargs['include'] = $includes;
-            $posts = get_posts($getpostsargs);
-            foreach( $posts as $post ) {
-                $ret.= "<li class=\"achp-child apip-no-disp\">";
-                $ret.= sprintf( "<a href=\"%s\" title=\"%s\">%s</a>",
-                    get_permalink($post->ID),
-                    htmlspecialchars($post->post_title),
-                    $post->post_title
-                );
-                $ret.='</li>';//achp-child
-            }
-            $ret .= "</ul>";
-            $ret .= "</li>";//achp_months
+    $all_result = $wpdb->get_results($sql_total_count);
+    $last_year = "";
+    $month_str="";
+    $total_month = "";
+    $year_count=0;
+    foreach ($all_result as $result) {
+        
+        //-------------
+        $monthLink = get_month_link($result->year, $result->month);
+        $monthFormat = $result->month < 10 ? '0'.$result->month : $result->month;
+        $month_str .= "<li class=\"achp-parent apip-no-disp\" >" .
+                "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol suffix\">[+]</span></a>".
+                "<a href=\"{$monthLink}\" title=\"{$monthFormat}\">{$monthFormat}({$result->count})</a>";
+        $month_str .= "<ul class = \"achp-child apip-no-disp\">";
+        $includes = explode(",",$result->posts);
+        $getpostsargs = array();
+        $getpostsargs['posts_per_page'] = -1;
+        $getpostsargs['orderby'] = 'date';
+        $getpostsargs['order'] = 'ASC';
+        $getpostsargs['include'] = $includes;
+        $posts = get_posts($getpostsargs);
+        foreach( $posts as $post ) {
+            $month_str.= "<li class=\"achp-child apip-no-disp\">";
+            $month_str.= sprintf( "<a href=\"%s\" title=\"%s\">%s</a>",
+                get_permalink($post->ID),
+                htmlspecialchars($post->post_title),
+                $post->post_title
+            );
+            $month_str.='</li>';//achp-child
         }
-        $ret .= "</ul></li>";//achp_years
-    }//for years
-    $ret .= '</ul>';//ul achp-widget
-    
-    /* 时间归档 */
+        $month_str .= "</ul>";
+        $month_str .= "</li>";//achp_months
+        //-------------
+        if (((!empty($last_year) && $result->year !== $last_year ) || !next($all_result))&& $year_count > 0) {
+            $yearLink = get_year_link($last_year);
+            $ret .= "<li class=\"achp-parent\">".
+                    "<a class=\"achp-sig\" title=\"{$last_year}\" href=\"#\">".
+                    "<span class=\"achp-symbol suffix\">[+]</span>".
+                    "</a><a href=\"{$last_year}\" title=\"{$last_year}\">".
+                    "{$last_year} ({$year_count})".
+                    "</a><ul class=\"achp-child apip-no-disp\">";
+            $ret .= $total_month;
+            $ret .= "</ul></li>";
+            $total_month = $month_str;
+            $month_str = "";
+            $year_count = $result->count;
+        } else {
+            $total_month .= $month_str;
+            $year_count += $result->count;
+            $month_str = "";
+        }
+        $last_year = $result->year;
+        
+    }//for each year result
+
+    /* 类别归档 */
     $all_cats = get_categories(
             array(
                 'type' => 'post',
