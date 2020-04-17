@@ -595,7 +595,7 @@ function apip_get_post_evaluate($post_id, $standard){
             $evaluate += $standard[$cat->term_taxonomy_id];
         }
     }
-    return intval(($evaluate * 100) / $myVal);
+    return ceil(($evaluate * 100) / $myVal);
 }
 
 /**
@@ -640,7 +640,12 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
             $fVal = 0.0;
             $ancestors = get_ancestors( $cat->term_taxonomy_id, "category" );
             $gen = count($ancestors);
-            $fVal = pow(1.3, $gen) * $gen;
+            if ($gen > 0) {
+                $fVal = pow(1.3, $gen) * $gen;
+            } else {
+                $fVal = 1;
+            }
+            
             $cat_taxonomy_ids[] = $cat->term_taxonomy_id;
             $standard[$cat->term_taxonomy_id] = $fVal; 
             if ($gen>0) {

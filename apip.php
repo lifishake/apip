@@ -111,8 +111,6 @@ function apip_init()
 {
     /** 00 */
     global $wpdb;
-    //wpdb->apipvts = $wpdb->prefix.'v_taxonomy_summary';
-
     //0.1 插件自带脚本控制
     add_action( 'wp_enqueue_scripts', 'apip_scripts' );
     add_action( 'admin_enqueue_scripts', 'apip_admin_scripts' );
@@ -128,7 +126,7 @@ function apip_init()
     //0.5 后台追加的快捷按钮
     add_action('admin_print_footer_scripts','apip_quicktags');
     //0.6 去掉后台的OpenSans
-    add_action( 'admin_enqueue_scripts', 'apip_remove_open_sans' );
+    //add_action( 'admin_enqueue_scripts', 'apip_remove_open_sans' );
     //0.7 自带的TagCloud格式调整
     add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
     //0.8 移除后台的“作者”列
@@ -136,7 +134,8 @@ function apip_init()
     //0.9 升级后替换高危文件
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
     //0.10 作者页跳转到404
-    add_action('template_redirect', 'apip_redirect_author');
+    //add_action('template_redirect', 'apip_redirect_author');
+    add_action('template_redirect', 'apip_template_redirect');
     //0.11 屏蔽留言class中的作者名
     add_filter('comment_class', 'apip_remove_author_class', 10, 5);
     //0.12 禁用古腾堡
@@ -148,7 +147,7 @@ function apip_init()
     add_filter('the_content_feed', 'apip_code_highlight') ;
     add_filter('the_content_feed', 'so_handle_038', 199, 1);
     //0.15 移除后台界面的WP版本升级提示
-    add_filter('pre_site_transient_update_core','remove_core_updates');
+    //add_filter('pre_site_transient_update_core','remove_core_updates');
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
     //0.17 针对苹果旧设备的访问，减少404
@@ -185,11 +184,13 @@ function apip_init()
         //2.6默认留言widget里屏蔽作者
         add_filter( 'widget_comments_args', 'before_get_comments' );
     }
+    /*
     if ( apip_option_check('redirect_if_single') )
     {
         //2.7搜索结果只有一条时直接跳入
         add_action('template_redirect', 'redirect_single_post');
     }
+    */
     if ( apip_option_check('protect_comment_php') )
     {
         //2.8禁止直接访问wp_comments.php
@@ -859,6 +860,9 @@ function apip_admin_scripts() {
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20191101', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
+    //20200416 原0.6功能,移除OpenSans字体
+    wp_deregister_style( 'open-sans' );
+    wp_register_style( 'open-sans', false );
 }
 
 //0.2
@@ -973,10 +977,12 @@ function apip_quicktags()
  * 来源: 自产
  * URL:
  */
+/*
 function apip_remove_open_sans() {
     wp_deregister_style( 'open-sans' );
     wp_register_style( 'open-sans', false );
 }
+*/
 
 //0.7 自带的TagCloud格式调整
  /**
@@ -1004,8 +1010,8 @@ function apip_remove_default_risk_files( $upgrader_object, $options )
     {
         global $wp_filesystem;
         $wp_dir = trailingslashit($wp_filesystem->abspath());
-        $wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'wp-comments-post.php', true );
-        $wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'xmlrpc.php', true );
+        @$wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'wp-comments-post.php', true );
+        @$wp_filesystem->copy( APIP_PLUGIN_DIR.'/ext/wp-go-die.php', $wp_dir.'xmlrpc.php', true );
     }
 }
 
@@ -1677,6 +1683,8 @@ function apip_build_cat_html( $cat, $is_child = 0 ) {
     $getpostsargs['orderby'] = 'date';
     $getpostsargs['order'] = 'ASC';
     $getpostsargs['category__in'] = array($cat->term_id);
+    $getpostsargs['post_status'] = 'publish';
+    $getpostsargs['post_type'] = 'post';
     $posts = get_posts($getpostsargs);
     if ( !empty($posts) ) {
         $post_html .= '<ul class="achp-child apip-no-disp">';
@@ -3276,4 +3284,16 @@ function apip_replace_tag_note( $defaults )
     $notice = "<em> 不懂问，不爽骂，无语右上有红叉。确定要按下按钮吗？</em>";
     $defaults['comment_notes_after'] = $notice;
     return $defaults;
+}
+
+/**
+ * 20200416 整合所有template_redirect的钩子到同一函数
+ */
+function apip_template_redirect() {
+    //0.10 作者页跳转到404
+    apip_redirect_author();
+    //2.7搜索结果只有一条时直接跳入
+    if ( apip_option_check('redirect_if_single') ) {
+        redirect_single_post();
+    }
 }
