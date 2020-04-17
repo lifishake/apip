@@ -1093,13 +1093,8 @@ function apip_get_link_colors( $color_str)
     $ret = array();
     $hsv_temp = $hsv;
     $h_start = $hsv[1];
-    for($i=4; $i>=0; $i--) {
-        if ($h_start<50){
-            $hsv_temp[1] = $hsv[1]+$i*8;
-        }
-        else {
-            $hsv_temp[1] = $hsv[1]-$i*8;
-            }
+    for($i=7; $i>=0; $i--) {
+        $hsv_temp[0] = ($hsv[0]+$i*25)%360;
         $rgb_temp = hsv2rgb($hsv_temp);
         $ret[] =sprintf("#%1$02X%2$02X%3$02X",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2]) ;
     }

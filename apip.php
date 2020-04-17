@@ -426,7 +426,7 @@ function apip_header_actions()
 /*
 $options
 00.                                     无选项，必须选中的内容
-    0.1                                 Ctrl+Enter提交
+    0.1                                 Ctrl+Enter提交                      //20200418移除
     0.2                                 屏蔽不必要的js
     0.3                                 屏蔽不必要的style
     0.4                                 feed结尾的追加内容
@@ -499,88 +499,22 @@ function apip_scripts()
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
     wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20200312' );
+    wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20200418", true);
     $css = '';
-    //所有要加载fontAowsem的情况
-    if ( ( is_singular() && apip_option_check('social_share_enable') ) ||
-         ( is_page('my_links') && apip_option_check('apip_link_enable') ) ||
-         (is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs') || in_category('nightlygames') ) && apip_option_check('apip_douban_enable') ) ||
-         has_tag('testcode') )
-    {
-        $css .= "   @font-face {
-                      font-family: 'FontAwesome';
-                      src: url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.eot?v=4.3.0');
-                      src: url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('".APIP_PLUGIN_URL."fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
-                      font-weight: normal;
-                      font-style: normal;
-                    }
-        ";
-    }
+
     if ( /*is_single()*/1 ) {
         wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css' );
         wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css' );
     }
 
     //0.1 Ctrl+Enter 提交
-    if (is_singular() ) {
-        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20200413", true);
-        wp_localize_script( 'apip-js-singular', 'enable-lazyload', true);
-    }
+    //if (is_singular() && comments_open() ) {
+        //wp_enqueue_script('apip-comment-form', APIP_PLUGIN_URL . 'js/apip-comment-form.js', array(), "20200417", true);
+    //}
     //07
     if  ( is_singular() && apip_option_check('social_share_enable') )
     {
         wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), "20191101", true);
-        $css .= '   #sharebar{
-                        clear:both;
-                        background: none repeat scroll 0 0 #EEFAF6;
-                        line-height: 2em ;
-                    }
-
-                    #sharebar span{
-                        padding: 0 15px;
-                        margin:4px 0 ;
-                        color: #5a5a5a;
-                    }
-
-                    #sharebar a {
-                        background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
-                        display: inline;
-                        font-size: 1.3em;
-                        height: inherit;
-                        line-height: inherit;
-                        margin: 0;
-                        opacity: 0.8;
-                        padding-right: 13px;
-                        position: relative;
-                        text-decoration: none;
-                        top: 2px;
-                        vertical-align: inherit;
-                        width: inherit;
-                        cursor:pointer;
-                    }
-
-                    #sharebar a:before {
-                        font-family: \'FontAwesome\' ;
-                        font-variant: normal;
-                        font-weight: 400;
-                        line-height: 1;
-                        text-transform: none;
-                    }
-
-                    .sharebar-twitter:before{
-                        content: "\f099" ;
-                    }
-                    .sharebar-weibo:before {
-                      content: "\f18a";
-                    }
-                    .sharebar-tencent-weibo:before {
-                      content: "\f1d5";
-                    }
-                    .sharebar-googleplus:before {
-                      content: "\f0d5";
-                    }
-                    .sharebar-facebook:before {
-                      content: "\f230";
-                    }';
     }
     //7.1
     if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
@@ -589,126 +523,46 @@ function apip_scripts()
         $bg_colors = array();
         $link_colors = apip_get_link_colors($color_link);
         $bg_colors = apip_get_bg_colors($color_bg);
-        $css .= '   ul.tagcloud, ul.tagcloud li {
-                        font-size: 1em;
-                        list-style-type: none;
-                        padding: 0;
-                        margin: 0;
-                        text-align:center;
-                    }
-                    ul.tagcloud li {
-                        display: inline;
-                        line-height: 2.8em;
-                        white-space: nowrap;
-                    }
-                    ul.tagcloud a {
-                        text-decoration: none;
-                        border-radius: 100%;
-                        -webkit-box-shadow: none;
-                        box-shadow: none;
-                        margin:-7px;
-                    }
-                    ul.tagcloud a:hover,
-                    ul.tagcloud a:focus,
-                    ul.tagcloud a:active{
-                        box-shadow:none;
-                    }
-                    a.tagged1 {
-                        font-size: 1.00em;
+        $css .= '   a.lk0 {
                         color: '.$link_colors[0].';
-                        font-weight: 300;
-                        padding: 0.5em;
-                        background: '.$bg_colors[0].';
-                        }
-
-                    a.tagged2 {
-                        font-size: 1.20em;
-                        color: '.$link_colors[1].';
-                        font-weight: 400;
-                        padding: 1.2em;
-                        background:'.$bg_colors[1].';
-                        }
-                    a.tagged3 {
-                        font-size: 1.50em;
-                        color'.$link_colors[2].';
-                        font-weight: 400;
-                        padding: 2.1em;
-                        background: '.$bg_colors[2].';
                     }
-                    a.tagged4 {
-                        font-size: 1.80em;
-                        color:'.$link_colors[3].';
-                        font-weight: 500;
-                        padding: 3.3em;
-                        background: '.$bg_colors[3].';
-                        }
-                    a.tagged5 {
-                        font-size: 2.20em;
-                        color:'.$link_colors[4].';
-                        font-weight: 700;
-                        padding: 4.6em;
-                        background:'.$bg_colors[4].';
-                        }';
+                    a.lk1 {
+                        color: '.$link_colors[1].';
+                    }
+                    a.lk2 {
+                        color: '.$link_colors[2].';
+                    }
+                    a.lk3 {
+                        color: '.$link_colors[3].';
+                    }
+                    a.lk4 {
+                        color: '.$link_colors[4].';
+                    }
+                    a.lk5 {
+                        color: '.$link_colors[5].';
+                    }
+                    a.lk6 {
+                        color: '.$link_colors[6].';
+                    }
+                    a.lk7 {
+                        color: '.$link_colors[7].';
+                    }';
+                    
     }
     //7.2
     if ( is_page('my_links') && apip_option_check('apip_link_enable') )
     {
-    //wp_enqueue_style( 'apip-link-style', APIP_PLUGIN_URL . 'css/apip-links.css' );
-        $css .= '   .apip-links {
-                        display:inline-block;
-                    }
-
-                    .apip-links > li {
-                        display: inline;
-                        float: left;
-                        margin-bottom: 1em;
-                        text-align: center;
-                        width: 128px;
-                    }
-
-                    .commenter-link.vcard {
-                        padding: 5px 5px 0;
-                    }
-                    .url::after {
+        $css .= '   .url::after {
                         color: '.$color_link.';
-                        content: "\f0c1";
-                        font-family: Fontawesome;
-                        font-size: 12px;
-                        left: -2px;
-                        margin: -5px 0 0 1px;
-                        position: relative;
-                        top: -7px;
-                    }
-
-                    .commenter-link img {
-                        border-radius: 100%;
                     }';
     }
     //7.3
     if ( (is_page('archive')||is_page('archives')) && apip_option_check('apip_archive_enable') )
     {
-        $css .= '   .apip-no-disp {
-                        display: none !important;
-
-                    }
-                    .achp-expanded {
-                        font-weight:800;
-                    }
-                    li.achp-child {
-                        position: relative;
-                        text-overflow: ellipsis;
-                        max-width: 100%;
-                        overflow: hidden;
-                        max-height: 1.25em;
-                    }
-                    a.achp-sig {
-                        box-shadow: none !important;
-                    }
-                    span.achp-symbol {
-                        font-family: monospace, monospace;
-                        font-weight: 800;
-                        line-height: inherit;
-                        margin: 0 10px 0;
+        $css .= '   
+                    .post-'.get_the_ID().' .entry-content ul li .achp-child {
+                        line-height: 1.25rem;
+                        font-size: 1rem;
                     }
                     .post-'.get_the_ID().' .entry-content ul,
                     .post-'.get_the_ID().' .entry-content ol {
@@ -728,123 +582,16 @@ function apip_scripts()
     {
         add_filter('the_content', 'apip_code_highlight') ;
         add_filter('the_content', 'so_handle_038', 199, 1);
-        $css .= '   pre.prettyprint {
-                        display: block;
-                        background-color: #333;
-                        text-shadow: none;
-                        }
-                    pre .nocode {
-                        background-color:none;
-                        color: #000;
-                        }
-                    pre .str {
-                        color: #ffa0a0;
-                        }
-                    pre .kwd {
-                        color: #f0e68c;
-                        font-weight: 700;
-                        }
-                    pre .com {
-                        color: #87ceeb;
-                        }
-                    pre .typ {
-                        color: #98fb98;
-                        }
-                    pre .lit {
-                        color: #cd5c5c;
-                        }
-                    pre .pun {
-                        color: #fff;
-                        }
-                    pre .pln {
-                        color: #fff;
-                        }
-                    pre .tag {
-                        color: #f0e68c;
-                        font-weight: 700;
-                        }
-                    pre .atn {
-                        color: #bdb76b;
-                        font-weight: 700;
-                        }
-                    pre .atv {
-                        color: #ffa0a0;
-                        }
-                    pre.dec {
-                        color: #98fb98;
-                        }
-                    ol.linenums {
-                        margin-top: 0;
-                        margin-bottom: 0;
-                        color: #AEAEAE;
-                        }
-                    li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
-                        list-style-type: none;
-                        }';
-    wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20191101", true);
+        wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20191101", true);
     }
     //8.2
     if ( apip_option_check('apip_lazyload_enable') ) {
-        $css .= '   img[data-unveil="true"] {
-                        opacity: 0;
-                        -webkit-transition: opacity .3s ease-in;
-                        -moz-transition: opacity .3s ease-in;
-                        -o-transition: opacity .3s ease-in;
-                        transition: opacity .3s ease-in;
-                        }';
-        wp_enqueue_script('apip_js_lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
+        wp_localize_script( 'apip-js-option', 'enable-lazyload', true);
+        wp_enqueue_script('apip-js-lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
     }
 
-    //8.5
-     if (is_singular() && (in_category('appreciations') || in_category('relisten_moring_songs') || has_tag('testcode')) && apip_option_check('apip_douban_enable') ) {
-         $css .= '.allstarlight:before,.allstardark:before,.allstarfill:before,.allstarlack:before {
-                      font-family:"FontAwesome" !important;
-                      font-size:inherit;
-                      font-style:normal;
-                      -webkit-font-smoothing: antialiased;
-                      -webkit-text-stroke-width: 0.2px;
-                      -moz-osx-font-smoothing: grayscale;
-                    }
-                    .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;letter-spacing:2px;}
-                    .allstarlight,.allstarfill,.allstarlack{position:absolute;left:0;height:18px;overflow:hidden}
-                    .allstarlight{color:#f99b01;}
-                    .allstarfill{color:#F75C02;}
-                    .allstarlack{color:RGBA(196,191,188,.5);}
-                    .allstarlight:before,.allstarfill:before,.allstarlack:before{content:"\f005\f005\f005\f005\f005"}
-                    .allstardark:before{content:"\f006\f006\f006\f006\f006"} ';
-     }
      //8.8
      if ( is_single() && comments_open() && apip_option_check('apip_commentquiz_enable')) {
-         $css .= ' .apipcommentquiz,
-                        .apipcommentquiz + * {
-                          overflow: hidden;
-                          transition: .5s;
-                          height: 0;
-                        }
-                        .apipcommentquiz { height: auto }
-                        .apipcommentquiz p{
-                            font-size:12px;
-                            font-style: italic;
-                        }
-                        .apipcommentquiz label {
-                          cursor: pointer;
-                          display: inline-block;
-                          margin: 0 7px 6px 0;
-                          border-radius: 5px;
-                          padding: 10px 15px;
-                          transition: .2s;
-                        }
-                        .apipcommentquiz label:hover {
-                          background: #ccc;
-                        }
-                        .apipcommentquiz h3 {
-                          color: red;
-                          font: inherit;
-                          animation: apipcommentquiz forward;
-                        }
-                        @keyframes apipcommentquiz{
-                          from{transform:scale(0)}
-                        } ';
         wp_enqueue_script( 'apip-js-comment-quiz',APIP_PLUGIN_URL . 'js/apip-commentquiz.js', array(), false, true);
      }
     if ( $css !== '' ) {
@@ -1604,7 +1351,10 @@ function apip_tagcloud_page($params = array()) {
     $index = 0;
 
     foreach ($tags as $tag) {
-        if ( $index < 13 ) {
+        if ( $index < 3 ) {
+            $tag->parent = 6;
+        }
+        elseif( $index < 13 )  {
             $tag->parent = 5;
         }
         elseif( $index < 39 )  {
@@ -1627,7 +1377,7 @@ function apip_tagcloud_page($params = array()) {
     foreach ($tags as $tag) {
         $url = get_tag_link($tag->term_id);
         $title = $tag->count . ' article' . ($tag->count == 1 ? '' : 's');
-        $class = $sizeclass . $tag->parent ;
+        $class = $sizeclass . $tag->parent. ' lk'.$tag->term_id%8 ;
         $ret .= ($wrapper ? "<$wrapper>" : '') ;
         $ret .= "<a href='{$url}' rel='external nofollow' class='{$class}' title='{$title}'>";
         $ret .= "{$tag->name}</a>" ;

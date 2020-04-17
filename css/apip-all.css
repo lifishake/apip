@@ -1,3 +1,13 @@
+@font-face {
+    font-family: 'FontAwesome';
+    src: url('../fonts/fontawesome-webfont.eot?v=4.3.0');
+    src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('../fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('../fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /*dou*/
 span.func-after,
 span.func-before {
                     font-family: monospace, monospace;
@@ -125,6 +135,285 @@ span.suffix {
     max-width: 23.5%;
 }
 
+.allstarlight:before,.allstardark:before,.allstarfill:before,.allstarlack:before {
+    font-family:"FontAwesome" !important;
+    font-size:inherit;
+    font-style:normal;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-stroke-width: 0.2px;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .allstardark{position:relative;color:#f99b01;display: inline-block;vertical-align: top;letter-spacing:2px;}
+  .allstarlight,.allstarfill,.allstarlack{position:absolute;left:0;height:18px;overflow:hidden}
+  .allstarlight{color:#f99b01;}
+  .allstarfill{color:#F75C02;}
+  .allstarlack{color:RGBA(196,191,188,.5);}
+  .allstarlight:before,.allstarfill:before,.allstarlack:before{content:"\f005\f005\f005\f005\f005"}
+  .allstardark:before{content:"\f006\f006\f006\f006\f006"}
+
+
+
+
+/*lazyload*/
+img[data-unveil="true"] {
+    opacity: 0;
+    -webkit-transition: opacity .3s ease-in;
+    -moz-transition: opacity .3s ease-in;
+    -o-transition: opacity .3s ease-in;
+    transition: opacity .3s ease-in;
+}
+
+/*tagcloud page*/
+ul.tagcloud, ul.tagcloud li {
+    font-size: 1em;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align:center;
+}
+ul.tagcloud li {
+    display: inline;
+    line-height: 2.8em;
+    white-space: nowrap;
+}
+ul.tagcloud a {
+    text-decoration: none;
+    border-radius: 100%;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    margin:-7px;
+}
+ul.tagcloud a:hover,
+ul.tagcloud a:focus,
+ul.tagcloud a:active{
+    box-shadow:none;
+}
+a.tagged1 {
+    font-size: 1.00em;                        
+    font-weight: 300;
+    padding: 0.5em;
+    }
+
+a.tagged2 {
+    font-size: 1.20em;
+    font-weight: 400;
+    padding: 0.7em;
+    }
+a.tagged3 {
+    font-size: 1.50em;
+    font-weight: 400;
+    padding: 1.0em;
+}
+a.tagged4 {
+    font-size: 1.80em;
+    font-weight: 500;
+    padding: 1.5em;
+    }
+a.tagged5 {
+    font-size: 2.50em;
+    font-weight: 700;
+    padding: 2.2em;
+    }
+a.tagged6 {
+    font-size: 3.10em;
+    font-weight: 900;
+    padding: 3.3em;
+    }
+
+/* link page */
+.apip-links {
+    display:inline-block;
+}
+
+.apip-links > li {
+    display: inline;
+    float: left;
+    margin-bottom: 1em;
+    text-align: center;
+    width: 128px;
+}
+
+.commenter-link.vcard {
+    padding: 5px 5px 0;
+}
+.url::after {
+    content: "\f0c1";
+    font-family: 'Fontawesome';
+    font-size: 12px;
+    left: -2px;
+    margin: -5px 0 0 1px;
+    position: relative;
+    top: -7px;
+}
+
+.commenter-link img {
+    border-radius: 100%;
+}
+
+/*share bar*/    
+#sharebar{
+    clear:both;
+    background: none repeat scroll 0 0 #EEFAF6;
+    line-height: 2em ;
+}
+
+#sharebar span{
+    padding: 0 15px;
+    margin:4px 0 ;
+    color: #5a5a5a;
+}
+
+#sharebar a {
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
+    display: inline;
+    font-size: 1.3em;
+    line-height: inherit;
+    margin: 0;
+    opacity: 0.8;
+    padding-right: 13px;
+    position: relative;
+    text-decoration: none;
+    top: 2px;
+    vertical-align: inherit;
+    cursor:pointer;
+}
+
+#sharebar a:before {
+    font-family: 'FontAwesome' ;
+    font-variant: normal;
+    font-weight: 400;
+    line-height: 1;
+    text-transform: none;
+}
+
+.sharebar-twitter:before{
+    content: "\f099" ;
+}
+.sharebar-weibo:before {
+  content: "\f18a";
+}
+.sharebar-tencent-weibo:before {
+  content: "\f1d5";
+}
+.sharebar-googleplus:before {
+  content: "\f0d5";
+}
+.sharebar-facebook:before {
+  content: "\f230";
+}
+
+/*pretty print*/
+pre.prettyprint {
+    display: block;
+    background-color: #333;
+    text-shadow: none;
+    }
+pre .nocode {
+    background-color:none;
+    color: #000;
+    }
+pre .str {
+    color: #ffa0a0;
+    }
+pre .kwd {
+    color: #f0e68c;
+    font-weight: 700;
+    }
+pre .com {
+    color: #87ceeb;
+    }
+pre .typ {
+    color: #98fb98;
+    }
+pre .lit {
+    color: #cd5c5c;
+    }
+pre .pun {
+    color: #fff;
+    }
+pre .pln {
+    color: #fff;
+    }
+pre .tag {
+    color: #f0e68c;
+    font-weight: 700;
+    }
+pre .atn {
+    color: #bdb76b;
+    font-weight: 700;
+    }
+pre .atv {
+    color: #ffa0a0;
+    }
+pre.dec {
+    color: #98fb98;
+    }
+ol.linenums {
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #AEAEAE;
+    }
+li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
+    list-style-type: none;
+    }
+
+/*quiz*/    
+.apipcommentquiz,
+.apipcommentquiz + * {
+  overflow: hidden;
+  transition: .5s;
+  height: 0;
+}
+.apipcommentquiz { height: auto }
+.apipcommentquiz p{
+    font-size:12px;
+    font-style: italic;
+}
+.apipcommentquiz label {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 7px 6px 0;
+  border-radius: 5px;
+  padding: 10px 15px;
+  transition: .2s;
+}
+.apipcommentquiz label:hover {
+  background: #ccc;
+}
 .apipcommentquiz h2 {
     color:#999;
+}
+.apipcommentquiz h3 {
+  color: red;
+  font: inherit;
+  animation: apipcommentquiz forward;
+}
+@keyframes apipcommentquiz{
+  from{transform:scale(0)}
+} 
+
+/*archive page*/
+.apip-no-disp {
+    display: none !important;
+
+}
+.achp-expanded {
+    font-weight:800;
+}
+li.achp-child {
+    position: relative;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    overflow: hidden;
+    max-height: 1.25em;
+}
+a.achp-sig {
+    box-shadow: none !important;
+}
+span.achp-symbol {
+    font-family: monospace, monospace;
+    font-weight: 800;
+    line-height: inherit;
+    margin: 0 10px 0;
 }
