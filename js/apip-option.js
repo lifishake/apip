@@ -1,10 +1,3 @@
-(
-	
-	function( $ ) {	
-		$(document).ready(function() {
-			if (enablelazyload) {
-				$("img").unveil(200);
-			}
-		});
-		
+jQuery( document ).ready( function( $ ) {
+	$( 'img[data-unveil="true"]' ).unveil( 200 );
 });
