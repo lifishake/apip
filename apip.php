@@ -205,6 +205,7 @@ function apip_init()
         add_filter('the_content','convert_to_internal_links',99); // 文章正文外链转换
         add_filter('comment_text','convert_to_internal_links',99); // 评论内容的链接转换
         add_filter('get_comment_author_link','convert_to_internal_links',99); // 访客的链接转换
+        add_filter('comment_url','apip_comment_url', 10, 2); //链接转换
     }
 
     if ( is_admin() ) {
@@ -1040,6 +1041,18 @@ function convert_to_internal_links($content){
         }
     }
     return $content;
+}
+
+function apip_comment_url($url, $ID) {
+    if (is_admin()) {
+        return $url;
+    }
+    if(strpos($url,home_url())===false) {
+        $new = home_url().'/gaan/'.base64_encode($url);
+        return $new;
+    } else {
+        return $url;
+    }
 }
 
 function apip_e2i_redirect() {
