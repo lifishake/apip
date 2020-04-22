@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.6
+ * Version:     1.30.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -147,7 +147,7 @@ function apip_init()
     add_filter('the_content_feed', 'apip_code_highlight') ;
     add_filter('the_content_feed', 'so_handle_038', 199, 1);
     //0.15 移除后台界面的WP版本升级提示
-    //add_filter('pre_site_transient_update_core','remove_core_updates');
+    add_filter('pre_site_transient_update_core','remove_core_updates');
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
     //0.17 针对苹果旧设备的访问，减少404
@@ -156,6 +156,8 @@ function apip_init()
     add_filter( 'sanitize_title', 'apip_slug', 1 );
     //0.19 autop与shortcode冲突问题
     add_filter( 'the_content', 'apip_fix_shortcodes');
+    //0.20 改用户profile不需要邮件确认
+    remove_action('personal_options_update', 'send_confirmation_on_profile_email');
     /** 01 */
   //颜色目前没有函数
 
@@ -204,7 +206,6 @@ function apip_init()
     if  ( apip_option_check('redirect_external_link') ) {
         add_filter('the_content','convert_to_internal_links',99); // 文章正文外链转换
         add_filter('comment_text','convert_to_internal_links',99); // 评论内容的链接转换
-        add_filter('get_comment_author_link','convert_to_internal_links',99); // 访客的链接转换
         add_filter('comment_url','apip_comment_url', 10, 2); //链接转换
     }
 
@@ -1044,10 +1045,14 @@ function convert_to_internal_links($content){
 }
 
 function apip_comment_url($url, $ID) {
+    if (""===$url) {
+        return "";
+    }
     if (is_admin()) {
         return $url;
     }
-    if(strpos($url,home_url())===false) {
+    $domain = str_replace(array("http://","https://","//"), "", home_url()); 
+    if(strpos($url,$domain)===false) {
         $new = home_url().'/gaan/'.base64_encode($url);
         return $new;
     } else {
