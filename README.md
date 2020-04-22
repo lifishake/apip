@@ -55,6 +55,7 @@
 - 利用yandex translate的API，手动翻译标题到英文
 - 手动输入图片信息，以类似豆瓣的效果显示
 - 特色图取主颜色功能
+- 外链转内链
 
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)

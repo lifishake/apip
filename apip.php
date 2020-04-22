@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.4
+ * Version:     1.30.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -201,6 +201,12 @@ function apip_init()
         //2.9搜索结果不包括page页面
         add_filter('pre_get_posts','remove_page_search');
     }
+    if  ( apip_option_check('redirect_external_link') ) {
+        add_filter('the_content','convert_to_internal_links',99); // 文章正文外链转换
+        add_filter('comment_text','convert_to_internal_links',99); // 评论内容的链接转换
+        add_filter('get_comment_author_link','convert_to_internal_links',99); // 访客的链接转换
+    }
+
     if ( is_admin() ) {
         define('NGG_DISABLE_RESOURCE_MANAGER', FALSE);
     } else {
@@ -1017,6 +1023,44 @@ function remove_page_search($query) {
     return $query;
 }
 
+//2.10
+/**
+ * 作用: 外链加密并在新页面打开，内链保持不变
+ * 来源: 灵尘子
+ * URL: https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html
+ */
+function convert_to_internal_links($content){
+    preg_match_all('/\shref=(\'|\")(http[^\'\"#]*?)(\'|\")([\s]?)/',$content,$matches);
+    if($matches){
+        foreach($matches[2] as $val){
+            if(strpos($val,home_url())===false){
+                $rep = $matches[1][0].$val.$matches[3][0];
+                $new = '"'.home_url().'/gaan/'.base64_encode($val).'" target="_blank"';
+                $content = str_replace("$rep","$new",$content);
+            }
+        }
+    }
+    return $content;
+}
+
+function apip_e2i_redirect() {
+    $baseurl = 'gaan';
+    if (is_ssl()) {
+        $prefix = 'https://';
+    } else {
+        $prefix = 'http://';
+    }
+    $request = $prefix.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $hop_base = trailingslashit(trailingslashit(home_url()).$baseurl); //删除末尾的 斜杠/ 符号
+    if (substr($request,0,strlen($hop_base)) != $hop_base) return false; //内链
+    $hop_key = str_ireplace($hop_base, '', $request);
+    if(substr($hop_key, -1) == '/')$hop_key = substr($hop_key, 0, -1);
+    if (!empty($hop_key)) {
+        $url = base64_decode($hop_key);
+        wp_redirect( $url, 302 );
+        exit;
+    }
+}
 /*                                          02终了                             */
 
 /******************************************************************************/
@@ -1524,6 +1568,7 @@ function apip_archive_page() {
         $last_year = $result->year;
         
     }//for each year result
+    $ret .= "</ul>";//achp-widget
 
     /* 类别归档 */
     $all_cats = get_categories(
@@ -3046,4 +3091,11 @@ function apip_template_redirect() {
     if ( apip_option_check('redirect_if_single') ) {
         redirect_single_post();
     }
+    //2.10外链转内链
+    if ( apip_option_check('redirect_external_link') ) {
+        apip_e2i_redirect();
+    }
 }
+
+//goto 链接钩子
+//link：https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html

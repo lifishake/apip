@@ -208,10 +208,12 @@ function apip_advanced_writer_settings_render()
   <input type='checkbox' name='apip_settings[show_author_comment]' <?php checked( $options['show_author_comment'], 1 ); ?> value='1'/><br />
   <span>    搜索结果只有一条时直接跳转：</span>
   <input type='checkbox' name='apip_settings[redirect_if_single]' <?php checked( $options['redirect_if_single'], 1 ); ?> value='1'/><br />
-    <span>    保护wp_comments.php：</span>
-    <input type='checkbox' name='apip_settings[protect_comment_php]' <?php checked( $options['protect_comment_php'], 1 ); ?> value='1'/><br />
-    <span>    搜索结果中屏蔽page：</span>
-    <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'/><br />
+  <span>    保护wp_comments.php：</span>
+  <input type='checkbox' name='apip_settings[protect_comment_php]' <?php checked( $options['protect_comment_php'], 1 ); ?> value='1'/><br />
+  <span>    搜索结果中屏蔽page：</span>
+  <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'/><br />
+  <span>    外链转内链：</span>
+  <input type='checkbox' name='apip_settings[redirect_external_link]' <?php checked( $options['redirect_external_link'], 1 ); ?> value='1'/><br />
   <?php
 
 }
