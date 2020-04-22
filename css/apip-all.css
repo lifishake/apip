@@ -237,15 +237,6 @@ a.tagged6 {
 .commenter-link.vcard {
     padding: 5px 5px 0;
 }
-.url::after {
-    content: "\f0c1";
-    font-family: 'Fontawesome';
-    font-size: 12px;
-    left: -2px;
-    margin: -5px 0 0 1px;
-    position: relative;
-    top: -7px;
-}
 
 .commenter-link img {
     border-radius: 100%;
