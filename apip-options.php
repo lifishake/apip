@@ -214,6 +214,8 @@ function apip_advanced_writer_settings_render()
   <input type='checkbox' name='apip_settings[search_without_page]' <?php checked( $options['search_without_page'], 1 ); ?> value='1'/><br />
   <span>    外链转内链：</span>
   <input type='checkbox' name='apip_settings[redirect_external_link]' <?php checked( $options['redirect_external_link'], 1 ); ?> value='1'/><br />
+  <span>    移除后台界面的WP版本升级提示：</span>
+  <input type='checkbox' name='apip_settings[remove_core_updates]' <?php checked( $options['remove_core_updates'], 1 ); ?> value='1'/><br />
   <?php
 
 }

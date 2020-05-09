@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.7
+ * Version:     1.30.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -146,8 +146,8 @@ function apip_init()
     //0.14 改善代码在feed里的表现
     add_filter('the_content_feed', 'apip_code_highlight') ;
     add_filter('the_content_feed', 'so_handle_038', 199, 1);
-    //0.15 移除后台界面的WP版本升级提示
-    add_filter('pre_site_transient_update_core','remove_core_updates');
+    //0.15 移除后台界面的WP版本升级提示 -->因为会引起downgrade失败,所以改为有配置项的2.11
+    //add_filter('pre_site_transient_update_core','remove_core_updates');
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
     //0.17 针对苹果旧设备的访问，减少404
@@ -158,6 +158,8 @@ function apip_init()
     add_filter( 'the_content', 'apip_fix_shortcodes');
     //0.20 改用户profile不需要邮件确认
     remove_action('personal_options_update', 'send_confirmation_on_profile_email');
+    //0.21 设置chrome内核浏览器的tab颜色
+    add_action('wp_head', 'apip_set_theme_color', 20);
     /** 01 */
   //颜色目前没有函数
 
@@ -203,10 +205,17 @@ function apip_init()
         //2.9搜索结果不包括page页面
         add_filter('pre_get_posts','remove_page_search');
     }
+
     if  ( apip_option_check('redirect_external_link') ) {
+        //2.10外链转内链
         add_filter('the_content','convert_to_internal_links',99); // 文章正文外链转换
         add_filter('comment_text','convert_to_internal_links',99); // 评论内容的链接转换
         add_filter('comment_url','apip_comment_url', 10, 2); //链接转换
+    }
+
+    if  ( apip_option_check('remove_core_updates') ) {
+        //2.11移除后台界面的WP版本升级提示
+        add_filter('pre_site_transient_update_core','remove_core_updates');
     }
 
     if ( is_admin() ) {
@@ -447,47 +456,54 @@ $options
     0.12                                禁用古腾堡（5.0）后
     0.13                                替换human_time_diff函数中的英文单词
     0.14                                改善代码在feed里的表现
-    0.15                                移除后台界面的WP版本升级提示
-    
+    0.15                                已删除
+    0.16                                强化AdminBar
+    0.17                                针对苹果旧设备的访问，减少404
+    0.18                                汉字标题自动转utf8字符
+    0.19                                autop与shortcode冲突问题
+    0.20                                改用户profile不需要邮件确认
+    0.21                                设置chrome的标签颜色
 01.     颜色选项
 02.     高级编辑选项
-    2.1     save_revisions_disable         阻止自动版本
-    2.2     auto_save_disabled              阻止自动保存
-    2.3     show_admin_bar                   显示登录用户的admin bar
-    2.4     apip_locale                            后台英文前台中文
-    2.5     block_open_sans                  屏蔽后台的open sans字体
+    2.1     save_revisions_disable      阻止自动版本
+    2.2     auto_save_disabled          阻止自动保存
+    2.3     show_admin_bar              显示登录用户的admin bar
+    2.4     apip_locale                 后台英文前台中文
+    2.5     block_open_sans             屏蔽后台的open sans字体
     2.6     show_author_comment         屏蔽作者留言
-    2.7     redirect_if_single                   搜索结果只有一条时直接跳入
-    2.8     protect_comment_php          禁止直接访问wp_comments.php
-    2.9     search_without_page           搜索结果中屏蔽page
-03.     header_description                   头部描述信息
-    3.1     hd_home_text                       首页描述文字
-    3.2     hd_home_keyword               首页标签
-    3.3     excerpt_length                      摘要长度
-    3.4     excerpt_ellipsis                     摘要结尾字符
+    2.7     redirect_if_single          搜索结果只有一条时直接跳入
+    2.8     protect_comment_php         禁止直接访问wp_comments.php
+    2.9     search_without_page         搜索结果中屏蔽page
+    2.10    redirect_external_link      外链转内链
+    2.11    remove_core_updates         移除后台界面的WP版本升级提示
+03.     header_description              头部描述信息
+    3.1     hd_home_text                首页描述文字
+    3.2     hd_home_keyword             首页标签
+    3.3     excerpt_length              摘要长度
+    3.4     excerpt_ellipsis            摘要结尾字符
 04.     GFW选项
-    4.1     local_gravatar                        头像本地缓存
-    4.2     replace_emoji                        替换emoji地址
+    4.1     local_gravatar              头像本地缓存
+    4.2     replace_emoji               替换emoji地址
 05.    留言者控制
-   5.1  blocked_commenters                 替换广告留言用户名和网址
-06.     social_share_enable                     社会化分享使能
+   5.1  blocked_commenters              替换广告留言用户名和网址
+06.     social_share_enable             社会化分享使能
 07.     自定义的shortcode
-    7.1     apip_tagcloud_enable            更好看的标签云
-    7.2     apip_link_page                       自定义友情链接
-    7.3     apip_achive_page                  自定义归档页
+    7.1     apip_tagcloud_enable        更好看的标签云
+    7.2     apip_link_page              自定义友情链接
+    7.3     apip_achive_page            自定义归档页
 08.     比较复杂的设定
-    8.1     apip_codehighlight_enable     代码高亮
-    8.2     apip_lazyload_enable             LazyLoad
-    8.3                                                    结果集内跳转
-    8.4.    notify_comment_reply            有回复时邮件提示
-    8.5                                                    豆瓣电影
-    8.6                                                     gaintbomb游戏信息
-    8.7     heweather_key                       和风天气/发帖时天气信息
+    8.1     apip_codehighlight_enable   代码高亮
+    8.2     apip_lazyload_enable        LazyLoad
+    8.3                                 结果集内跳转
+    8.4.    notify_comment_reply        有回复时邮件提示
+    8.5                                 豆瓣电影
+    8.6                                 gaintbomb游戏信息
+    8.7     heweather_key               和风天气/发帖时天气信息
     8.8     apip_commentquiz_enable     回复前答题
-    8.9     yandex_translate_key            手动翻译标题的按钮
-    8.10    apip_colorthief_meta_box        取特色图片主色调相关内容
-99.     local_widget_enable                  自定义小工具
-    99.1    local_definition_count           自定义widget条目数
+    8.9     yandex_translate_key        手动翻译标题的按钮
+    8.10    apip_colorthief_meta_box    取特色图片主色调相关内容
+99.     local_widget_enable             自定义小工具
+    99.1    local_definition_count      自定义widget条目数
 */
 
 /******************************************************************************/
@@ -797,7 +813,7 @@ function apip_replaced_human_time_diff( $since ) {
     $since = str_replace( $search, $replace, $since );
     return $since;
 }
-//0.15
+//0.15-->2.11
 //来源:https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
 function remove_core_updates(){
 	global $wp_version;
@@ -887,6 +903,17 @@ function apip_fix_shortcodes($content){
     $content = strtr($content, $array);
     return $content;
 }
+
+//0.21 设置chrome内核浏览器的tab颜色
+//来源：https://developers.google.com/web/updates/2014/11/Support-for-theme-color-in-Chrome-39-for-Android
+function apip_set_theme_color() {
+    global $apip_options;
+    $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
+    $color_bg = apply_filters('apip_tab_color',$color_bg);
+    echo '<meta name="theme-color" content="'.trim($color_bg).'">';
+    //echo '<meta name="theme-color" content="#db5945">';
+}
+
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -1460,7 +1487,7 @@ function apip_link_page(){
     foreach ( $links as $link ){
         $parm = sprintf( '<li><div class="commenter-link vcard">%1$s</div><a href="%2$s" target="_blank" class="url">%3$s</a></li>',
                             get_avatar( $link->comment_author_email, 64),
-                            $link->comment_author_url,
+                            apip_option_check('redirect_external_link') ? apip_comment_url($link->comment_author_url,0) : $link->comment_author_url,
                             $link->comment_author) ;
         $ret.= $parm;
     }
@@ -1536,6 +1563,8 @@ function apip_archive_page() {
     $month_str="";
     $total_month = "";
     $year_count=0;
+    $i=0;
+    $result_count = count($all_result);
     foreach ($all_result as $result) {
         
         //-------------
@@ -1564,7 +1593,7 @@ function apip_archive_page() {
         $month_str .= "</ul>";
         $month_str .= "</li>";//achp_months
         //-------------
-        if (((!empty($last_year) && $result->year !== $last_year ) || !next($all_result))&& $year_count > 0) {
+        if (((!empty($last_year) && $result->year !== $last_year ) || $i == $result_count - 1)&& $year_count > 0) {
             $yearLink = get_year_link($last_year);
             $ret .= "<li class=\"achp-parent\">".
                     "<a class=\"achp-sig\" title=\"{$last_year}\" href=\"#\">".
@@ -1577,13 +1606,24 @@ function apip_archive_page() {
             $total_month = $month_str;
             $month_str = "";
             $year_count = $result->count;
+            if($i == $result_count - 1 && $result->year != $last_year ) {
+                $yearLink = get_year_link($result->year);
+                $ret .= "<li class=\"achp-parent\">".
+                        "<a class=\"achp-sig\" title=\"{$result->year}\" href=\"#\">".
+                        "<span class=\"achp-symbol suffix\">[+]</span>".
+                        "</a><a href=\"{$result->year}\" title=\"{$result->year}\">".
+                        "{$result->year} ({$result->count})".
+                        "</a><ul class=\"achp-child apip-no-disp\">";
+                $ret .= $total_month;
+                $ret .= "</ul></li>";
+            }
         } else {
             $total_month .= $month_str;
             $year_count += $result->count;
             $month_str = "";
         }
         $last_year = $result->year;
-        
+        $i++;
     }//for each year result
     $ret .= "</ul>";//achp-widget
 
@@ -1825,100 +1865,86 @@ function apip_dou_detail( $atts, $content = null ) {
     $output = "";
     foreach ( $items as $item )  {
         if ($type == 'music') {
-                $output .= apip_dou_music_detail($item);
+                $output .= apip_dou_music_detail($item, $atts);
         }
         else if ($type == 'book') {
-            $output .= apip_dou_book_detail($item, $score);
+            $output .= apip_dou_book_detail($item, $atts);
         }
         else if ($type == 'book_series') {
-            $output .= apip_dou_book_list($item, $link, $count, $total, $alt, $series);
+            $output .= apip_dou_book_list($item, $atts);
         }
         else{ //movie
-                $output .= apip_dou_movie_detail($item, $score, $nipple);
+                $output .= apip_dou_movie_detail($item, $atts);
         }
     }
     return $output;
 }
 
-function apip_dou_book_detail($id, $score){
-
+function apip_dou_book_detail($id, $atts){
+    extract( $atts );
     $data = apip_get_dou_content($id,$type = 'book');
+    /*
     if(apip_is_debug_mode()) {
-        //$data = apip_debug_book_content();
+        $data = apip_debug_book_content();
     }
+    */
     if (!$data) {
         return '';
     }
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'" /></div>';
-    $delta_num = 0.0;
+    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
+
+    $subject_class="v-overflowHidden doulist-subject";//5
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban'),
+                        base64_encode($data["alt"]));//1
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $data["alt"],
+                        $data["title"]);//2
+    $rating_str="";//3
+    $star_dou=sprintf('<span class="dou-stars-%s"></span>',
+                        round(floatval($data["rating"]["average"])));    
+    $star_my="";
+    
+    $str_rnum="";
+    $abstract_str="";//4
+    
     if ( $score !== '' ) {
-        $score_num = floatval($score);
-        $delta_num = $score_num - floatval($data["rating"]["average"]);
-        $pls=$delta_num>0?'+':'';
-        if ($delta_num>0.4) {
-            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
-        }
-        else if ($delta_num<-0.4) {
-            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
-        }
-        else {
-            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
-        }
-        
+        $subject_class .= " my-score-".$score;
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $data["rating"]["average"]);
+        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
     }
     else  {
-        $score_num = floatval($data["rating"]["average"]);
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s)</span>', $data["rating"]["average"]);
     }
-    $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
+    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou,$star_my,$str_rnum);
 
-        //$output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $data["rating"]["average"]*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
-
-    if ($delta_num>=0) {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
-    }
-    else {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
-    }
-    
-    $output .= '<div class="abstract">作者 : ';
-    if (array_key_exists("author", $data) && is_array($data["author"])) {
-        $authors = $data["author"];
-        if (count($authors)>1){
-            $output .= implode('/', $authors);
-        } else {
-            $output .= $authors[0];
-        }
+    $str_author=sprintf('<span class="author">作者：%s</span>', apip_convert_dou_array_to_string($data,'author',''));
+    $str_trans_1 = apip_convert_dou_array_to_string($data,'translator','','xxx');
+    if ('xxx' !== $str_trans_1) {
+        $str_translator=sprintf('<span class="translator">译者：%s</span>', $str_trans_1);
     } else {
-        $output .= "未知";
+        $str_translator='';
     }
-    
-    if (array_key_exists("translator", $data) && is_array($data["translator"])) {
-        $translator = $data["translator"];
-        if (!empty($translator)) {
-            $output .= '<br />译者 : ';
-            if (count($translator)>1){
-                $output .= implode('/', $translator);
-            }
-            else {
-                $output .= $translator[0];
-            }
-        }
-    }
+       
+    $str_pubdate = sprintf('<span class="pubdate">出版年份：%s</span>', $data["pubdate"]);
+    $str_publisher = sprintf('<span class="publisher">出版社：%s</span>', $data["publisher"]);
+    $str_price = sprintf('<span class="price">定价：%s</span>', $data["price"]);
+    $abstract_str = $str_author.$str_translator.$str_pubdate.$str_publisher.$str_price;
 
-    $output .= '<br />出版年份 : ' . $data["pubdate"] ;
-    $output .= '<br />出版社 : ' . $data["publisher"] ;
-    $output .= '<br />定价 : '. $data["price"];
-    $output .= '</div></div></div></div>';
-    return $output;
+
+    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    return $out;
+
 }
 
 /**
 * 作用: 显示丛书中所有书籍的子函数，输入参是丛书id。
 * 来源: 自创
 */
-function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
+function apip_dou_book_list($id, $atts) {
+    extract( $atts );
     $books = array();
-    $serial_name='';
+    $serial_name = $alt;
     if ( 'x' == $id ) {
         $series_ids = explode(',', $series);
         $count = min($count, count($series_ids));
@@ -1940,15 +1966,9 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
         if (0==$count){
             return '';
         }
-        $serial_name = $alt;
     }
     else{
-        if (apip_is_debug_mode()) {
-            //$cache = apip_debug_book_series_content();
-            $cache = apip_get_dou_content($id,$type = 'book_series');
-        } else {
-            $cache = apip_get_dou_content($id,$type = 'book_series');
-        }
+        $cache = apip_get_dou_content($id, $type = 'book_series');
         if (!$cache) {
             return '';
         }
@@ -1956,7 +1976,6 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
         $count = min($cache['count'],$cache['total']);
         $total = $cache['total'];
         $books = $cache['books'];
-        $serial_name = $books[0]['series']['title'];
     }
     $start_time = $books[0]['pubdate'];
     $finish_time = $books[$count-1]['pubdate'];
@@ -1967,24 +1986,25 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
         $finish_time = '未知';
     }
     $pubdate = $start_time." 至 ".$finish_time;
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject">';
-    $output .= '<div class="title"><a href="'. $link .'" class="cute" target="_blank" rel="external nofollow">'. $serial_name .'</a></div>';
-    $output .= '<div class="abstract-left">作者 : ';
-    $authors = $books[0]["author"];
-    if (count($authors)>1){
-        $output .= implode('/', $authors);
-    }
-    else {
-        $output .= $authors[0];
-    }
-    $output .= '<br />出版年份 : ' . $pubdate ;
-    $output .= '<br />出版社 : ' . $books[0]["publisher"] ;
-    $output .= '<br /> 全套共（ ' . $total ." ）册";
-    $output .= '</div>';//abstract
+
+    $template = '<div class="apip-item"><div class="mod"><div class="%4$s"><div class="title">%1$s</div><div class="abstract-left">%2$s</div>%3$s</div></div></div>';
+    $class_str = "v-overflowHidden doulist-subject";//4
+    $title_str = sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',$link, $serial_name);//1
+
+    $str_author = sprintf('<span class="author">作者：%s</span>', apip_convert_dou_array_to_string($books[0],'author',''));
+    $str_pubdate = sprintf('<span class="pubdate">出版年份：%s</span>', $pubdate);
+    $str_publisher = sprintf('<span class="publisher">出版社：%s</span>', $books[0]["publisher"]);
+    $str_count = sprintf('<span class="totalcount">全套共（ %s ）册</span>', $total);
+    $abstract_str = $str_author.$str_pubdate.$str_publisher.$str_count;//2
+    $poster_str = "";//3
+
     for ($i = 0; $i < $count; ++$i ) {
-        $output .= '<div class="apiplist-post"><a href="'. $books[$i]["alt"] .'" class="cute" target="_blank" rel="external nofollow"><img src="'.  apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban') .'" /></a></div>';
+        $poster_str.=sprintf('<div class="apiplist-post"><a href="%1$s" class="cute" target="_blank" rel="external nofollow"><img src="%2$s" alt="%3$s" /></a></div>',
+                        $books[$i]["alt"],
+                        apip_get_saved_images($books[$i]["id"],str_replace('spic','mpic',$books[$i]['image']),'douban'),
+                        base64_encode($books[$i]["alt"]));
     }
-    $output .= '</div></div></div>';
+    $output =sprintf($template, $title_str, $abstract_str, $poster_str, $class_str);
     return $output;
 }
 
@@ -1992,163 +2012,111 @@ function apip_dou_book_list($id, $link, $count, $total, $alt, $series) {
 * 作用: 显示音乐专辑详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
 */
-function apip_dou_music_detail($id){
+function apip_dou_music_detail($id, $atts){
 
     $data = apip_get_dou_content($id,$type = 'music');
+    extract( $atts );
+    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
 
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban') .'" /></div>';
+    $subject_class="v-overflowHidden doulist-subject";//5
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban'),
+                        base64_encode($data["alt"]));//1
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $data["alt"],
+                        $data["title"]);//2
+    $rating_str="";//3
+    $star_dou=sprintf('<span class="dou-stars-%s"></span>',
+                        round(floatval($data["rating"]["average"])));    
+    $star_my="";
+    
+    $str_rnum="";
+    $abstract_str="";//4
+    
     if ( $score !== '' ) {
-        $score_num = floatval($score);
-        $delta_num = $score_num - floatval($data["rating"]["average"]);
-        $pls=$delta_num>0?'+':'';
-        if ($delta_num>0.4) {
-            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
-        }
-        else if ($delta_num<-0.4) {
-            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
-        }
-        else {
-            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
-        }
-        
+        $subject_class .= " my-score-".$score;
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $data["rating"]["average"]);
+        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
     }
     else  {
-        $score_num = floatval($data["rating"]["average"]);
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s)</span>', $data["rating"]["average"]);
     }
-    $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    //$output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $score_num*10 . '%"></span></span><span class="rating_nums"> ' . $data["rating"]["average"]. ' </span><span>(' . $data["rating"]["numRaters"]. '人评价)</span></div>';
-    if ($delta_num>=0) {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
-    }
-    else {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
-    }
-    $output .= '<div class="abstract">表演者 : ';
-    $authors = $data["author"];
-    if (count($authors)>1){
-        $authors = wp_list_pluck($authors,'name');
-        $output .= implode('/', $authors);
-    }
-    else {
-        $output .= $authors[0]['name'];
-    }
+    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou,$star_my,$str_rnum);
 
-    $output .= '<br />年份 : ' . $data["attrs"]["pubdate"][0] ;
-    $output .= '<br />唱片公司 : ' . $data["attrs"]["publisher"][0] ;
-    $output .= '</div></div></div></div>';
-    return $output;
+    $str_author=sprintf('<span class="author">表演者：%s</span>', apip_convert_dou_array_to_string($data,'author','name'));
+    $str_pubdate = sprintf('<span class="pubdate">年份：%s</span>', $data["attrs"]["pubdate"][0]);
+    $str_publisher = sprintf('<span class="publisher">出版社：%s</span>', $data["attrs"]["publisher"][0]);
+    $abstract_str = $str_author.$str_pubdate.$str_publisher;
+
+    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+
+    return $out;
 }
 
 /**
 * 作用: 显示电影详情的子函数，主要区别是格式和字段。
 * 来源: 大发(bigFa)
 */
-function apip_dou_movie_detail($id, $score, $nipple) {
+function apip_dou_movie_detail($id, $atts) {
     $data = apip_get_dou_content($id,$type = 'movie');
+    extract($atts);
+    /*
     if ( apip_is_debug_mode() ){
-        //$data = apip_debug_movie_content();
+        $data = apip_debug_movie_content();
     }
+    */
     if ( empty($data) ) {
         return '';
     }
-    $meta_class='';
-    if ("yes"===$nipple) {
-        $meta_class="has-nipple";
-    }
+
+    //1:list_begin_class
+    //2:img
+    //3:title
+    //4:rating
+    //5:abstract
+    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
     if ( array_key_exists('msg', $data) && "movie_not_found" === $data['msg']) {
         $output = '<div class="apip-item"><div class="mod "><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  APIP_PLUGIN_URL.'img/nocover.jpg" /></div>';
         $output .= '<div class="title">惨遭和谐的豆瓣资源：【'. $id .'】</div></div></div></div>';
         return $output;
     }
-    $output = '<div class="apip-item"><div class="mod  '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  apip_get_saved_images($id,$data['images']['medium'],'douban') .'" /></div>';
-    $delta_num = 0.0;
+    $subject_class="v-overflowHidden doulist-subject";//5
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        apip_get_saved_images($id,$data['images']['medium'],'douban'),
+                        base64_encode($data["alt"]));//1
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $data["alt"],
+                        $data["title"]);//2
+    $rating_str="";//3
+    $star_dou=sprintf('<span class="dou-stars-%s"></span>',
+                        round(floatval($data["rating"]["average"])));    
+    $star_my="";
+    
+    $str_rnum="";
+    $abstract_str="";//4
+    
     if ( $score !== '' ) {
-        $score_num = floatval($score);
-        $delta_num = $score_num - floatval($data["rating"]["average"]);
-        $pls=$delta_num>0?'+':'';
-        if ($delta_num>0.4) {
-            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
-        }
-        else if ($delta_num<-0.4) {
-            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
-        }
-        else {
-            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
-        }
-        
+        $subject_class .= " my-score-".$score;
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $data["rating"]["average"]);
+        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
     }
     else  {
-        $score_num = floatval($data["rating"]["average"]);
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s)</span>', $data["rating"]["average"]);
     }
-    $output .= '<div class="title"><a href="'. $data["alt"] .'" class="cute" target="_blank" rel="external nofollow">'. $data["title"] .'</a></div>';
-    if ($delta_num>=0) {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].'+'.$delta_num. ') </span></div>';
-    }
-    else {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($data["rating"]["average"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$data["rating"]["average"].$delta_num. ') </span></div>';
-    }
-    $output .= '<div class="abstract">导演 :';
-    if (array_key_exists("directors", $data) && is_array($data["directors"])) {
-        $directors = $data["directors"];
-        if (count($directors) > 1){
-            $directors = wp_list_pluck($directors,'name');
-            $output .= implode('/', $directors);
-        } else if (!empty($directors)) {
-            $output .= $directors[0]["name"];
-        } else {
-            $output .= "未知";
-        }
-    } else {
-        $output .= "未知";
+    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou,$star_my,$str_rnum);
+
+    $str_director=sprintf('<span class="director">导演：%s</span>', apip_convert_dou_array_to_string($data,'directors','name'));
+    $str_casts=sprintf('<span class="casts">演员：%s</span>', apip_convert_dou_array_to_string($data,'casts','name'));   
+    $str_genres=sprintf('<span class="genres">类型：%s</span>', apip_convert_dou_array_to_string($data,'genres',''));
+    $str_year = sprintf('<span class="year">年份：%s</span>', $data["year"]);
+    $abstract_str = $str_director.$str_casts.$str_genres.$str_year;
+
+    if ("yes"===$nipple) {
+        $abstract_str .= '<span class="feature">奶</span>';
     }
 
-    $output .= '<br />演员: ';
-    if (array_key_exists("casts", $data) && is_array($data["casts"])) {
-        $casts = $data["casts"];
-        if ( count($casts)>1 ) {
-            $casts = wp_list_pluck($casts,'name');
-            $output .= implode('/', $casts);
-        } else if (!empty($casts)) {
-            $output .= $casts[0]["name"];
-        } else {
-            $output .= "未知";
-        }
-    } else {
-        $output .= "未知";
-    }
-
-    $output .= '<br />类型: ';
-    if (array_key_exists("genres", $data) && is_array($data["genres"])) {
-        $genres = $data["genres"];
-        if (count($genres)>1){
-            $output .= implode('/', $genres);
-        } else if (!empty($genres)){
-            $output .= $genres[0];
-        } else {
-            $output .= "未知";
-        }
-    } else {
-        $output .= "未知";
-    }
-
-    //20200409 豆瓣API把返回值中的国家去掉了
-    /*
-    $output .= '<br />国家/地区: ';
-    if (array_key_exists("contries", $data) && is_array($data["countries"])) {
-        $countries = $data["countries"];
-        if (count($countries)>1){
-            $output .= implode('/', $countries);
-        } else {
-            $output .= $countries[0];
-        }
-    } else {
-        $output .= "未知";
-    }
-    */
-    
-
-    $output .= '<br />年份: ' . $data["year"] .'</div></div></div></div>';
-    return $output;
+    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    return $out;
 }
 
 /**
@@ -2353,6 +2321,41 @@ function apip_get_saved_images($id, $src, $dst )  {
     return $url;
 }
 
+/**
+* 作用: 把豆瓣返回array的内容变成字符串
+* 参数: data        array   数据源
+*       key         string  查找的array key
+*       key_name    string  如果找到的内容有子项目,要返回的子项目的关键字
+*       unknown_str string  遇到未知项转换的内容
+*/
+function apip_convert_dou_array_to_string($data, $key, $name_key="name", $unknown_str="未知") {
+    $ret = '';
+    if (array_key_exists($key, $data) && is_array($data[$key])) {
+        $subs = $data[$key];
+        if ( count($subs)>1 ) {
+            if (array_key_exists($name_key, $subs[0])) {
+                $items = wp_list_pluck($subs, $name_key);
+                $ret .= implode('/ ', $items);
+            } else {
+                $ret .= implode('/ ', $subs);
+            }
+        } else if (!empty($subs)) {
+            if (array_key_exists($name_key, $subs[0])) {
+                $ret .= $subs[0][$name_key];
+            } else {
+                $ret .= $subs[0];
+            }
+        } else {
+            $ret .= $unknown_str;
+        }
+    } elseif (array_key_exists($key, $data)) {
+        $ret .= $data[$key];
+    } else {
+        $ret .= $unknown_str;
+    }
+    return $ret;
+}
+
 
 function apip_is_debug_mode()
 {
@@ -2431,119 +2434,50 @@ function apip_imbd_detail($atts, $content = null){
     }
     $imdb_url = "https://www.imdb.com/title/".$id;
     $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
-    $output = '<div class="apip-item"><div class="mod '.$meta_class.'"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
-    $delta_num = 0.0;
-    $pls='';
+
+    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
+
+    $subject_class="v-overflowHidden doulist-subject";//5
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        $img_url,
+                        base64_encode($content["Title"]));//1
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $imdb_url,
+                        $cname !== ''?$cname:$content["Title"]);//2
+    $rating_str="";//3
+    $star_dou=sprintf('<span class="dou-stars-%s"></span>',
+                        round(floatval($content["imdbRating"])));    
+    $star_my="";
+    
+    $str_rnum="";
+    $abstract_str="";//4
+    
     if ( $score !== '' ) {
-        $score_num = floatval($score);
-        $delta_num = $score_num - floatval($content["imdbRating"]);
-        $pls=$delta_num>0?'+':'';
-        if ($delta_num>0.4) {
-            $output .= '<div class="apiplist-score apip-score-plus">'.$pls.$delta_num.'</div>';    
-        }
-        else if ($delta_num<-0.4) {
-            $output .= '<div class="apiplist-score apip-score-minus">'.$delta_num.'</div>';    
-        }
-        else {
-            $output .= '<div class="apiplist-score apip-score-equal">'.$pls.$delta_num.'</div>';
-        }        
+        $subject_class .= " my-score-".$score;
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $content["imdbRating"]);
+        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
     }
-    else {
-        $score_num = floatval($score);
+    else  {
+        $str_rnum = sprintf('<span class="rating_nums">(%1$s)</span>', $content["imdbRating"]);
     }
+    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou,$star_my,$str_rnum);
 
-    $output .= '<div class="title"><a href="'. $imdb_url .'" class="cute" target="_blank" rel="external nofollow">'. $cname !== ''?$cname:$content["Title"] .' </a></div>';
-    if ($delta_num>=0) {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarfill" style="width:' . ($score_num*10). '%"></span><span class="allstarlight" style="width:' . (floatval($content["imdbRating"])*10). '%"></span></span><span class="rating_nums">('.$content["imdbRating"].'+'.$delta_num. ') </span></div>';
-    }
-    else {
-        $output .= '<div class="rating"><span class="allstardark"><span class="allstarlack" style="width:' . (floatval($content["imdbRating"])*10). '%"></span><span class="allstarlight" style="width:' . ($score_num*10). '%"></span></span><span class="rating_nums">('.$content["imdbRating"].$delta_num. ') </span></div>';
-    }
-        $output .= '<div class="abstract">';
+    $str_director=sprintf('<span class="director">导演：%s</span>', $content["Director"]);
+    $str_casts=sprintf('<span class="casts">演员：%s</span>', str_replace(',','/',$content["Actors"]));   
+    $str_genres=sprintf('<span class="genres">类型：%s</span>', str_replace(',','/',$content["Genre"]));
+    $str_countries=sprintf('<span class="country">地区：%s</span>', str_replace(',','/',$content["Country"]));
+    $str_year = sprintf('<span class="year">年份：%s</span>', $content["Year"]);
+    $abstract_str = $str_director.$str_casts.$str_genres.$str_countries.$str_year;
 
-    if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br />';
+    if ("yes"===$nipple) {
+        $abstract_str .= '<span class="feature">奶</span>';
     }
 
-    $output .= '导演 : '.$content["Director"];
+    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    return $out;
 
-    $output .= '<br />演员: ';
 
-    $casts = $content["Actors"];
-    $casts = str_replace(',','/',$casts);
-    $output .= $casts;
-
-    $output .= '<br />类型: ';
-    $genres = $content["Genre"];
-    $genres = str_replace(',','/',$genres);
-    $output .= $genres;
-
-    $output .= '<br />国家/地区: ';
-    $countries = $content["Country"];
-    $countries = str_replace(',','/',$countries);
-    $output .= $countries;
-
-    $output .= '<br />年份: ' . $content["Year"] .'</div></div></div></div>';
-    return $output;
 }
-/*
-function apip_imbd_detail($atts, $content = null){
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'' ), $atts ) );
-    $cache_key = 'imdb_'.$id;
-    $content = get_transient($cache_key);
-    if ( !$content )
-    {
-        $url = "http://www.theimdbapi.org/api/movie?movie_id=".$id;
-        delete_transient($cache_key);
-        //从链接取数据
-        $response = file_get_contents($url, false);
-        if ($response) {
-            $content = json_decode($response,true);
-            set_transient($cache_key, $content, 60*60*24*30);
-        } else {
-            return false;
-        }
-    }
-    $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
-    $img_url = $content['poster']['thumb'];
-    if ( !is_file($img_src) ) {
-        if (!@copy(htmlspecialchars_decode($img_url), $img_src))
-        {
-            $errors= error_get_last();
-            return false;
-        }
-        $image = new Apip_SimpleImage();
-        $image->load($img_src);
-        $image->resize(100, 150);
-        $image->save($img_src);
-    }
-    $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'.  $img_url  .'"></div>';
-    $output .= '<div class="title"><a href="'. $content["title"] .'" class="cute" target="_blank" rel="external nofollow">'. $content["title"] .'</a></div>';
-    $output .= '<div class="rating"><span class="allstardark"><span class="allstarlight" style="width:' . $content["rating"]*10 . '%"></span></span><span class="rating_nums"> ' . $content["rating"]. ' </span><span>(' . $content["rating_count"]. '人评价)</span></div>';
-    $output .= '<div class="abstract">';
-
-    if ( $cname !== '' ) {
-        $output .='中文名: '.$cname.'<br/>';
-    }
-
-    $output .= '导演 :'.$content["director"];
-
-    $output .= '<br/>演员: ';
-
-    $casts = $content["cast"];
-    $casts = wp_list_pluck($casts,'name');
-    $output .= implode('/', $casts);
-
-    $output .= '<br/>';
-    $output .= '类型: ';
-    $genres = $content["genre"];
-    $output .= implode('/', $genres);
-
-    $output .= '<br/>年份: ' . $content["year"] .'</div></div></div></div>';
-    return $output;
-}
-*/
 
 //8.6游戏资料
 /**
@@ -2656,92 +2590,81 @@ function apip_game_detail($atts, $content = null) {
     } else {
         $img_url = APIP_GALLERY_URL.'game_poster/'. $id .'.jpg';
     }
-    $output = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="apiplist-post"><img src="'. $img_url .'"></div>';
-    $output .= '<div class="title"><a href="'. $data["site_detail_url"] .'" class="cute" target="_blank" rel="external nofollow">'. ($cname!=''?$cname:$data["name"]) .'</a></div>';
-    $output .= '<div class="abstract">';
-    if ( $cname !== '' ) {
-        $output .='英文名: '.$data["name"].'<br />';
+
+    $template = '<div class="apip-item"><div class="mod"><div class="%4$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="abstract">%3$s</div></div></div></div>';
+
+    $subject_class="v-overflowHidden doulist-subject";//4
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        $img_url,
+                        base64_encode($data["name"]));//1
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $data["site_detail_url"],
+                        $cname != ''? $cname : $data["name"]);//2
+    $str_rnum="";
+    $abstract_str="";//3
+    
+    if ( $score !== '' ) {
+        $subject_class .= " my-score-".$score;
+    }
+
+    $str_name = '';
+    if ( $cname !== '') {
+        $str_name .= sprintf('<span class="game-name">英文名：%s</span>', $data["name"]);
     }
     if ( $jname !== '' ) {
-        $output .='日文名: '.$jname.'<br />';
+        $str_name .= sprintf('<span class="game-name">日文名：%s</span>', $jname);
     }
     if ( $alias !== '' ) {
-        $output .='别名: '.str_replace(',','/ ',$alias).'<br />';
+        $str_name .= sprintf('<span class="game-name">别名：%s</span>', str_replace(',','/ ',$alias));
     }
-
-    if ( $publisher !== '' ) {
-        $output .='发行商: '.str_replace(',','/ ',$publisher);
-    } else {
-        $output .='发行商: ';
-        if (array_key_exists("publishers", $data) && is_array($data["publishers"])) {
-            $publishers = $data["publishers"];
-            if ( count($publishers)>1 ){
-                $publishers = wp_list_pluck($publishers,'name');
-                $output .= implode('/ ', $publishers);
-            } else {
-                $output .= $publishers[0]['name'];
-            }
-        } else {
-            $output .= "不明";
-        }
-
-    }
-
-    $output .='<br />发售日期: ';
+    
+    $str_pubdate = '';
     if ( $year !== '' ) {
-        $output .= $year;
+        $str_the_pubdate = $year;
     } else {
         if (array_key_exists("original_release_date",$data)) {
-            $output .=substr($data['original_release_date'],0,10);
+            $str_the_pubdate = substr($data['original_release_date'],0,10);
         } else {
-            $output .="不明";
+            $str_the_pubdate = "不明";
         }
-        
     }
+    $str_pubdate .= sprintf('<span class="pubdate">发售日期：%s</span>', $str_the_pubdate);
 
-    $output .=' <br />类型: ';
-    if ($genres !=='') {
-        $output .= $genres;
-    } else{
-        if (array_key_exists('genres',$data) && is_array($data['genres'])){
-            $genres = $data['genres'];
-            if ( count($genres) >1 ) {
-                $genres = wp_list_pluck($genres,'name');
-                $output .= implode('/ ', $genres);
-            }
-            else {
-                $output .= $genres[0]['name'];
-            }
-        } else {
-            $output .= "不明";
-        }        
-    }
-
-    $output .=' <br />机种: ';
-    if ( $platform !== '' ) {
-        $output .= $platform;
+    $str_publisher = '';
+    if ( $publisher !== '' ) {
+        $str_the_publisher = $publisher;
     } else {
-        if (array_key_exists('platforms',$data) && is_array($data['platforms'])){
-            $platforms = $data['platforms'];
-            if (count($platforms)>1){
-                $platforms = wp_list_pluck($platforms,'abbreviation');
-                $platform_str = str_replace( array('NES','GEN','SNES'),array('FC','MD','SFC'),$platforms);
-                $output .= implode('/ ', $platform_str);
-            } else {
-                $output .= $platforms[0]['abbreviation'];
-            }
-        } else {
-            $output .= "不明";
-        }
-
+        $str_the_publisher = apip_convert_dou_array_to_string($data, 'publishers', 'name', '不明');
     }
+    $str_publisher = sprintf('<span class="publisher">发行商：%s</span>', $str_the_publisher);
 
+    $str_genres = '';
+    if ( $genres !== '' ) {
+        $str_the_genres = $genres;
+    } else {
+        $str_the_genres = apip_convert_dou_array_to_string($data, 'genres', 'name', '不明');
+    }
+    $str_genres = sprintf('<span class="genres">类型：%s</span>', $str_the_genres);
+
+    $str_platform = '';
+    if ( $platform !== '' ) {
+        $str_the_platform = $platform;
+    } else {
+        $str_the_platform = apip_convert_dou_array_to_string($data, 'platforms', 'abbreviation', '不明');
+        $str_the_platform = str_replace( array('NES','GEN','SNES'), array('FC','MD','SFC'), $str_the_platform);
+    }
+    $str_platform = sprintf('<span class="platform">类型：%s</span>', $str_the_platform);
+
+    $str_download = '';
     if ( $download !== '' ){
-        $output .='<br /><a href="'.$download .'" class="cute" target="_blank" rel="external nofollow">下载</a>';
+        $str_download =sprintf('<span class="platform"><a href="%s" class="cute" target="_blank" rel="external nofollow">下载</a></span>',$download);
     }
+    
+    $abstract_str = $str_name.$str_pubdate.$str_publisher.$str_genres.$str_platform.$str_download;
 
-    $output .= '</div></div></div></div>';
-    return $output;
+    $out = sprintf($template, $img_str, $title_str, $abstract_str, $subject_class);
+    return $out;
+
 }
 
 //8.7 发帖时天气信息
