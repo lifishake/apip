@@ -2333,14 +2333,14 @@ function apip_convert_dou_array_to_string($data, $key, $name_key="name", $unknow
     if (array_key_exists($key, $data) && is_array($data[$key])) {
         $subs = $data[$key];
         if ( count($subs)>1 ) {
-            if (array_key_exists($name_key, $subs[0])) {
+            if ( is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
                 $items = wp_list_pluck($subs, $name_key);
                 $ret .= implode('/ ', $items);
             } else {
                 $ret .= implode('/ ', $subs);
             }
         } else if (!empty($subs)) {
-            if (array_key_exists($name_key, $subs[0])) {
+            if (is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
                 $ret .= $subs[0][$name_key];
             } else {
                 $ret .= $subs[0];
