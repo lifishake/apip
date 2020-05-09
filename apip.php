@@ -1860,7 +1860,8 @@ function apip_comment_inserted($comment_id, $comment_object) {
 * URL: https://github.com/bigfa/wp-douban
 */
 function apip_dou_detail( $atts, $content = null ) {
-    extract( shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no', 'link'=>'', 'count'=>'0', 'total'=>'0', 'alt'=>'', 'series'=>'' ), $atts ) );
+    $atts = shortcode_atts( array( 'id' => '', 'type' => '', 'score'=>'', 'nipple'=>'no', 'link'=>'', 'count'=>'0', 'total'=>'0', 'alt'=>'', 'series'=>'' ), $atts );
+    extract( $atts );
     $items =  explode(',', $id);
     $output = "";
     foreach ( $items as $item )  {
@@ -2020,7 +2021,7 @@ function apip_dou_music_detail($id, $atts){
 
     $subject_class="v-overflowHidden doulist-subject";//5
     $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
-                        apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban'),
+                        apip_get_saved_images($id,str_replace('spic','mpic',$data['image']),'douban',100,100),
                         base64_encode($data["alt"]));//1
     $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
                         $data["alt"],
@@ -2238,7 +2239,7 @@ function apip_get_dou_content( $id, $type )  {
 * 作用: 用于保存图像缓存的子函数。
 * 来源: 大发
 */
-function apip_get_saved_images($id, $src, $dst )  {
+function apip_get_saved_images($id, $src, $dst, $width = 100, $height = 150 )  {
 
     if ( apip_is_debug_mode() )
     {
@@ -2281,7 +2282,7 @@ function apip_get_saved_images($id, $src, $dst )  {
     {
         $imglocal = new Apip_SimpleImage();
         $imglocal->load($e);
-        if ($imglocal->getWidth() != 100) {
+        if ($imglocal->getWidth() != $width) {
             unlink($e);
         }
     }
@@ -2305,7 +2306,7 @@ function apip_get_saved_images($id, $src, $dst )  {
         } 
         $image = new Apip_SimpleImage();
         $image->load($e_temp);
-        $image->resize(100, 150);
+        $image->resize($width, $height);
         $image->save($e);
         if ($imagetype != ".jpg") {
             unlink($e_temp);
@@ -2372,7 +2373,8 @@ function apip_is_debug_mode()
 * API格式： https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
 */
 function apip_imbd_detail($atts, $content = null){
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'','nipple'=>'no' ), $atts ) );
+    $atts = shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'','nipple'=>'no' ), $atts );
+    extract( $atts );
     $cache_key = 'imdb_'.$id;
     $content = get_transient($cache_key);
     global $apip_options;
@@ -2486,7 +2488,8 @@ function apip_imbd_detail($atts, $content = null){
 * API格式：https://www.giantbomb.com/api/game/THE_GAME_ID/?api_key=YOUR_TOKEN&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers
 */
 function apip_game_detail($atts, $content = null) {
-    extract( shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'', 'ename'=>'', 'jname'=>'', 'year'=>'', 'download'=>'','platform'=>'','publisher'=>'','genres'=>'','poster'=>'' ), $atts ) );
+    $atts = shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'', 'ename'=>'', 'jname'=>'', 'year'=>'', 'download'=>'','platform'=>'','publisher'=>'','genres'=>'','poster'=>'' ), $atts );
+    extract( $atts );
     global $apip_options;
     $token = $apip_options['gaintbomb_key'];
     if (!$token) {
