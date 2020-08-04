@@ -621,7 +621,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
     }
     
     
-    if (count($tags) > 0) {
+    if ( is_array($tags) && count($tags) > 0) {
         foreach ($tags as $tag) {
             $fVal = 0.0;
             if ($tag->count > 1) {
@@ -635,7 +635,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
         }
     }
     
-    if (count($cats) > 0) {
+    if ( is_array($cats) && count($cats) > 0) {
         foreach ($cats as $cat) {
             $fVal = 0.0;
             $ancestors = get_ancestors( $cat->term_taxonomy_id, "category" );

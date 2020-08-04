@@ -310,60 +310,74 @@ img[data-unveil="true"] {
 }
 
 /*tagcloud page*/
-ul.tagcloud, ul.tagcloud li {
-    font-size: 1em;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    text-align:center;
+ul.tagcloud {
+  display: table;
 }
+
 ul.tagcloud li {
-    display: inline;
-    line-height: 2.8em;
-    white-space: nowrap;
+  margin: 3px;
+  background-color: #e7e7e7e7;
+  height: 4.48em;
+  list-style-type: none;
+  display: grid;
+  white-space: nowrap;
+  float: left;
+  line-height: 4.4em;
 }
+
 ul.tagcloud a {
     text-decoration: none;
-    border-radius: 100%;
     -webkit-box-shadow: none;
     box-shadow: none;
-    margin:-7px;
+    margin:auto;
 }
+
 ul.tagcloud a:hover,
 ul.tagcloud a:focus,
 ul.tagcloud a:active{
     box-shadow:none;
 }
+
 a.tagged1 {
-    font-size: 1.00em;                        
+    font-size: 1.00em;
     font-weight: 300;
-    padding: 0.5em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
     }
 
 a.tagged2 {
     font-size: 1.20em;
     font-weight: 400;
-    padding: 0.7em;
+    padding-left: 0.7em;
+    padding-right: 0.7em;
     }
+
 a.tagged3 {
     font-size: 1.50em;
     font-weight: 400;
-    padding: 1.0em;
+    padding-left: 0.85em;
+    padding-right: 0.85em;
 }
+
 a.tagged4 {
     font-size: 1.80em;
     font-weight: 500;
-    padding: 1.5em;
+    padding-left: 1.0em;
+    padding-right: 1.0em;
     }
+
 a.tagged5 {
     font-size: 2.50em;
     font-weight: 700;
-    padding: 2.2em;
+    padding-left: 1.35em;
+    padding-right: 1.35em;
     }
+
 a.tagged6 {
     font-size: 3.10em;
     font-weight: 900;
-    padding: 3.3em;
+    padding-left: 1.65em;
+    padding-right: 1.65em;
     }
 
 /* link page */

@@ -6,6 +6,21 @@ function dec_to_hex_string(dec, length) {
     return hex;
 }
 
+String.prototype.hexEncode = function(){
+    var hex, i;
+    var s = unescape(encodeURIComponent(this))
+    var result = "";
+    for (i=0; i<s.length; i++) {
+        hex = s.charCodeAt(i).toString(16);
+        if (i>0 && i%3==0) {
+            result += "-";
+        }
+        result += hex;
+    }
+
+    return result
+}
+
 function rgb_to_hex_string(rgb_array) {
     var hex_string = '';
     for( var i = 0; i < rgb_array.length; i++) {
@@ -49,6 +64,12 @@ jQuery(document).ready(function($) {
                 }
             }
         }
+    })
+    $('button[name="apiphexbtn"]').click(function(){
+        var parent = $(this).parent();
+        var chinese_title = document.getElementById("title").value;
+        var converted = chinese_title.hexEncode();
+        document.getElementById("post_name").value=converted;
     })
     $('button[name="apipweatherbtn"]').click(function(){
         var parent = $(this).parent();

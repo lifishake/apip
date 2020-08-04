@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.8
+ * Version:     1.30.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -522,7 +522,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20200422' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20200804' );
     wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20200418", true);
     $css = '';
 
@@ -547,7 +547,10 @@ function apip_scripts()
         $bg_colors = array();
         $link_colors = apip_get_link_colors($color_link);
         $bg_colors = apip_get_bg_colors($color_bg);
-        $css .= '   a.lk0 {
+        $css .= '   ul.tagcloud li {
+                        background-color: '.$color_bg.'E6;
+                    }
+                    a.lk0 {
                         color: '.$link_colors[0].';
                     }
                     a.lk1 {
@@ -628,7 +631,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20191101', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20200804', true);
     wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
@@ -2890,6 +2893,8 @@ function apip_commentquiz_save($post_id, $post, $update){
 /*
 apip_optimize_boxes 函数在admin_menu的钩子里调用。
 这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
+UPDATE:20200803
+因为yandex API在20200815会停止服务，所以把这个功能改为获取unicode。
 */
 function apip_optimize_boxes() {
     //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
@@ -2901,7 +2906,8 @@ function apip_optimize_boxes() {
     //8.7
     add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
     //8.9
-    add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
+    //add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
+    add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
     //8.10
     add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
@@ -2914,6 +2920,17 @@ function apip_title_translate_meta_box( $post ){
     $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
     ?>
     <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiptranlatebtn" >翻译或更新</button>
+    <?php
+    /*剩下的看js的了*/
+}
+
+/*
+将标题转成16进制的按钮
+ */
+function apip_title_hex_meta_box( $post ){
+    $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
+    ?>
+    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiphexbtn" >uincode</button>
     <?php
     /*剩下的看js的了*/
 }
