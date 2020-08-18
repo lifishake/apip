@@ -18,7 +18,7 @@ String.prototype.hexEncode = function(){
         result += hex;
     }
 
-    return result
+    return result;
 }
 
 function rgb_to_hex_string(rgb_array) {

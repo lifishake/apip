@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.30.9
+ * Version:     1.31.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -188,13 +188,7 @@ function apip_init()
         //2.6默认留言widget里屏蔽作者
         add_filter( 'widget_comments_args', 'before_get_comments' );
     }
-    /*
-    if ( apip_option_check('redirect_if_single') )
-    {
-        //2.7搜索结果只有一条时直接跳入
-        add_action('template_redirect', 'redirect_single_post');
-    }
-    */
+        //2.7移至apip_template_redirect
     if ( apip_option_check('protect_comment_php') )
     {
         //2.8禁止直接访问wp_comments.php
@@ -316,7 +310,6 @@ function apip_init()
     if(is_admin() && apip_option_check('apip_commentquiz_enable') ) {
         add_action('admin_init','apip_commentquiz_init');
     }
-    //8.9 手动翻译按钮
     //8.10 特色图主颜色按钮
     if(is_admin()) {
         add_action('admin_menu','apip_optimize_boxes');
@@ -326,11 +319,25 @@ function apip_init()
         add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
     }
 
+    /** 09  */
+    //9.1 后台taglist增加private和draft计数列
+    if(is_admin()) {
+        add_filter( "manage_edit-post_tag_columns", 'apip_edit_post_tag_column_header', 10);
+        add_action( "manage_post_tag_custom_column", 'apip_edit_post_tag_content', 10, 3);
+    }
+
+    // Add to the admin_init action hook
+    //add_filter('current_screen', 'my_current_screen' );
+    
+    function my_current_screen($screen) {
+        if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return $screen;
+        print_r($screen);
+        return $screen;
+    }
+
     //0X 暂时不用了
     //三插件冲突
     //add_action( 'wp_print_scripts', 'apip_filter_filter',2 );
-    //确认提交前的提示,未添加配置项
-    //add_filter('comment_form_defaults' , 'apip_replace_tag_note', 30);
 
     /** 99 */
     if ( apip_option_check('local_widget_enable') ) {
@@ -453,7 +460,7 @@ $options
     0.8                                 移除后台的作者列
     0.9                                 版本升级后自动替换掉危险文件(wp-comments-post.php,xmlrpc.php)
     0.11                                移除无用的钩子
-    0.12                                禁用古腾堡（5.0）后
+    0.12                                禁用古腾堡（5.0后）
     0.13                                替换human_time_diff函数中的英文单词
     0.14                                改善代码在feed里的表现
     0.15                                已删除
@@ -500,8 +507,10 @@ $options
     8.6                                 gaintbomb游戏信息
     8.7     heweather_key               和风天气/发帖时天气信息
     8.8     apip_commentquiz_enable     回复前答题
-    8.9     yandex_translate_key        手动翻译标题的按钮
+    8.9     apip_title_hex_meta_box     手动将标题转换成unicode值的按钮
     8.10    apip_colorthief_meta_box    取特色图片主色调相关内容
+09.     后台维护相关
+    9.1                                 后台taglist增加private和draft计数列
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -2906,22 +2915,9 @@ function apip_optimize_boxes() {
     //8.7
     add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
     //8.9
-    //add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_translate_meta_box', 'post', 'normal', 'core');
-    add_meta_box('apipslugdiv', 'Slug and translate', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
+    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
     //8.10
     add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
-}
-
-/*
-yandex translate的文档
-https://tech.yandex.com/translate/doc/dg/reference/translate-docpage/
-*/
-function apip_title_translate_meta_box( $post ){
-    $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
-    ?>
-    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiptranlatebtn" >翻译或更新</button>
-    <?php
-    /*剩下的看js的了*/
 }
 
 /*
@@ -2987,24 +2983,64 @@ function apip_new_thumbnail_color(){
     }   
 }
 
-/**
-* 作用: 将UTF8字符串转成16进制带下划线的字符串
-*/
-function apip_mb_str2_hex($str) {
-    $ret="";    
-    for ($i = 0; $i < mb_strlen($str, "utf-8"); $i++)
-    {
-        $char = mb_substr($str, $i, 1, "utf-8");
+/*                                          08终了                             */
 
-        for ($j = 0; $j < strlen($char); $j++)
-        {
-            $ret.= "_".(dechex(ord($char[$j])));
+/******************************************************************************/
+/*        09.纯后台功能                                                        */
+/******************************************************************************/
+//9.1 后台taglist增加private和draft计数列
+ /**
+ * 作用: 添加taglist中的列标题
+ * 来源: https://gist.github.com/maxfenton/593473788c2259209694
+ * URL: https://make.wordpress.org/docs/plugin-developer-handbook/10-plugin-components/custom-list-table-columns/
+ * 备注: filter: manage_edit-{$taxonomy}_columns
+ */
+function apip_edit_post_tag_column_header( $columns ){
+        $columns['none-public-count'] = 'Non-public Count';
+        return $columns;
+}
+ /**
+ * 作用: 填充非public状态tag的计数
+ * 来源: https://gist.github.com/maxfenton/593473788c2259209694
+ * URL: https://make.wordpress.org/docs/plugin-developer-handbook/10-plugin-components/custom-list-table-columns/
+ * 备注: filter: manage_{$taxonomy}_custom_column
+ */
+function apip_edit_post_tag_content( $value, $column_name, $tax_id ){
+    $args = array(
+        'numberposts' => -1,
+        'post_type'   => 'post',
+        'post_status' => array('private', 'draft'),
+        'tag_id'      => $tax_id,
+    );
+    $myquery = new WP_Query( $args );   //查询类型为private和draft，并且包含tag_id与$tax_id的所有post。
+    $p_count = 0; //private count
+    $d_count = 0; //draft count
+    foreach ($myquery->posts as $p) {
+        //对两种类型分别计数
+        if ($p->post_status == 'private') {
+            $p_count++;
+        } else {
+            $d_count++;
         }
     }
-    return $ret;
+    if (0 === $p_count + $d_count) {
+        return "—";
+    }
+    $term_slug = get_term( $tax_id )->slug; //URL需要tag的slug
+    $ret = "";
+    $p_str = "";
+    $d_str = "";
+    $url_base = home_url('/',is_ssl()?'https':'http').'wp-admin/edit.php?post_type=post';
+    if ($p_count) {
+        $p_str = sprintf('<strong>privates:</strong><a href="%s&tag=%s&post_status=private">%d</a>', $url_base, $term_slug, $p_count); //加编辑用的超链
+    }
+    if ($d_count) {
+        $d_str = sprintf('<strong>drafts:</strong><a href="%s&tag=%s&post_status=draft">%d</a>',$url_base, $term_slug, $d_count);
+    }
+    return sprintf("  %s  %s", $p_str, $d_str);
 }
 
-/*                                          08终了                             */
+/*                                          09终了                             */
 
  /**
  * 作用: 解决bjlazyload，ngg-gallery之间的冲突问题，暂时废弃
@@ -3029,20 +3065,15 @@ function apip_filter_filter()
     }
 }
 
+/******************************************************************************/
+/*        一些共用功能的整合                                                   */
+/******************************************************************************/
 /**
- * 作用: 替换留言框下方的提示，暂时废弃
- * 来源: customizr论坛
- * URL:
- */
-function apip_replace_tag_note( $defaults )
-{
-    $notice = "<em> 不懂问，不爽骂，无语右上有红叉。确定要按下按钮吗？</em>";
-    $defaults['comment_notes_after'] = $notice;
-    return $defaults;
-}
-
-/**
- * 20200416 整合所有template_redirect的钩子到同一函数
+ *  WP钩子：template_redirect
+ *  整合日：20200416
+ *  涉及功能：0.10 作者页跳转到404
+ *           2.7  搜索结果只有一条时直接跳入
+ *           2.10 外链转内链
  */
 function apip_template_redirect() {
     //0.10 作者页跳转到404
@@ -3057,5 +3088,26 @@ function apip_template_redirect() {
     }
 }
 
-//goto 链接钩子
-//link：https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html
+/* */
+//准备抄袭的功能
+/* */
+
+/******************************************************************************/
+/*        已经废除不再调用的代码，但可能有些参考价值                              */
+/******************************************************************************/
+/**
+* 作用: 将UTF8字符串转成16进制带下划线的字符串
+*/
+function apip_mb_str2_hex($str) {
+    $ret="";    
+    for ($i = 0; $i < mb_strlen($str, "utf-8"); $i++)
+    {
+        $char = mb_substr($str, $i, 1, "utf-8");
+
+        for ($j = 0; $j < strlen($char); $j++)
+        {
+            $ret.= "_".(dechex(ord($char[$j])));
+        }
+    }
+    return $ret;
+}
