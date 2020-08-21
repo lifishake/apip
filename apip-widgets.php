@@ -456,3 +456,50 @@ function apip_widget_register() {
 
 //add_action( 'widgets_init', create_function( '', 'return register_widget( "APIP_Widget_Hook_List" );' ) );
 add_action( 'widgets_init', 'apip_widget_register' );
+add_action( 'widgets_init', 'apip_widget_unregister', 99 );
+
+function apip_widget_unregister() {
+/*
+     WP_Widget_Pages = Pages Widget
+     WP_Widget_Calendar = Calendar Widget
+     WP_Widget_Archives = Archives Widget
+     WP_Widget_Links = Links Widget
+     WP_Widget_Media_Audio = Audio Player Media Widget
+     WP_Widget_Media_Image = Image Media Widget
+     WP_Widget_Media_Video = Video Media Widget
+     WP_Widget_Media_Gallery = Gallery Media Widget
+     WP_Widget_Meta = Meta Widget
+     WP_Widget_Search = Search Widget
+     WP_Widget_Text = Text Widget
+     WP_Widget_Categories = Categories Widget
+     WP_Widget_Recent_Posts = Recent Posts Widget
+     WP_Widget_Recent_Comments = Recent Comments Widget
+     WP_Widget_RSS = RSS Widget
+     WP_Widget_Tag_Cloud = Tag Cloud Widget
+     WP_Nav_Menu_Widget = Menus Widget
+     WP_Widget_Custom_HTML = Custom HTML Widget
+    */
+    $names = array(
+         "WP_Widget_Pages",
+         "WP_Widget_Archives",
+         "WP_Widget_Links",
+         "WP_Widget_Media_Audio",
+         "WP_Widget_Media_Image",
+         "WP_Widget_Media_Video",
+         "WP_Widget_Media_Gallery",
+         "WP_Widget_Meta",
+         "WP_Widget_Text",
+         "WP_Widget_Categories",
+         "WP_Widget_Recent_Posts",
+         "WP_Widget_RSS",
+         "WP_Widget_Tag_Cloud",
+         "WP_Widget_Custom_HTML",
+         /*NGGallerys */
+         "C_Widget_Gallery",
+         "C_Widget_MediaRSS",
+         "C_Widget_Slideshow",
+    );
+    foreach ($names as $wd) {
+          unregister_widget($wd);
+     }
+}

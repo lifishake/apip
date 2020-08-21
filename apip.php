@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.31.0
+ * Version:     1.31.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -324,6 +324,10 @@ function apip_init()
     if(is_admin()) {
         add_filter( "manage_edit-post_tag_columns", 'apip_edit_post_tag_column_header', 10);
         add_action( "manage_post_tag_custom_column", 'apip_edit_post_tag_content', 10, 3);
+    }
+    //9.2
+    if(is_admin()) {
+        add_filter( 'post_tag_row_actions', 'apip_convert_post_tag_slug_to_utf', 10, 2 );
     }
 
     // Add to the admin_init action hook
@@ -3038,6 +3042,14 @@ function apip_edit_post_tag_content( $value, $column_name, $tax_id ){
         $d_str = sprintf('<strong>drafts:</strong><a href="%s&tag=%s&post_status=draft">%d</a>',$url_base, $term_slug, $d_count);
     }
     return sprintf("  %s  %s", $p_str, $d_str);
+}
+
+//9.2
+function apip_convert_post_tag_slug_to_utf($actions, $tag){
+    $action = '<a href="/">转unicode</a>';
+    $new_slug=apip_mb_str2_hex($tag->name);
+    $actions['convert_unicode_slug'] = $action;
+    return $actions;
 }
 
 /*                                          09终了                             */
