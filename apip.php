@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.31.1
+ * Version:     1.32.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -58,6 +58,16 @@ function apip_plugin_activation()
 
     //8.6
     $thumb_path = APIP_GALLERY_DIR . "game_poster";
+    if (file_exists ($thumb_path)) {
+        if (! is_writeable ( $thumb_path )) {
+            @chmod ( $thumb_path, '511' );
+        }
+    } else {
+        @mkdir ( $thumb_path, '511', true );
+    }
+
+    //8.11
+    $thumb_path = APIP_GALLERY_DIR . "myfv";
     if (file_exists ($thumb_path)) {
         if (! is_writeable ( $thumb_path )) {
             @chmod ( $thumb_path, '511' );
@@ -128,7 +138,7 @@ function apip_init()
     //0.6 去掉后台的OpenSans
     //add_action( 'admin_enqueue_scripts', 'apip_remove_open_sans' );
     //0.7 自带的TagCloud格式调整
-    add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
+    //add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
     //0.8 移除后台的“作者”列
     add_filter( 'manage_posts_columns', 'apip_posts_columns' );
     //0.9 升级后替换高危文件
@@ -318,6 +328,9 @@ function apip_init()
         add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
         add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
     }
+    //8.11 我的收藏第一版
+    add_shortcode('myfv', 'apip_myfv_detail');
+    add_action( 'transition_post_status', 'apip_myfv_filter', 10, 3 );
 
     /** 09  */
     //9.1 后台taglist增加private和draft计数列
@@ -420,6 +433,7 @@ function apip_init_actions()
     ////0A.2
     ////禁用4.4以后的embed功能
     ////来源:disable-embeds
+    /*
     global $wp;
     if ( is_array($wp->public_query_vars) && !empty($wp->public_query_vars) ) {
         $wp->public_query_vars = array_diff( $wp->public_query_vars, array(
@@ -438,6 +452,7 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'run_shortcode' );
         apip_remove_anonymous_object_hook( 'the_content', 'WP_Embed', 'autoembed' );
     }
+    */
 
     //8.3 结果集内跳转的先决条件
     if( !session_id() )
@@ -513,6 +528,7 @@ $options
     8.8     apip_commentquiz_enable     回复前答题
     8.9     apip_title_hex_meta_box     手动将标题转换成unicode值的按钮
     8.10    apip_colorthief_meta_box    取特色图片主色调相关内容
+    8.11                                自定义收藏的添加和显示
 09.     后台维护相关
     9.1                                 后台taglist增加private和draft计数列
 99.     local_widget_enable             自定义小工具
@@ -752,7 +768,7 @@ function apip_quicktags()
         QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music" /]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
         QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book" /]', 'p' );
-        QTags.addButton( 'eg_mybook', '自定义读书', '[mybook id="', '" name="" author="" year="未知" publisher="未知" media="实体" cover="" score="6" subtitle="" translater="" /]', 'p' );
+        QTags.addButton( 'eg_myfav', '我的收藏', '[myfv id="x" type="movie" title="', '" img="" link="" score="0" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;imdblink:;作者:;译者:;出版年份:;出版社:;表演者:;download:;"/]', 'p' );
     </script>
 <?php
 }
@@ -2419,10 +2435,7 @@ function apip_imbd_detail($atts, $content = null){
         $content = apip_slim_dou_cache($content, "imdb");
         set_transient($cache_key, $content, 60*60*24*30*6);
     }
-    $meta_class='';
-    if ("yes"===$nipple) {
-        $meta_class="has-nipple";
-    }
+
     $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
     $img_url = $content['Poster'];
     if ( !is_file($img_src) /*&& !apip_is_debug_mode()*/ ) {
@@ -2493,7 +2506,6 @@ function apip_imbd_detail($atts, $content = null){
 
     $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
     return $out;
-
 
 }
 
@@ -2985,6 +2997,232 @@ function apip_new_thumbnail_color(){
         delete_post_meta( $pic_id, "apip_main_color", false );
         add_post_meta($pic_id, "apip_main_color", $maincolor, false);
     }   
+}
+
+
+function apip_append_linebreak_to_myfv( $output, $tag ) {
+	if ( 'myfv' !== $tag ) {
+		return $output;
+	}
+	return $output . '<br /><br />';
+}
+add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
+
+
+//8.11 显示自定义收藏内容
+function apip_save_myfv_img($id, $img, $width = 100, $height = 150) {
+    $local_dir = APIP_GALLERY_DIR.'myfv/';
+    $local_file = $local_dir.$id.'.jpg';
+
+    if ( !is_file($local_file) /*&& !apip_is_debug_mode()*/ ) {
+        $response = @wp_remote_get( 
+            htmlspecialchars_decode($img), 
+            array( 
+                'timeout'  => 300, 
+                'stream'   => true, 
+                'filename' => $local_file 
+            ) 
+        );
+        if ( is_wp_error( $response ) )
+        {
+            return false;
+        }
+        $image = new Apip_SimpleImage();
+        $image->load($local_file);
+        $image->resize($width, $height);
+        $image->save($local_file);
+        return true;
+
+    } else {
+        return true;
+    }
+}
+
+function apip_load_myfv_img($id) {
+    $local_dir = APIP_GALLERY_DIR.'myfv/';
+    $local_file = $local_dir.$id.'.jpg';
+    if (!is_file($local_file)) {
+        return "";
+    }
+    return APIP_GALLERY_URL."myfv/".$id.".jpg";
+}
+
+/**
+* 作用: 在保存时给自定义收藏赋予ID并保存图片到本地。
+* 来源: 自创
+* id标准:  
+*   书籍: fvbk
+*   电影: fvmv
+*   游戏: fvgm
+*   音乐: fvmu
+* type: book, movie, music, game, series(TBD)
+*/
+/* [myfv id="x" type="movie" title="', '" img="", link="", score="0" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;imdblink:;作者:;译者:;出版年份:;出版社:;表演者:;download:;"/] */
+function apip_myfv_filter( $new_status, $old_status, $post ) {
+    if ( 'post' !== $post->post_type && 'page' !== $post->post_type) {
+        return;
+    }
+    if (FALSE === get_option( 'apip_max_fav_ids' )) {
+        $myfv_maxids = array('m_fvbk'=>1000001, 'm_fvmv'=>3000001, 'm_fvgm'=>5000001, 'm_fvmu'=>6000001);
+        add_option('apip_max_fav_ids',$myfv_maxids, null, 'no');
+    } else {
+        $myfv_maxids = get_option( 'apip_max_fav_ids' );
+    }
+    if (!key_exists('m_fvbk', $myfv_maxids)) {
+        $myfv_maxids['m_fvbk'] = 1000001;
+    }
+    if (!key_exists('m_fvmv', $myfv_maxids)) {
+        $myfv_maxids['m_fvmv'] = 3000001;
+    }
+    if (!key_exists('m_fvgm', $myfv_maxids)) {
+        $myfv_maxids['m_fvgm'] = 5000001;
+    }
+    if (!key_exists('m_fvmu', $myfv_maxids)) {
+        $myfv_maxids['m_fvmu'] = 6000001;
+    }
+    $my_content = $post->post_content;
+    if ( "draft" == $new_status || "publish" == $new_status || "private" == $new_status) {
+        preg_match_all('/\[myfv.+[^\]]/', $post->post_content, $matches);
+        if ( !is_array($matches) || empty($matches) ) {
+            return;
+        }
+        foreach ($matches[0] as $hit) {
+            /*id type title img link score abs*/
+            preg_match_all('/(?<=id=").*?(?=")|(?<=type=").*?(?=")|(?<=title=").*?(?=")|(?<=img=").*?(?=")|(?<=link=").*?(?=")|(?<=score=").*?(?=")|(?<=abs=").*?(?=")/s', $hit, $keys);
+            $id = $keys[0][0];
+            if ("x"!==$id) {
+                continue;
+            }
+            $type = $keys[0][1];
+            $title = $keys[0][2];
+            $img = $keys[0][3];
+            $link = $keys[0][4];
+            $score =$keys[0][5];
+            $abs = $keys[0][6];
+            $width = 100;
+            $height = 150;
+            if ("movie" === $type) {
+                $myfv_maxids['m_fvmv']++;
+                $id = 'fvmv'.$myfv_maxids['m_fvmv'];
+            } else if ("book" === $type) {
+                $myfv_maxids['m_fvbk']++;
+                $id = 'fvbk'.$myfv_maxids['m_fvbk'];
+            }  else if ("music" === $type) {
+                $myfv_maxids['m_fvmu']++;
+                $id = 'fvmu'.$myfv_maxids['m_fvmu'];
+                $width = 150;
+            }  else if ("game" === $type) {
+                $myfv_maxids['m_fvgm']++;
+                $id = 'fvgm'.$myfv_maxids['m_fvgm'];
+            } else {
+                continue;
+            }
+            if ($img !== "") {
+                if (!apip_save_myfv_img($id, $img, $width, $height)) {
+                    continue;
+                }
+            } else {
+                //Must contain picture
+                continue;
+            }
+            $fix_to = sprintf('[myfv id="%s" type="%s" title="%s" img="%s" link="%s" score="%s" abs="%s" /]', $id, $type, $title, $img, $link, $score, $abs);
+            $my_content = str_replace($hit, $fix_to, $my_content);
+        }
+        if ($fix_to !== "") {
+            update_option( 'apip_max_fav_ids', $myfv_maxids );
+            //防止无限循环
+            remove_action( 'transition_post_status', 'apip_myfv_filter', 10 );
+            remove_filter( 'the_content', 'apip_fix_shortcodes' );
+            $my_post = array("ID"=>$post->ID, "post_content"=> $my_content);
+            wp_update_post($my_post);
+            add_action( 'transition_post_status', 'apip_myfv_filter', 10, 3 );
+            add_filter( 'the_content', 'apip_fix_shortcodes');
+        }
+    }
+}
+
+/**
+* 作用: 解析自定义的属性。
+* 返回值: array[key]=value，value为空时不计入
+* 来源: 自创
+*/
+function apip_content_extract($abs){
+    $contentarray = array();
+    $ret = array();
+    $contentarray = explode(";", $abs);
+    if ( !is_array($contentarray) || empty($contentarray)) {
+        return $ret;
+    }
+    foreach ($contentarray as $abstract) {
+        $gotarray = explode(":", $abstract);
+        if (!is_array($gotarray) || empty($gotarray)) {
+            continue;
+        }
+        if (count($gotarray) != 2) {
+            continue;
+        }
+        if (trim($gotarray[1]) === "") {
+            continue;
+        }
+        $ret[trim($gotarray[0])] = trim($gotarray[1]);
+    }
+    return $ret;
+}
+
+/**
+* 作用: 在保存时给自定义收藏赋予ID并保存图片到本地。
+* 来源: 自创
+* id标准:  
+*   书籍: fvbk
+*   电影: fvmv
+*   游戏: fvgm
+*   音乐: fvmu
+* type: book, movie, music, game, series(TBD)
+*/
+function apip_myfv_detail($atts, $content = null){
+    extract( $atts );
+    $abstracts = apip_content_extract($abs);
+
+    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
+
+    $subject_class="v-overflowHidden doulist-subject";//5
+    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                        apip_load_myfv_img($id),
+                        base64_encode($link));//1
+
+    //标题
+    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
+                        $link,
+                        $title);//2
+
+    //评分
+    $rating_str="";//3
+    if (intval($score)>=0 && intval($score) <= 10) {
+        $subject_class .= " my-score-".$score;
+    } else {
+        $score = 0;
+    }
+    $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, "--");
+    $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
+    $rating_str = sprintf('<span class="allstardark"><span class="dou-stars-0"></span>%1$s</span>%2$s', $star_my, $str_rnum);
+
+    //详细
+    $abstract_str="";//4
+    $i=0;
+    $abs_img_str="";
+    foreach ($abstracts as $key=>$val) {
+        if ($key=="nipple" && $val == "yes") {
+            $abs_img_str .= '<span class="feature">奶</span>';
+            continue;
+        }
+        //把详细里的逗号换成斜线
+        $abstract_str.= sprintf('<span class="abs-%d">%s：%s</span>', ++$i, $key, str_replace(",", " / ", $val));
+    }
+    $abstract_str.= $abs_img_str;
+
+    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    return $out;
+
 }
 
 /*                                          08终了                             */
