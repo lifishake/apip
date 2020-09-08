@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.1
+ * Version:     1.32.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2917,6 +2917,24 @@ function apip_commentquiz_save($post_id, $post, $update){
 /*
 8.9 将标题转成16进制的按钮
  */
+/*
+apip_optimize_boxes 函数在admin_menu的钩子里调用。
+这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
+*/
+function apip_optimize_boxes() {
+    //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
+    remove_meta_box('authordiv', 'post', 'normal');//移除[author]，顺道。
+    remove_meta_box('trackbacksdiv', 'post', 'normal');//移除[trackback]，顺道。
+    remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
+    remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
+    remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+    //8.7
+    add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
+    //8.9
+    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
+    //8.10
+    add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
+}
 function apip_title_hex_meta_box( $post ){
     $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
     ?>
