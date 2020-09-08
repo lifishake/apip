@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.0
+ * Version:     1.32.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -661,7 +661,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20200804', true);
-    wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
+    //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
     wp_register_style( 'open-sans', false );
@@ -2914,30 +2914,8 @@ function apip_commentquiz_save($post_id, $post, $update){
   }
 }
 
-//8.9 文章发布前，通过调用yandex translate的API，手动生成英文slug。
 /*
-apip_optimize_boxes 函数在admin_menu的钩子里调用。
-这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
-UPDATE:20200803
-因为yandex API在20200815会停止服务，所以把这个功能改为获取unicode。
-*/
-function apip_optimize_boxes() {
-    //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
-    remove_meta_box('authordiv', 'post', 'normal');//移除[author]，顺道。
-    remove_meta_box('trackbacksdiv', 'post', 'normal');//移除[trackback]，顺道。
-    remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
-    remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
-    remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
-    //8.7
-    add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
-    //8.9
-    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
-    //8.10
-    add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
-}
-
-/*
-将标题转成16进制的按钮
+8.9 将标题转成16进制的按钮
  */
 function apip_title_hex_meta_box( $post ){
     $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
