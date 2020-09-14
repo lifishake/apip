@@ -196,8 +196,6 @@ function apip_advanced_writer_settings_render()
   ?>
   <span>    禁止自动保存：</span>
   <input type='checkbox' name='apip_settings[auto_save_disabled]' <?php checked( $options['auto_save_disabled'], 1 ); ?> value='1'/><br />
-  <span>    禁止保存版本修订(autorevision)：</span>
-  <input type='checkbox' name='apip_settings[save_revisions_disable]' <?php checked( $options['save_revisions_disable'], 1 ); ?> value='1'/><br />
   <span>    显示AdminBar：</span>
   <input type='checkbox' name='apip_settings[show_admin_bar]' <?php checked( $options['show_admin_bar'], 1 ); ?> value='1'/><br />
   <span>    前台显示中文：</span>

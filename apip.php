@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.2
+ * Version:     1.32.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -22,6 +22,7 @@ register_activation_hook( __FILE__, 'apip_plugin_activation' );
 register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
 
+/* 打log用 */
 function apip_log(  $any )
 {
     echo '<pre>'.$any.'</pre>';
@@ -106,10 +107,10 @@ function apip_option_check( $key, $val = 1 )
 }
 
 /* Plugin页面追加配置选项 */
-function apip_settings_link($action_links,$plugin_file){
-	if($plugin_file==plugin_basename(__FILE__)){
+function apip_settings_link($action_links, $plugin_file){
+	if($plugin_file == plugin_basename(__FILE__)){
 		$apip_settings_link = '<a href="options-general.php?page=apip/apip-options.php">Settings</a>';
-		array_push($action_links,$apip_settings_link);
+		array_push($action_links, $apip_settings_link);
 	}
 	return $action_links;
 }
@@ -135,15 +136,13 @@ function apip_init()
     add_filter('the_content_feed', 'apip_addi_feed');
     //0.5 后台追加的快捷按钮
     add_action('admin_print_footer_scripts','apip_quicktags');
-    //0.6 去掉后台的OpenSans
-    //add_action( 'admin_enqueue_scripts', 'apip_remove_open_sans' );
-    //0.7 自带的TagCloud格式调整
-    //add_filter( 'widget_tag_cloud_args', 'apip_resort_tagcloud' ) ;
+    //0.6 去掉后台的OpenSans  -->移至统一的admin_enqueue_scripts
+    //0.7 自带的TagCloud格式调整  -->暂时不用
     //0.8 移除后台的“作者”列
     add_filter( 'manage_posts_columns', 'apip_posts_columns' );
     //0.9 升级后替换高危文件
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
-    //0.10 作者页跳转到404
+    //0.10 作者页跳转到404 -->移至统一的template_redirect钩子
     //add_action('template_redirect', 'apip_redirect_author');
     add_action('template_redirect', 'apip_template_redirect');
     //0.11 屏蔽留言class中的作者名
@@ -157,7 +156,6 @@ function apip_init()
     add_filter('the_content_feed', 'apip_code_highlight') ;
     add_filter('the_content_feed', 'so_handle_038', 199, 1);
     //0.15 移除后台界面的WP版本升级提示 -->因为会引起downgrade失败,所以改为有配置项的2.11
-    //add_filter('pre_site_transient_update_core','remove_core_updates');
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
     //0.17 针对苹果旧设备的访问，减少404
@@ -171,54 +169,55 @@ function apip_init()
     //0.21 设置chrome内核浏览器的tab颜色
     add_action('wp_head', 'apip_set_theme_color', 20);
     /** 01 */
-  //颜色目前没有函数
+    //颜色目前没有函数
 
     /** 02 */
-    if( apip_option_check('save_revisions_disable') ) {
-        //2.1停止自动版本更新
-        //这个必须在config里面设才行
-        //apip_auto_rev_settings();
-    }
-    if( apip_option_check('auto_save_disabled') ) {
+    //2.1停止自动版本更新　　=>这个必须在config里面设才行，已删除
     //2.2停止自动保存
+    if( apip_option_check('auto_save_disabled') ) {
         add_action( 'wp_print_scripts', 'apip_auto_save_setting' );
     }
     //2.3是否显示adminbar
     add_filter( 'show_admin_bar', 'apip_admin_bar_setting' );
-    if ( apip_option_check('forground_chinese') ) {
+
     //2.4后台英文前台中文
+    if ( apip_option_check('forground_chinese') ) {
         add_filter( 'locale', 'apip_locale', 99 );
     }
+
+    //2.5屏蔽已经注册的open sans
     if ( apip_option_check('block_open_sans') ) {
-        //2.5屏蔽已经注册的open sans
         add_action( 'wp_default_styles', 'apip_block_open_sans', 100);
     }
+
+    //2.6默认留言widget里屏蔽作者
     if ( apip_option_check('show_author_comment') )
     {
-        //2.6默认留言widget里屏蔽作者
         add_filter( 'widget_comments_args', 'before_get_comments' );
     }
-        //2.7移至apip_template_redirect
+    
+    //2.7 搜索结果只有一条时直接跳入，移至apip_template_redirect
+    //2.8禁止直接访问wp_comments.php
     if ( apip_option_check('protect_comment_php') )
     {
-        //2.8禁止直接访问wp_comments.php
         add_action('check_comment_flood', 'check_referrer_comment');
     }
+
+    //2.9搜索结果不包括page页面
     if ( apip_option_check('search_without_page') )
     {
-        //2.9搜索结果不包括page页面
         add_filter('pre_get_posts','remove_page_search');
     }
 
+    //2.10外链转内链
     if  ( apip_option_check('redirect_external_link') ) {
-        //2.10外链转内链
         add_filter('the_content','convert_to_internal_links',99); // 文章正文外链转换
         add_filter('comment_text','convert_to_internal_links',99); // 评论内容的链接转换
         add_filter('comment_url','apip_comment_url', 10, 2); //链接转换
     }
 
+    //2.11移除后台界面的WP版本升级提示
     if  ( apip_option_check('remove_core_updates') ) {
-        //2.11移除后台界面的WP版本升级提示
         add_filter('pre_site_transient_update_core','remove_core_updates');
     }
 
@@ -232,6 +231,7 @@ function apip_init()
     }  else {
         define('NGG_DISABLE_FILTER_THE_CONTENT', TRUE);
     }
+
     /** 03 */
     if( apip_option_check('better_excerpt') ) {
         //更好的中文摘要
@@ -243,7 +243,7 @@ function apip_init()
     }
 
     /** 04 */
-  //4.1 头像替换
+    //4.1 头像替换
     add_filter('get_avatar','apip_get_cavatar');
     //4.2 表情链接替换
     add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
@@ -252,12 +252,13 @@ function apip_init()
     //5.1 广告关键字替换，抢在akimest前面
     add_filter('preprocess_comment', 'hm_check_user',1);
     add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
-    add_filter( 'comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
-    add_filter( 'comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
+    add_filter('comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
+    add_filter('comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
 
     /** 06*/
     //social没有添加项,需要外部手动调用
-    /** 07 */
+
+    /** 07 自定义页面 */
     //7.1 TAGcloud 注册
     if ( apip_option_check('apip_tagcloud_enable') )
     {
@@ -282,34 +283,39 @@ function apip_init()
 
     //8.2 lazyload
     if ( apip_option_check('apip_lazyload_enable') )  {
-        add_filter( 'the_content', 'apip_lazyload_filter',200 );
-        add_filter( 'post_thumbnail_html', 'apip_lazyload_filter',200 );
+        add_filter('the_content', 'apip_lazyload_filter', 200);
+        add_filter('post_thumbnail_html', 'apip_lazyload_filter', 200);
     }
 
     //8.3 结果集内跳转
     if ( apip_option_check('range_jump_enable') ) {
         add_action('template_redirect', 'apip_keep_query', 9 );
     }
+
     //8.4 留言邮件回复
     if ( apip_option_check('notify_comment_reply') )  {
-    //邮件回复
+        //邮件回复
         add_action('wp_insert_comment','apip_comment_inserted',99,2);
     }
     //8.5 豆瓣显示
-    if ( apip_option_check('apip_douban_enable') )  {
-        add_shortcode('mydouban', 'apip_dou_detail');
-        add_shortcode('myimdb', 'apip_imbd_detail');
-    }
-    //8.6 每夜一游
-    add_shortcode('mygame', 'apip_game_detail');
     if ( !class_exists('Apip_SimpleImage') ) {
         //包跳转类含头文件
         require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
     }
+    if ( apip_option_check('apip_douban_enable') )  {
+        add_shortcode('mydouban', 'apip_dou_detail');
+    }
+    add_shortcode('myimdb', 'apip_imbd_detail');
+
+    //8.6 每夜一游
+    add_shortcode('mygame', 'apip_game_detail');
+
     //8.7 发帖天气
     //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
     add_action( 'draft_to_publish','apip_save_heweather',99,1);
     add_action( 'draft_to_private','apip_save_heweather',99,1);
+    add_action( 'auto-draft_to_publish','apip_save_heweather',99,1);
+    add_action( 'auto-draft_to_private','apip_save_heweather',99,1);
     add_action( 'new_to_publish','apip_save_heweather',99,1);
     add_action( 'new_to_private','apip_save_heweather',99,1);
     //在后台update区域增加手动更新天气的checkbox
@@ -330,6 +336,7 @@ function apip_init()
     }
     //8.11 我的收藏第一版
     add_shortcode('myfv', 'apip_myfv_detail');
+    //add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
     add_action( 'transition_post_status', 'apip_myfv_filter', 10, 3 );
 
     /** 09  */
@@ -361,6 +368,12 @@ function apip_init()
         require APIP_PLUGIN_DIR.'/apip-widgets.php';
     }
 
+}
+
+function wp_fetch_from_douban($url, $type) {
+    
+    //var_dump($ret) ;
+    return $ret;
 }
 
 register_activation_hook( __FILE__, 'apip_disable_embeds_remove_rewrite_rules' );
@@ -491,7 +504,7 @@ $options
     0.21                                设置chrome的标签颜色
 01.     颜色选项
 02.     高级编辑选项
-    2.1     save_revisions_disable      阻止自动版本
+    2.1     save_revisions_disable      阻止自动版本                ×已删除
     2.2     auto_save_disabled          阻止自动保存
     2.3     show_admin_bar              显示登录用户的admin bar
     2.4     apip_locale                 后台英文前台中文
@@ -653,7 +666,7 @@ function apip_scripts()
         wp_add_inline_style('apip-style-all', $css);
     }
 }
-
+/* 统一处理后台相关的脚本 */
 function apip_admin_scripts() {
     global $apip_options;
     wp_enqueue_style( 'wp-color-picker' );
@@ -762,41 +775,14 @@ function apip_quicktags()
 ?>
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_163music', '网易云音乐', '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=', '&auto=1&height=66"></iframe>' );
-        QTags.addButton( 'eg_mydoubanmovie', '豆瓣电影', '[mydouban id="', '" type="movie" nipple="no" /]', 'p' );
         QTags.addButton( 'eg_myimdb', 'imdb', '[myimdb id="', '" cname="" nipple="no" /]', 'p' );
-        QTags.addButton( 'eg_mydoubanmusic', '豆瓣音乐', '[mydouban id="', '" type="music" /]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
-        QTags.addButton( 'eg_mydoubanbook', '豆瓣读书', '[mydouban id="', '" type="book" /]', 'p' );
-        QTags.addButton( 'eg_myfav', '我的收藏', '[myfv id="x" type="movie" title="', '" img="" link="" score="0" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;imdblink:;作者:;译者:;出版年份:;出版社:;表演者:;download:;"/]', 'p' );
+        QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
+        QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
+        QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
+        QTags.addButton( 'eg_myfavmusic', '收藏音乐', '[myfv id="x" type="music" title="', '" img="x" link="" score="99" abs="出版年份:;出版公司:;表演者:;doulink:;douscore:;" series="0"/]', 'p' );
     </script>
 <?php
-}
-
-//0.6
-/**
- * 作用: 去掉后台的Open Sans
- * 来源: 自产
- * URL:
- */
-/*
-function apip_remove_open_sans() {
-    wp_deregister_style( 'open-sans' );
-    wp_register_style( 'open-sans', false );
-}
-*/
-
-//0.7 自带的TagCloud格式调整
- /**
- * 作用: 调整TagCloud Widget输出的顺序及显示数量
- * 来源: 原创
- * Author URI:
- */
-function apip_resort_tagcloud( $arg )
-{
-    $arg['number'] = '39' ;
-    $arg['order'] = 'RAND' ;
-    return $arg ;
 }
 
 //0.8 移除后台的作者列
@@ -1313,7 +1299,7 @@ function apip_rep_emoji_url( $url )
 {
     global $apip_options;
     if ( !apip_option_check('replace_emoji') )
-    return $url;
+        return $url;
     return '//coding.net/u/MinonHeart/p/twemoji/git/raw/gh-pages/72x72/' ;
 }
 /*                                          05终了                             */
@@ -2496,7 +2482,6 @@ function apip_imbd_detail($atts, $content = null){
     $str_director=sprintf('<span class="director">导演：%s</span>', $content["Director"]);
     $str_casts=sprintf('<span class="casts">演员：%s</span>', str_replace(',','/',$content["Actors"]));   
     $str_genres=sprintf('<span class="genres">类型：%s</span>', str_replace(',','/',$content["Genre"]));
-    $str_countries=sprintf('<span class="country">地区：%s</span>', str_replace(',','/',$content["Country"]));
     $str_year = sprintf('<span class="year">年份：%s</span>', $content["Year"]);
     $abstract_str = $str_director.$str_casts.$str_genres.$str_countries.$str_year;
 
@@ -2995,65 +2980,218 @@ function apip_new_thumbnail_color(){
     }   
 }
 
-
-function apip_append_linebreak_to_myfv( $output, $tag ) {
-	if ( 'myfv' !== $tag ) {
-		return $output;
-	}
-	return $output . '<br /><br />';
-}
-add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
-
-
 //8.11 显示自定义收藏内容
+
+/**
+ * 作用: 保存myfv用到的图片到本地
+ * 来源: 自产
+ * 参数: $id    [in]    图片的唯一标志，超过一张时为条目的主标志
+ *       $img   [in]    图片网址。超过一张时用‘,’分割。
+ *       $width [in]    图片保存时转换的宽度
+ *       $height [in]   图片保存时转换的高度
+ * 返回值：成功保存返回true，有一张失败返回false。
+ * 备注：调用了Apip_SimpleImage，保存的格式默认是jpg。php5输入webp格式图片会保存成全黑jpg，php7支持webp的格式转换。
+ */
 function apip_save_myfv_img($id, $img, $width = 100, $height = 150) {
     $local_dir = APIP_GALLERY_DIR.'myfv/';
-    $local_file = $local_dir.$id.'.jpg';
-
-    if ( !is_file($local_file) /*&& !apip_is_debug_mode()*/ ) {
-        $response = @wp_remote_get( 
-            htmlspecialchars_decode($img), 
-            array( 
-                'timeout'  => 300, 
-                'stream'   => true, 
-                'filename' => $local_file 
-            ) 
-        );
-        if ( is_wp_error( $response ) )
-        {
-            return false;
+    $singlemode = true;
+    $infs = array();
+    if (strpos($img, ",")) {
+        $singlemode = false;
+        $imgs = explode(",", $img);
+        for($i=0; $i<count($imgs); ++$i) {
+            $infs[] = array('id'=>$id."-".($i+1), 'img'=>$imgs[$i]);
         }
-        $image = new Apip_SimpleImage();
-        $image->load($local_file);
-        $image->resize($width, $height);
-        $image->save($local_file);
-        return true;
-
     } else {
-        return true;
+        $infs[] = array('id'=>$id, 'img'=>$img);
+    }
+    $ret = true;
+    foreach ($infs as $inf) {
+        $local_file = $local_dir.$inf['id'].'.jpg';
+        $img = $inf['img'];
+        if ( !is_file($local_file) /*&& !apip_is_debug_mode()*/ ) {
+            if (!is_array(@getimagesize($img))) {
+                $ret = false;
+                continue;
+            }
+            $response = @wp_remote_get( 
+                htmlspecialchars_decode($img), 
+                array( 
+                    'timeout'  => 300, 
+                    'stream'   => true, 
+                    'filename' => $local_file 
+                ) 
+            );
+            if ( is_wp_error( $response ) )
+            {
+                $ret = false;
+                continue;
+            }
+            $image = new Apip_SimpleImage();
+            $image->load($local_file);
+            $image->resize($width, $height);
+            $image->save($local_file);
+        } else {
+            continue;
+        }
+    }
+    return $ret;
+}
+
+/**
+ * 作用: 读取myfv用到的图片
+ * 来源: 自产
+ * 参数: $id        [in]    条目的唯一标志
+ *       $series    [in]    是否为系列中的图片，0为否，非0为是
+ * 返回值:  非系列时返回本地图片的url，系列时返回本地图片url数组
+ */
+function apip_load_myfv_img($id, $series=0) {
+    $local_dir = APIP_GALLERY_DIR.'myfv/';
+    if (0===$series) {
+        $local_file = $local_dir.$id.'.jpg';
+        if (!is_file($local_file)) {
+            return "";
+        }
+        return APIP_GALLERY_URL."myfv/".$id.".jpg";
+    } else {
+        $imgs=array();
+        for($i=1; $i<100; ++$i ) {
+            $local_file = $local_dir.$id.'-'.$i.'.jpg';
+            if (!is_file($local_file)) {
+                break;
+            }
+            $imgs[] = APIP_GALLERY_URL."myfv/".$id.'-'.$i.'.jpg';
+        }
+        return $imgs;
     }
 }
 
-function apip_load_myfv_img($id) {
-    $local_dir = APIP_GALLERY_DIR.'myfv/';
-    $local_file = $local_dir.$id.'.jpg';
-    if (!is_file($local_file)) {
-        return "";
+/**
+ * 作用: 获得豆瓣数据
+ * 来源: 自产
+ * 参数: $id        [in]    条目的唯一标志
+ *       $series    [in]    是否为系列中的图片，0为否，非0为是
+ * 返回值:  abs的字符串和分列形式
+ */
+function apip_fetch_from_douban_page($url, $abs, $type) {
+    $ret = array('str'=> $abs, 'arr' => array());
+    $response = @wp_remote_get( 
+        htmlspecialchars_decode($url), 
+        array( 'timeout'  => 1000, ) 
+    );
+    if ( is_wp_error( $response ) || !is_array($response) ) {
+        return $ret;
     }
-    return APIP_GALLERY_URL."myfv/".$id.".jpg";
+    preg_match_all('/(<div id="mainpic"[\s\S]+?<\/div>)|(<div id="info"[\s\S]+?<\/div>)|(<strong .+? property="v:average">.+?(<\/strong>|>))/',wp_remote_retrieve_body($response), $matches);
+    if (is_array($matches) && is_array($matches[0]) && count($matches[0])>=3) {
+        $mainpic_div_str = $matches[0][0];
+        $info_div_str = $matches[0][1];
+        $score_str = $matches[0][2];
+        $fetch['link'] = $url;
+
+        //图
+        preg_match('/(?<=img src=").*?(?=")/',$mainpic_div_str,$match_imgs);
+        if (is_array($match_imgs)) {
+            $fetch['pic'] = $match_imgs[0];
+        }
+
+        //分
+        preg_match('/(?<= property="v:average"\>).*?(?=\<)/',$score_str, $match_score);
+        if (is_array($match_score)) {
+            $fetch['average_score'] = $match_score[0];
+        }
+
+        if ("movie"=== $type) {
+            //电影：导演，演员，类型，上映时间，imdb链接
+            $info_grep_keys = array(
+                array('pattern'=>'/(?<="v:directedBy"\>).*?(?=\<)/', 'item'=>'director'),
+                array('pattern'=>'/(?<="v:starring"\>).*?(?=\<)/', 'item'=>'actor'),
+                array('pattern'=>'/(?<="v:genre"\>).*?(?=\<)/', 'item'=>'genre'),
+                array('pattern'=>'/(?<=\<span property="v:initialReleaseDate" content=").*?(?=\")/', 'item'=>'release_date'),
+                array('pattern'=>'/https:\/\/www.imdb.com\/title\/tt[0-9]{1,10}/', 'item'=>'imdblink'),
+            );
+        } elseif ("book"===$type) {
+            $info_grep_keys = array(
+                array('pattern'=>'/(?<=\<span class="pl"\>出版社:\<\/span\>).*?(?=\<br\/\>)/', 'item'=>'publisher'),
+            );
+        } elseif ("music"===$type) {
+            
+        }
+
+        foreach ($info_grep_keys as $grep) {
+            unset($matches);
+            preg_match_all( $grep['pattern'], $info_div_str, $matches);
+            if (is_array($matches) && is_array($matches[0]) && count($matches[0])>=1) {
+                if(count($matches[0])>1) {
+                    $fetch[$grep['item']] = implode(',', $matches[0]);
+                }
+                else {
+                    $fetch[$grep['item']]  = $matches[0][0];
+                }
+            }
+        }
+    }//preg_matches
+
+    if (!is_array($fetch) || count($fetch)==0) {
+        return $ret;
+    }
+    $abs_a = apip_content_explode($abs);
+    if ("movie" === $type) {
+        $ci = array(
+            array( 'itemf' => 'average_score', 'itemt' => 'douscore' ),
+            array( 'itemf' => 'pic', 'itemt' => 'img' ),
+            array( 'itemf' => 'link', 'itemt' => 'doulink' ),
+            array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
+            array( 'itemf' => 'director', 'itemt' => '导演' ),
+            array( 'itemf' => 'actor', 'itemt' => '演员' ),
+            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
+            array( 'itemf' => 'genre', 'itemt' => '类型' ),
+        );
+    } elseif ("book"===$type) {
+        $ci = array(
+            array( 'itemf' => 'average_score', 'itemt' => 'douscore' ),
+            array( 'itemf' => 'pic', 'itemt' => 'img' ),
+            array( 'itemf' => 'link', 'itemt' => 'doulink' ),
+            array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
+            array( 'itemf' => 'director', 'itemt' => '导演' ),
+            array( 'itemf' => 'actor', 'itemt' => '演员' ),
+            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
+            array( 'itemf' => 'genre', 'itemt' => '类型' ),
+        );
+    } elseif ("music"===$type) {
+        $ci = array(
+            array( 'itemf' => 'average_score', 'itemt' => 'douscore' ),
+            array( 'itemf' => 'pic', 'itemt' => 'img' ),
+            array( 'itemf' => 'link', 'itemt' => 'doulink' ),
+            array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
+            array( 'itemf' => 'director', 'itemt' => '导演' ),
+            array( 'itemf' => 'actor', 'itemt' => '演员' ),
+            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
+            array( 'itemf' => 'genre', 'itemt' => '类型' ),
+        );
+    }
+    foreach ($ci as $i) {
+        if (array_key_exists($i['itemf'], $fetch)) {
+            $abs_a[$i['itemt']] = $fetch[$i['itemf']];
+        }
+    }
+    $ret['str'] = apip_content_implode($abs_a);
+    $ret['arr'] = $abs_a;
+    return $ret;
 }
 
 /**
 * 作用: 在保存时给自定义收藏赋予ID并保存图片到本地。
 * 来源: 自创
+* 说明: 新建条目时,$id="x"表示要生成图片。其余必须要有的参数是type，img，title，link，score。abs中的内容会在随后显示成列表，每个项目用分号隔开，项目的值用逗号隔开。系列时要增加series=1
 * id标准:  
 *   书籍: fvbk
 *   电影: fvmv
 *   游戏: fvgm
 *   音乐: fvmu
-* type: book, movie, music, game, series(TBD)
+* type: book, movie, music, game
 */
-/* [myfv id="x" type="movie" title="', '" img="", link="", score="0" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;imdblink:;作者:;译者:;出版年份:;出版社:;表演者:;download:;"/] */
+/* [myfv id="x" type="movie" title="', '" img="" link="" score="0" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;imdblink:;作者:;译者:;出版年份:;出版社:;表演者:;download:;"/] */
 function apip_myfv_filter( $new_status, $old_status, $post ) {
     if ( 'post' !== $post->post_type && 'page' !== $post->post_type) {
         return;
@@ -3077,6 +3215,7 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
         $myfv_maxids['m_fvmu'] = 6000001;
     }
     $my_content = $post->post_content;
+    $fix_to = "";
     if ( "draft" == $new_status || "publish" == $new_status || "private" == $new_status) {
         preg_match_all('/\[myfv.+[^\]]/', $post->post_content, $matches);
         if ( !is_array($matches) || empty($matches) ) {
@@ -3084,7 +3223,7 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
         }
         foreach ($matches[0] as $hit) {
             /*id type title img link score abs*/
-            preg_match_all('/(?<=id=").*?(?=")|(?<=type=").*?(?=")|(?<=title=").*?(?=")|(?<=img=").*?(?=")|(?<=link=").*?(?=")|(?<=score=").*?(?=")|(?<=abs=").*?(?=")/s', $hit, $keys);
+            preg_match_all('/(?<=id=").*?(?=")|(?<=type=").*?(?=")|(?<=title=").*?(?=")|(?<=img=").*?(?=")|(?<=link=").*?(?=")|(?<=score=").*?(?=")|(?<=abs=").*?(?=")|(?<=series=").*?(?=")/s', $hit, $keys);
             $id = $keys[0][0];
             if ("x"!==$id) {
                 continue;
@@ -3095,6 +3234,7 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
             $link = $keys[0][4];
             $score =$keys[0][5];
             $abs = $keys[0][6];
+            $series = $keys[0][7];
             $width = 100;
             $height = 150;
             if ("movie" === $type) {
@@ -3113,6 +3253,14 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
             } else {
                 continue;
             }
+            if ($link !== "" && strpos($link, "douban.com")) {
+                $ret = apip_fetch_from_douban_page($link, $abs, $type);
+                $abs_a = $ret['arr'];
+                if (array_key_exists('img', $abs_a) && $abs_a['img']!="") {
+                    $img = $abs_a['img'];
+                }
+                $abs = $ret['str'];
+            }
             if ($img !== "") {
                 if (!apip_save_myfv_img($id, $img, $width, $height)) {
                     continue;
@@ -3121,7 +3269,7 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
                 //Must contain picture
                 continue;
             }
-            $fix_to = sprintf('[myfv id="%s" type="%s" title="%s" img="%s" link="%s" score="%s" abs="%s" /]', $id, $type, $title, $img, $link, $score, $abs);
+            $fix_to = sprintf('[myfv id="%s" type="%s" title="%s" img="%s" link="%s" score="%s" abs="%s" series="%s" /]', $id, $type, $title, $img, $link, $score, $abs, $series);
             $my_content = str_replace($hit, $fix_to, $my_content);
         }
         if ($fix_to !== "") {
@@ -3138,11 +3286,35 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
 }
 
 /**
+* 作用: 生成自定义属性的字符串，多个值用逗号分割。
+* 来源: 自创
+*/
+function apip_content_implode($abs_array){
+    $ret = "";
+    foreach($abs_array as $key=>$value) {
+        if (""===$key){
+            continue;
+        }
+        if (is_array($value)) {
+            if (count($value) > 1) {
+                $v1 = implode(",",$value);
+            } else{
+                $v1 = $value[0];
+            }
+        } else {
+            $v1 = $value;
+        }
+        $ret .= $key.":".$v1.";";
+    }
+    return $ret;
+}
+
+/**
 * 作用: 解析自定义的属性。
 * 返回值: array[key]=value，value为空时不计入
 * 来源: 自创
 */
-function apip_content_extract($abs){
+function apip_content_explode($abs){
     $contentarray = array();
     $ret = array();
     $contentarray = explode(";", $abs);
@@ -3177,14 +3349,38 @@ function apip_content_extract($abs){
 */
 function apip_myfv_detail($atts, $content = null){
     extract( $atts );
-    $abstracts = apip_content_extract($abs);
+    if ("x"===$id || ""===$id) {
+        return "";
+    }
+    if (isset($abs)) {
+        $abstracts = apip_content_explode($abs);
+    } else {
+        $abstracts = array();
+    }
+    
 
-    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
+    if (0 == $series) {
+        $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
+    } else {
+        $template = '<div class="apip-item"><div class="mod"><div class="v-overflowHidden doulist-subject"><div class="title">%1$s</div><div class="abstract-left">%2$s</div>%3$s</div></div></div>';
+    }
+    
 
     $subject_class="v-overflowHidden doulist-subject";//5
-    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
-                        apip_load_myfv_img($id),
-                        base64_encode($link));//1
+    if (0 == $series) {
+        $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
+                            apip_load_myfv_img($id),
+                            base64_encode($link));//1
+    } else {
+        $img_urls = apip_load_myfv_img($id, $series);
+        $img_str = "";
+        $i = 0;
+        foreach ($img_urls as $img_url) {
+            $img_str.=sprintf('<div class="apiplist-post"><img src="%1$s" alt="%2$s" ></img></div>',
+                        $img_url,
+                        $id."-".++$i);
+        }
+    }
 
     //标题
     $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
@@ -3193,14 +3389,27 @@ function apip_myfv_detail($atts, $content = null){
 
     //评分
     $rating_str="";//3
+    $rated="--";
     if (intval($score)>=0 && intval($score) <= 10) {
         $subject_class .= " my-score-".$score;
     } else {
-        $score = 0;
+        $score = "--";
     }
-    $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, "--");
-    $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
-    $rating_str = sprintf('<span class="allstardark"><span class="dou-stars-0"></span>%1$s</span>%2$s', $star_my, $str_rnum);
+    $star_dou = '<span class="dou-stars-0"></span>';
+    if (isset($abstracts['douscore'])) {
+        $rated = $abstracts['douscore'];
+        $star_dou = sprintf('<span class="dou-stars-%d"></span>', $rated);
+    }
+    unset($abstracts['douscore']);
+    unset($abstracts['doulink']);
+
+    $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>', $score, $rated);
+    if ($score !== "--") {
+        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
+    } else {
+        $star_my = '<span class="my-stars-0"></span>';
+    }
+    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou, $star_my, $str_rnum);
 
     //详细
     $abstract_str="";//4
@@ -3215,8 +3424,11 @@ function apip_myfv_detail($atts, $content = null){
         $abstract_str.= sprintf('<span class="abs-%d">%s：%s</span>', ++$i, $key, str_replace(",", " / ", $val));
     }
     $abstract_str.= $abs_img_str;
-
-    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    if (0 == $series) {
+        $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
+    } else {
+        $out = sprintf($template, $title_str, $abstract_str, $img_str);
+    }
     return $out;
 
 }
