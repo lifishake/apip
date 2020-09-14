@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.3
+ * Version:     1.32.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -108,11 +108,11 @@ function apip_option_check( $key, $val = 1 )
 
 /* Plugin页面追加配置选项 */
 function apip_settings_link($action_links, $plugin_file){
-	if($plugin_file == plugin_basename(__FILE__)){
-		$apip_settings_link = '<a href="options-general.php?page=apip/apip-options.php">Settings</a>';
-		array_push($action_links, $apip_settings_link);
-	}
-	return $action_links;
+    if($plugin_file == plugin_basename(__FILE__)){
+        $apip_settings_link = '<a href="options-general.php?page=apip/apip-options.php">Settings</a>';
+        array_push($action_links, $apip_settings_link);
+    }
+    return $action_links;
 }
 add_filter('plugin_action_links','apip_settings_link',10,2);
 
@@ -834,8 +834,8 @@ function apip_replaced_human_time_diff( $since ) {
 //0.15-->2.11
 //来源:https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
 function remove_core_updates(){
-	global $wp_version;
-	return (object) array('last_checked'=> time(),'version_checked'=> $wp_version,);
+    global $wp_version;
+    return (object) array('last_checked'=> time(),'version_checked'=> $wp_version,);
 }
 
 //0.16 优化AdminBar
@@ -868,8 +868,8 @@ function apip_admin_bar() {
 //0.17 减少苹果旧设备访问的404错误
 function apip_add_apple_touch_icon($meta_tags){
     $icon_180 = get_site_icon_url( 180 );
-	if ( $icon_180 ) {
-		$meta_tags[] = sprintf( '<link rel="apple-touch-icon" href="%s" />', esc_url( $icon_180 ) );
+    if ( $icon_180 ) {
+        $meta_tags[] = sprintf( '<link rel="apple-touch-icon" href="%s" />', esc_url( $icon_180 ) );
     }
     return $meta_tags;
 }
@@ -879,35 +879,35 @@ function apip_add_apple_touch_icon($meta_tags){
 function apip_slug($strTitle) {
     $PSL = get_option( 'slug_length', 100 );
 
-	$origStrTitle = $strTitle;
+    $origStrTitle = $strTitle;
     $containsChinese = false;
     $strRet = "";
     
     if ( get_bloginfo( 'charset' ) !="UTF-8" ) {
-		$strTitle = iconv( get_bloginfo( "charset" ), "UTF-8", $strTitle );
+        $strTitle = iconv( get_bloginfo( "charset" ), "UTF-8", $strTitle );
     }
     
     if ( $PSL>0 ) {
-		$strTitle=substr( $strTitle, 0, $PSL );
+        $strTitle=substr( $strTitle, 0, $PSL );
     }
     for ( $i = 0; $i < strlen( $strTitle ); $i++ ) {
-		$byte1st = ord( substr( $strTitle, $i, 1 ) );
-		if ( $byte1st >= 224 && $byte1st <= 239 ) {
+        $byte1st = ord( substr( $strTitle, $i, 1 ) );
+        if ( $byte1st >= 224 && $byte1st <= 239 ) {
             $containsChinese = true;
             $aChinese = sprintf("%02x%02x%02x-", ord(substr( $strTitle, $i, 1 )), ord(substr( $strTitle, $i+1, 1 )), ord(substr( $strTitle, $i+2, 1 )));
             $i += 2;
             $strRet .= $aChinese;
-		} else {
-			$strRet .= preg_replace( '/[^A-Za-z0-9\-]/', '$0', chr( $byte1st ) );
-		}
-	}
+        } else {
+            $strRet .= preg_replace( '/[^A-Za-z0-9\-]/', '$0', chr( $byte1st ) );
+        }
+    }
 
-	if (! $containsChinese ) { 
-		$strRet = $origStrTitle;
+    if (! $containsChinese ) { 
+        $strRet = $origStrTitle;
     }
     $strRet = rtrim($strRet, "-");
 
-	return $strRet;
+    return $strRet;
 }
 
 //0.19 给短代码擦屁股
@@ -1684,7 +1684,7 @@ function apip_archive_page() {
  */
 function apip_footer_actions()
 {
-	/*
+    /*
     global $apip_options ;
     //9.1
     if ( (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') )
@@ -2250,7 +2250,7 @@ function apip_get_dou_content( $id, $type )  {
     $cache = apip_slim_dou_cache($cache, $type);
     set_transient($cache_key, $cache, 60*60*24*30*6);
 
-	return $cache;
+    return $cache;
 }
 
 /**
@@ -3297,6 +3297,9 @@ function apip_content_implode($abs_array){
         }
         if (is_array($value)) {
             if (count($value) > 1) {
+                if (count($value) > 8) {
+                    $value = array_slice($value, 0, 8);
+                }
                 $v1 = implode(",",$value);
             } else{
                 $v1 = $value[0];
