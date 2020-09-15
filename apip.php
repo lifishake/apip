@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.4
+ * Version:     1.32.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -779,8 +779,9 @@ function apip_quicktags()
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
         QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
-        QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavmusic', '收藏音乐', '[myfv id="x" type="music" title="', '" img="x" link="" score="99" abs="出版年份:;出版公司:;表演者:;doulink:;douscore:;" series="0"/]', 'p' );
+        QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
+        QTags.addButton( 'eg_myfavauto', '收藏自动', '[myfv id="x" type="auto" img="x" link="', '" score="99" /]', 'p' );
     </script>
 <?php
 }
@@ -3066,6 +3067,40 @@ function apip_load_myfv_img($id, $series=0) {
     }
 }
 
+function trim_fetched_item($value) {
+    $value = trim($value);
+    $value = str_replace(array("[", "]", "&nbsp;", ""),array("【", "】", "", "N/A"), $value);
+    return $value;
+}
+
+function apip_fetch_douban_people_str ($from_str, $to_str, $base_str) {
+    $pos_start = strpos($base_str, $from_str);
+    $pos_end = strpos($base_str, $to_str, $pos_start);
+    if ( $pos_start>0 && $pos_end > $pos_start) {
+        $people_str = substr($base_str, $pos_start, ($pos_end - $pos_start) + strlen($to_str) );
+        preg_match_all( '/(?<=>).*?(?=<\/a>)/', $people_str, $matches);
+        if (is_array($matches) && count($matches)>0 && is_array($matches[0]) ) {
+            return apip_items_implode($matches[0]);
+        }
+    }
+    return "";
+}
+
+/** */
+function apip_fetch_title_from_douban_header($url) {
+    $response = @wp_remote_get(htmlspecialchars_decode($url));
+    if ( is_wp_error( $response ) || !is_array($response) ) {
+        return "";
+    }
+    preg_match('/(?<=<title>[\s\S]).[\s\S]*?(?=[\s\S]<\/title>)/', wp_remote_retrieve_header($response), $matches);
+    if (!is_array($matches)||count($matches)<1) {
+        return "";
+    }
+    $ret = trim($matches[0]);
+    $ret = str_replace("(豆瓣)", "", $ret);
+    return trim($ret);
+}
+
 /**
  * 作用: 获得豆瓣数据
  * 来源: 自产
@@ -3073,8 +3108,8 @@ function apip_load_myfv_img($id, $series=0) {
  *       $series    [in]    是否为系列中的图片，0为否，非0为是
  * 返回值:  abs的字符串和分列形式
  */
-function apip_fetch_from_douban_page($url, $abs, $type) {
-    $ret = array('str'=> $abs, 'arr' => array());
+function apip_fetch_from_douban_page($url, $abs, $type, $wanttitle='0') {
+    $ret = array('str'=> $abs, 'arr' => array(), 'title' => "");
     $response = @wp_remote_get( 
         htmlspecialchars_decode($url), 
         array( 'timeout'  => 1000, ) 
@@ -3082,7 +3117,18 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
     if ( is_wp_error( $response ) || !is_array($response) ) {
         return $ret;
     }
-    preg_match_all('/(<div id="mainpic"[\s\S]+?<\/div>)|(<div id="info"[\s\S]+?<\/div>)|(<strong .+? property="v:average">.+?(<\/strong>|>))/',wp_remote_retrieve_body($response), $matches);
+    $body = wp_remote_retrieve_body($response);
+    if ('1' == $wanttitle) {
+        $start_pos = strpos($body, "<title>", 0);
+        $end_pos = strpos($body, "</title>", $end_pos);
+        $title_str = "";
+        if ( $start_pos>0 && $end_pos > $start_pos) {
+            $title_str = substr($body, $start_pos, ($end_pos - $start_pos)+strlen("</title>") );
+        }
+        $title = str_replace(array("(豆瓣)","<title>","</title>"), "", $title_str);
+        $ret['title'] = trim($title);
+    }
+    preg_match_all('/(<div id="mainpic"[\s\S]+?<\/div>)|(<div id="info"[\s\S]+?<\/div>)|(<strong .+? property="v:average">.+?(<\/strong>|>))/',$body, $matches);
     if (is_array($matches) && is_array($matches[0]) && count($matches[0])>=3) {
         $mainpic_div_str = $matches[0][0];
         $info_div_str = $matches[0][1];
@@ -3092,13 +3138,13 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
         //图
         preg_match('/(?<=img src=").*?(?=")/',$mainpic_div_str,$match_imgs);
         if (is_array($match_imgs)) {
-            $fetch['pic'] = $match_imgs[0];
+            $fetch['pic'] = trim($match_imgs[0]);
         }
 
         //分
         preg_match('/(?<= property="v:average"\>).*?(?=\<)/',$score_str, $match_score);
         if (is_array($match_score)) {
-            $fetch['average_score'] = $match_score[0];
+            $fetch['average_score'] = trim($match_score[0]);
         }
 
         if ("movie"=== $type) {
@@ -3113,21 +3159,44 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
         } elseif ("book"===$type) {
             $info_grep_keys = array(
                 array('pattern'=>'/(?<=\<span class="pl"\>出版社:\<\/span\>).*?(?=\<br\/\>)/', 'item'=>'publisher'),
+                array('pattern'=>'/(?<=\<span class="pl"\>出版年:\<\/span\>).*?(?=\<br\/\>)/', 'item'=>'pubdate'),
             );
+            /*<span>[\s\S]+?<span class="pl"> 作者</span>\:[\s\S]+?<\/span> */
+            /*<span>[\s\S]+?<span class="pl"> 译者</span>\:[\s\S]+?<\/span> */
+            $pos_start = strpos($info_div_str, '<span class="pl"> 作者</span>:');
+            $pos_end = strpos($info_div_str, '</span><br/>', $pos_start);
+            if ( $pos_start>0 && $pos_end > $pos_start) {
+                $author_str = substr($info_div_str, $pos_start, ($pos_end - $pos_start)+strlen('</span><br/>') );
+                unset($matches);
+                preg_match_all( '/(?<=>).*?(?=<\/a>)/', $author_str, $matches);
+                if (is_array($matches) && count($matches)>0 && is_array($matches[0]) ) {
+                    $fetch['author'] = apip_items_implode($matches[0]);
+                }
+            }
+            $pos_start = strpos($info_div_str, '<span class="pl"> 译者</span>:');
+            $pos_end = strpos($info_div_str, '</span><br/>', $pos_start);
+            if ( $pos_start>0 && $pos_end > $pos_start) {
+                $author_str = substr($info_div_str, $pos_start, ($pos_end - $pos_start)+strlen('</span><br/>') );
+                unset($matches);
+                preg_match_all( '/(?<=>).*?(?=<\/a>)/', $author_str, $matches);
+                if (is_array($matches) && count($matches)>0 && is_array($matches[0]) ) {
+                    $fetch['translator'] = apip_items_implode($matches[0]);
+                }
+            }
         } elseif ("music"===$type) {
-            
+            $info_grep_keys = array(
+                array('pattern'=>'/(?<=\<span class="pl"\>出版者:<\/span>).[\s\S]*?(?=\<br[\s\S]\/>)/', 'item'=>'publisher'),
+                array('pattern'=>'/(?<=\<span class="pl"\>发行时间:<\/span>).[\s\S]*?(?=\<br[\s\S]\/>)/', 'item'=>'release_date'),
+                array('pattern'=>'/(?<=\<span class="pl"\>流派:<\/span>).[\s\S]*?(?=\<br[\s\S]\/>)/', 'item'=>'genre'),
+            );
+            $fetch['artist'] = apip_fetch_douban_people_str('表演者:','</span>',$info_div_str);
         }
 
         foreach ($info_grep_keys as $grep) {
             unset($matches);
             preg_match_all( $grep['pattern'], $info_div_str, $matches);
             if (is_array($matches) && is_array($matches[0]) && count($matches[0])>=1) {
-                if(count($matches[0])>1) {
-                    $fetch[$grep['item']] = implode(',', $matches[0]);
-                }
-                else {
-                    $fetch[$grep['item']]  = $matches[0][0];
-                }
+                $fetch[$grep['item']] = apip_items_implode($matches[0]);
             }
         }
     }//preg_matches
@@ -3144,7 +3213,7 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
             array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
             array( 'itemf' => 'director', 'itemt' => '导演' ),
             array( 'itemf' => 'actor', 'itemt' => '演员' ),
-            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
+            array( 'itemf' => 'release_date', 'itemt' => '上映时间' ),
             array( 'itemf' => 'genre', 'itemt' => '类型' ),
         );
     } elseif ("book"===$type) {
@@ -3152,22 +3221,20 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
             array( 'itemf' => 'average_score', 'itemt' => 'douscore' ),
             array( 'itemf' => 'pic', 'itemt' => 'img' ),
             array( 'itemf' => 'link', 'itemt' => 'doulink' ),
-            array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
-            array( 'itemf' => 'director', 'itemt' => '导演' ),
-            array( 'itemf' => 'actor', 'itemt' => '演员' ),
-            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
-            array( 'itemf' => 'genre', 'itemt' => '类型' ),
+            array( 'itemf' => 'author', 'itemt' => '作者' ),
+            array( 'itemf' => 'translator', 'itemt' => '译者' ),
+            array( 'itemf' => 'pubdate', 'itemt' => '出版时间' ),
+            array( 'itemf' => 'publisher', 'itemt' => '出版社' ),
         );
     } elseif ("music"===$type) {
         $ci = array(
             array( 'itemf' => 'average_score', 'itemt' => 'douscore' ),
             array( 'itemf' => 'pic', 'itemt' => 'img' ),
             array( 'itemf' => 'link', 'itemt' => 'doulink' ),
-            array( 'itemf' => 'imdblink', 'itemt' => 'imdblink' ),
-            array( 'itemf' => 'director', 'itemt' => '导演' ),
-            array( 'itemf' => 'actor', 'itemt' => '演员' ),
-            array( 'itemf' => 'release_date', 'itemt' => '年份' ),
-            array( 'itemf' => 'genre', 'itemt' => '类型' ),
+            array( 'itemf' => 'artist', 'itemt' => '表演者' ),
+            array( 'itemf' => 'publisher', 'itemt' => '出版者' ),
+            array( 'itemf' => 'release_date', 'itemt' => '发行时间' ),
+            array( 'itemf' => 'genre', 'itemt' => '流派' ),
         );
     }
     foreach ($ci as $i) {
@@ -3175,8 +3242,9 @@ function apip_fetch_from_douban_page($url, $abs, $type) {
             $abs_a[$i['itemt']] = $fetch[$i['itemf']];
         }
     }
-    $ret['str'] = apip_content_implode($abs_a);
     $ret['arr'] = $abs_a;
+    unset($abs_a['img']);
+    $ret['str'] = apip_content_implode($abs_a);
     return $ret;
 }
 
@@ -3223,18 +3291,136 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
         }
         foreach ($matches[0] as $hit) {
             /*id type title img link score abs*/
-            preg_match_all('/(?<=id=").*?(?=")|(?<=type=").*?(?=")|(?<=title=").*?(?=")|(?<=img=").*?(?=")|(?<=link=").*?(?=")|(?<=score=").*?(?=")|(?<=abs=").*?(?=")|(?<=series=").*?(?=")/s', $hit, $keys);
-            $id = $keys[0][0];
+            unset($keys);
+            unset($id);
+            unset($title);
+            unset($type);
+            unset($img);
+            unset($link);
+            unset($score);
+            unset($abs);
+            unset($series);
+            unset($nipple);
+            unset($hasauto);
+
+            //id
+            preg_match('/(?<=id=").*?(?=")/', $hit, $keys);
+            if(!is_array($keys) || count($keys) == 0 || trim($keys[0])== "") {
+                continue;
+            }
+            $id = trim($keys[0]);
             if ("x"!==$id) {
                 continue;
             }
-            $type = $keys[0][1];
-            $title = $keys[0][2];
-            $img = $keys[0][3];
-            $link = $keys[0][4];
-            $score =$keys[0][5];
-            $abs = $keys[0][6];
-            $series = $keys[0][7];
+
+            //type
+            unset($keys);
+            preg_match('/(?<=type=").*?(?=")/', $hit, $keys);
+            if(!is_array($keys) || count($keys) == 0 || trim($keys[0])== "") {
+                continue;
+            }
+            $type = trim($keys[0]);
+            if ("movie"!==$type && "book"!==$type && "music"!==$type && "game"!==$type && "auto"!==$type) {
+                continue;
+            }
+
+            //link
+            unset($keys);
+            preg_match('/(?<=link=").*?(?=")/', $hit, $keys);
+            if(!is_array($keys) || count($keys) == 0 || trim($keys[0])== "") {
+                continue;
+            }
+            $link = trim($keys[0]);
+
+            //abs
+            if (!isset($abs)) {
+                unset($keys);
+                preg_match('/(?<=abs=").*?(?=")/', $hit, $keys);
+                if(is_array($keys) && count($keys) > 0 ) {
+                    $abs = trim($keys[0]);
+                }else {
+                    $abs="";
+                }
+            }
+
+            //nipple
+            unset($keys);
+            preg_match('/(?<=nipple=").*?(?=")/', $hit, $keys);
+            if(is_array($keys) && count($keys) > 0 ) {
+                $nipple = trim($keys[0]);
+            }
+            else {
+                $nipple = "";
+            }
+            if ("yes" !== $nipple) {
+                $nipple = "";
+            }
+
+            if ("auto" == $type) {
+                unset($keys);
+                if ($link !== "") {
+                    if (strpos($link, "movie.douban.com")) {
+                        $type = "movie";
+                    } elseif (strpos($link, "book.douban.com")) {
+                        $type = "book";
+                    } elseif (strpos($link, "music.douban.com")) {
+                        $type = "music";
+                    }
+                    if (isset($type)) {
+                        $ret = apip_fetch_from_douban_page($link, $abs, $type, '1');
+                        $title = $ret['title'];
+                        $abs_a = $ret['arr'];
+                        if (array_key_exists('img', $ret['arr']) && $ret['arr']['img']!="") {
+                            $img = $ret['arr']['img'];
+                        }
+                        $abs = $ret['str'];
+                        if ("yes" == $nipple) {
+                            $abs .= "nipple:yes;";
+                        }
+                    }
+                }
+                $hasauto=1;
+            }
+
+            //title
+            if (!isset($title)) {
+                unset($keys);
+                preg_match('/(?<=title=").*?(?=")/', $hit, $keys);
+                if(is_array($keys) && count($keys) > 0 ) {
+                    $title = trim($keys[0]);
+                }
+            }
+
+            //img
+            if (!isset($img)) {
+                unset($keys);
+                preg_match('/(?<=img=").*?(?=")/', $hit, $keys);
+                if(is_array($keys) && count($keys) > 0 ) {
+                    $img = trim($keys[0]);
+                }
+            }
+
+            //score
+            if (!isset($score)) {
+                unset($keys);
+                preg_match('/(?<=score=").*?(?=")/', $hit, $keys);
+                if(is_array($keys) && count($keys) > 0 ) {
+                    $score = trim($keys[0]);
+                }
+            }
+
+            //series
+            if (!isset($series)) {
+                unset($keys);
+                preg_match('/(?<=series=").*?(?=")/', $hit, $keys);
+                if(is_array($keys) && count($keys) > 0 ) {
+                    $series = trim($keys[0]);
+                }
+                else {
+                    $series = "0";
+                }
+            }
+
             $width = 100;
             $height = 150;
             if ("movie" === $type) {
@@ -3253,13 +3439,16 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
             } else {
                 continue;
             }
-            if ($link !== "" && strpos($link, "douban.com")) {
+            if ($link !== "" && strpos($link, "douban.com") && !isset($hasauto)) {
                 $ret = apip_fetch_from_douban_page($link, $abs, $type);
                 $abs_a = $ret['arr'];
                 if (array_key_exists('img', $abs_a) && $abs_a['img']!="") {
                     $img = $abs_a['img'];
                 }
                 $abs = $ret['str'];
+                if (isset($nipple) && "yes" == $nipple) {
+                    $abs .= 'nipple:yes;';
+                }
             }
             if ($img !== "") {
                 if (!apip_save_myfv_img($id, $img, $width, $height)) {
@@ -3269,6 +3458,8 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
                 //Must contain picture
                 continue;
             }
+            //找到的内容后面有个回车，直接替换会吃掉这个回车。
+            $hit = trim($hit);
             $fix_to = sprintf('[myfv id="%s" type="%s" title="%s" img="%s" link="%s" score="%s" abs="%s" series="%s" /]', $id, $type, $title, $img, $link, $score, $abs, $series);
             $my_content = str_replace($hit, $fix_to, $my_content);
         }
@@ -3282,6 +3473,25 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
             add_action( 'transition_post_status', 'apip_myfv_filter', 10, 3 );
             add_filter( 'the_content', 'apip_fix_shortcodes');
         }
+    }
+}
+
+function apip_items_implode($items) {
+    if (!is_array($items)) {
+        return $items;
+    }
+    $count = count($items);
+    if (0 == $count) {
+        return "";
+    }
+    if ($count > 8) {
+        $items = array_slice($items, 0, 8);
+    }
+    $items = array_map('trim_fetched_item', $items);
+    if (1 == $count) {
+        return $items[0];
+    } else {
+        return implode(",",$items);
     }
 }
 
