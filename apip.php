@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.6
+ * Version:     1.32.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -3439,6 +3439,8 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
             } else {
                 continue;
             }
+            /*
+            暂时注掉
             if ($link !== "" && strpos($link, "douban.com") && !isset($hasauto)) {
                 $ret = apip_fetch_from_douban_page($link, $abs, $type);
                 $abs_a = $ret['arr'];
@@ -3450,6 +3452,7 @@ function apip_myfv_filter( $new_status, $old_status, $post ) {
                     $abs .= 'nipple:yes;';
                 }
             }
+            */
             $need_img_download = true;
             if ($img !== "") {
                 $img = str_replace(".webp", ".jpg", $img);
