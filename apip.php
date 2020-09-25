@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.7
+ * Version:     1.32.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -3086,21 +3086,6 @@ function apip_fetch_douban_people_str ($from_str, $to_str, $base_str) {
     return "";
 }
 
-/** */
-function apip_fetch_title_from_douban_header($url) {
-    $response = @wp_remote_get(htmlspecialchars_decode($url));
-    if ( is_wp_error( $response ) || !is_array($response) ) {
-        return "";
-    }
-    preg_match('/(?<=<title>[\s\S]).[\s\S]*?(?=[\s\S]<\/title>)/', wp_remote_retrieve_header($response), $matches);
-    if (!is_array($matches)||count($matches)<1) {
-        return "";
-    }
-    $ret = trim($matches[0]);
-    $ret = str_replace("(豆瓣)", "", $ret);
-    return trim($ret);
-}
-
 /**
  * 作用: 获得豆瓣数据
  * 来源: 自产
@@ -3164,6 +3149,9 @@ function apip_fetch_from_douban_page($url, $abs, $type, $wanttitle='0') {
             /*<span>[\s\S]+?<span class="pl"> 作者</span>\:[\s\S]+?<\/span> */
             /*<span>[\s\S]+?<span class="pl"> 译者</span>\:[\s\S]+?<\/span> */
             $pos_start = strpos($info_div_str, '<span class="pl"> 作者</span>:');
+            if ($pos_start <=0) {
+                $pos_start = strpos($info_div_str, '<span class="pl">作者</span>:');
+            }
             $pos_end = strpos($info_div_str, '</span><br/>', $pos_start);
             if ( $pos_start>0 && $pos_end > $pos_start) {
                 $author_str = substr($info_div_str, $pos_start, ($pos_end - $pos_start)+strlen('</span><br/>') );
@@ -3174,6 +3162,9 @@ function apip_fetch_from_douban_page($url, $abs, $type, $wanttitle='0') {
                 }
             }
             $pos_start = strpos($info_div_str, '<span class="pl"> 译者</span>:');
+            if ($pos_start <=0) {
+                $pos_start = strpos($info_div_str, '<span class="pl">译者</span>:');
+            }
             $pos_end = strpos($info_div_str, '</span><br/>', $pos_start);
             if ( $pos_start>0 && $pos_end > $pos_start) {
                 $author_str = substr($info_div_str, $pos_start, ($pos_end - $pos_start)+strlen('</span><br/>') );
