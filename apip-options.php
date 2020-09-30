@@ -308,12 +308,8 @@ function apip_heavy_tools_render()
   <input type='checkbox' name='apip_settings[range_jump_enable]' <?php checked( $options['range_jump_enable'], 1 ); ?> value='1'><br />
   <span>    开启邮件回复(js)：</span>
   <input type='checkbox' name='apip_settings[notify_comment_reply]' <?php checked( $options['notify_comment_reply'], 1 ); ?> value='1'/><br />
-  <span>    豆瓣条目（css+js）<i>CODE:mydouban</i>：</span>
-  <input type='checkbox' name='apip_settings[apip_douban_enable]' <?php checked( $options['apip_douban_enable'], 1 ); ?> value='1'><br />
   <span>    omdb API KEY<i>CODE:myimdb</i>：</span>
   <input type='text' name='apip_settings[omdb_key]' size='64' value='<?php echo $options['omdb_key']; ?>'/><br />
-  <span>    douban API KEY<i>CODE:doubankey</i>：</span>
-  <input type='text' name='apip_settings[douban_key]' size='64' value='<?php echo $options['douban_key']; ?>'/><br />
   <span>    gaintbomb API KEY<i>CODE:mygame</i>：</span>
   <input type='text' name='apip_settings[gaintbomb_key]' size='64' value='<?php echo $options['gaintbomb_key']; ?>'/><br />
   <span>    和风天气 API KEY：</span>
