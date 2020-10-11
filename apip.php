@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.32.9
+ * Version:     1.33.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2034,6 +2034,41 @@ function apip_imbd_detail($atts, $content = null){
     $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
     return $out;
 
+}
+
+/**
+* 作用: 把豆瓣返回array的内容变成字符串
+* 参数: data        array   数据源
+*       key         string  查找的array key
+*       key_name    string  如果找到的内容有子项目,要返回的子项目的关键字
+*       unknown_str string  遇到未知项转换的内容
+*/
+function apip_convert_dou_array_to_string($data, $key, $name_key="name", $unknown_str="未知") {
+    $ret = '';
+    if (array_key_exists($key, $data) && is_array($data[$key])) {
+        $subs = $data[$key];
+        if ( count($subs)>1 ) {
+            if ( is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
+                $items = wp_list_pluck($subs, $name_key);
+                $ret .= implode('/ ', $items);
+            } else {
+                $ret .= implode('/ ', $subs);
+            }
+        } else if (!empty($subs)) {
+            if (is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
+                $ret .= $subs[0][$name_key];
+            } else {
+                $ret .= $subs[0];
+            }
+        } else {
+            $ret .= $unknown_str;
+        }
+    } elseif (array_key_exists($key, $data)) {
+        $ret .= $data[$key];
+    } else {
+        $ret .= $unknown_str;
+    }
+    return $ret;
 }
 
 //8.6游戏资料
