@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.0
+ * Version:     1.33.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1732,6 +1732,9 @@ function so_handle_038($content) {
  */
 function apip_lazyload_filter( $content )
 {
+    if (is_feed()) {
+        return $content;
+    }
     $content = mb_convert_encoding($content, 'HTML-ENTITIES', "UTF-8");
     $dom = new DOMDocument();
     @$dom->loadHTML($content);
