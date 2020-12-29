@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.1
+ * Version:     1.33.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -16,8 +16,6 @@ define('APIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define('APIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ) ;
 define('APIP_GALLERY_URL',home_url('/',is_ssl()?'https':'http').'wp-content/gallery/');
 define('APIP_GALLERY_DIR', ABSPATH.'wp-content/gallery/');
-global $apip_options;
-
 register_activation_hook( __FILE__, 'apip_plugin_activation' );
 register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
@@ -337,6 +335,11 @@ function apip_init()
     //add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
     add_action( 'transition_post_status', 'apip_myfv_filter', 10, 3 );
 
+    //8.12 我的引文
+    add_shortcode('mysup', 'apip_sup_detail');
+    add_filter( 'the_content', 'apip_make_sup_anchors', 101);
+    add_filter( 'the_content_feed', 'apip_make_sup_anchors', 101);
+
     /** 09  */
     //9.1 后台taglist增加private和draft计数列
     if(is_admin()) {
@@ -565,6 +568,10 @@ function apip_scripts()
         wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css' );
     }
 
+    if (is_singular()) {
+        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20201208", true);
+    }
+
     //0.1 Ctrl+Enter 提交
     //if (is_singular() && comments_open() ) {
         //wp_enqueue_script('apip-comment-form', APIP_PLUGIN_URL . 'js/apip-comment-form.js', array(), "20200417", true);
@@ -767,13 +774,14 @@ function apip_quicktags()
 ?>
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_myimdb', 'imdb', '[myimdb id="', '" cname="" nipple="no" /]', 'p' );
+        QTags.addButton( 'eg_myimdb', 'imdb', '[myimdb id="', '" cname="" score="99" nipple="no" /]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
         QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
         QTags.addButton( 'eg_myfavmusic', '收藏音乐', '[myfv id="x" type="music" title="', '" img="x" link="" score="99" abs="出版年份:;出版公司:;表演者:;doulink:;douscore:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavauto', '收藏自动', '[myfv id="x" type="auto" img="x" link="', '" score="99" /]', 'p' );
+        QTags.addButton( 'eg_mysup', '引文', '[mysup sup_content="', '" /]', 'p' );
     </script>
 <?php
 }
@@ -2014,7 +2022,7 @@ function apip_imbd_detail($atts, $content = null){
     $str_rnum="";
     $abstract_str="";//4
     
-    if ( $score !== '' ) {
+    if ( $score !== '' && $score !="99" ) {
         $subject_class .= " my-score-".$score;
         $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $content["imdbRating"]);
         $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
@@ -3254,6 +3262,42 @@ function apip_myfv_detail($atts, $content = null){
     }
     return $out;
 
+}
+
+//8.12
+/**
+* 作用: 分拣出引文标志，并且最终表示出来
+* 来源: 自创
+*/
+function apip_sup_detail($atts, $content = null){
+    global $g_mysups;
+    extract( $atts );
+    if (!isset($sup_content) || $sup_content === "") {
+        return;
+    }
+    if (!isset($g_mysups) || count($g_mysups) == 0) {
+        //第一条
+        $g_mysups = array();
+    }
+    $str_num = strval(count($g_mysups)+1);
+    $g_mysups[$str_num] = $sup_content;
+    $output = sprintf('<sup class="content-sup"><a href="#inner_anchor_%s" name="inner_ref_%s">[%s]</a></sup>', $str_num, $str_num, $str_num);
+    return $output;
+}
+
+function apip_make_sup_anchors($content) {
+    global $g_mysups;
+    if (!isset($g_mysups) || count($g_mysups) == 0) {
+        return $content;
+    }
+    $output = '<hr class="apip_inner_anchors_begin" />';
+    $output .= '<div class="apip_inner_anchors"><ul>';
+    foreach ($g_mysups as $index => $anchor) {
+        $list = sprintf('<li><a name = "inner_anchor_%s" class="apip_anchor_link" href="#inner_ref_%s">(%s)</a>：%s</li>', $index, $index, $index, $anchor);
+        $output .= $list;
+    }
+    $output .= '</ul></div>';
+    return $content.$output;
 }
 
 /*                                          08终了                             */

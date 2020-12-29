@@ -567,3 +567,13 @@ span.achp-symbol {
     line-height: inherit;
     margin: 0 10px 0;
 }
+
+.content-sup{
+  padding-right: 0.25em;
+  transition: all 1.5s;
+}
+
+.ref-visited{
+  color:#b2b7b3;
+  transition: all 1.5s;
+}
