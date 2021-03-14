@@ -1,5 +1,11 @@
 <?php
 
+//Class lunar
+/*
+ * 作用: 计算农历相关 除夕判断为自行添加
+ * 来源: 忘了
+ * URL:
+*/
 class Lunar{
 	var $MIN_YEAR=1891;
 	var $MAX_YEAR=2100;
@@ -79,9 +85,11 @@ class Lunar{
     }
 
     function isChuxi($year, $month, $day){
-        if ($month != 12) {
+        $monthData=$this->getLunarMonths($year);
+        if ($month != count($monthData)) {
             return "";
         }
+
         $monthDays = $this->getLunarMonthDays($year, $month);
         if ($monthDays == $day) {
             return "除夕";
@@ -184,9 +192,94 @@ class Lunar{
 		return $res;
 	}
 }
+// class Lunar
 
+/*
+ * 作用: 取得1900-2100年间公历日期转为干支记日的结果
+ * 来源: 百度知道
+ * 参数: int    $year       公历年份
+ * 参数: int    $month      公历月份（1-12）
+ * 参数: int    $month      公历日期
+ * URL:
+ * 返回值：array()
+ *                  =>'num', 1-60 该干支在干支表中的序号。干支表：甲子(1)、乙丑(2)、丙寅(3)……癸亥(60)
+ *                  =>'gan', 该日天干中文文字
+ *                  =>'zhi', 该日地支中文文字
+ *                  =>'day', 干支中文名
+*/
+function get_ganzhi($year, $month, $day) {
+    $ret = array();
+    $term_gan = array("甲","乙","丙","丁","戊","己","庚","辛","壬","癸");
+    $term_zhi = array("子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥");
+    $um = (141-$month*11)%12+3;//(MOD(9-$AC3*11,12)+3)
+    $bc = ($year - floor($um/13)) %100;
+    $r = floor($bc/4)*6 + 
+        5*(floor($bc/4)*3 + $bc%4) + 
+        30*($month%2+1) + 
+        floor(($um*3-7)/5)+$day + 
+        44*floor(($year - floor($um/13)) /100) + 
+        floor(floor(($year - floor($um/13)) /100)/4)+9;
+    $ret['num'] = $r % 60 +1;
+    $ret['gan'] = $term_gan[($r - 1) % 10];
+    $ret['zhi'] = $term_zhi[($r - 1) % 12];
+    $ret['day'] = $ret['gan'].$ret['zhi'];
+    return $ret;
+}
 
+/*
+ * 作用: 判断是否是【某月第几个星期几】方法构成的节日
+ * 来源: 自产
+ * 参数: int    $month      公历月份（1-12）
+ * 参数: int    $month      公历日期
+ * 参数: int    $w          星期几（星期天0，星期一1...星期六6）
+ * 返回值：string 节日名或者空字符串
+*/
+function is_cristian_festivel($month, $day, $w) {
+    $chistian_festivals=array(
+        "5_2_0"=>"母亲节",
+        "6_3_0"=>"父亲节",
+        "7_3_1"=>"海之日",
+        "11_4_4"=>"感恩节",
+    );
+    $count = 0;
+    $d = $day;
+    while($d >=0 ) {
+        $count++;
+        $d -=7;
+    }
+    $ret = "";
+    $chistian_str = sprintf("%d_%d_%d", $month, $count, $w);
+    if (array_key_exists($chistian_str, $chistian_festivals)) {
+        $ret = $chistian_festivals[$chistian_str];
+    }
+    return $ret;
+}
 
+/*
+ * 作用: 判断是否是仲夏节（6/19至25之间的星期五（瑞典））
+ * 来源: 自产
+ * 参数: int    $month      公历月份（1-12）
+ * 参数: int    $month      公历日期
+ * 参数: int    $w          星期几（星期天0，星期一1...星期六6）
+ * 返回值：bool 
+*/
+function is_mid_summer_festivel($month, $day, $w) {
+    if($month != 6) {
+        return false;
+    }
+    if ($day <19 || $day >25) {
+        return false;
+    }
+    if ($w == 5) {
+        return true;
+    }
+    return false;
+}
+
+/*
+ * 作用: 在页面开始处显示debug信息
+ * 来源: 自产
+*/
 function apip_debug_page($val,$name)
 {
     if (is_array($val)) {
@@ -197,16 +290,141 @@ function apip_debug_page($val,$name)
     }
 }
 
+/*
+ * 作用: 根据节气编号取节气日期（1900-2100）
+ * 来源: https://www.csdn.net/tags/MtTaAg4sMzIwMTMtYmxvZwO0O0OO0O0O.html
+ * 参数: int    $year       公历年
+ * 参数: int    $no         节日序号，见下表
+        1  小寒     2  大寒     3  立春     4  雨水     5  惊蛰     6  春分
+        7  清明     8  谷雨     9  立夏     10 小满     11 芒种     12 夏至
+        13 小暑     14 大暑     15 立秋     16 处暑     17 白露     18 秋分
+        19 寒露     20 霜降     21 立冬     22 小雪     23 大雪     24 冬至
+ * 返回值:  int 该节气的公历日
+ */
+function get_term_day($year, $no)
+{
+    $solarTerms = [
+        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf97c3598082c95f8c965cc920f',
+        '97bd0b06bdb0722c965ce1cfcc920f', 'b027097bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f', '97bd0b06bdb0722c965ce1cfcc920f', 'b027097bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f', '97bd0b06bdb0722c965ce1cfcc920f',
+        'b027097bd097c36b0b6fc9274c91aa', '9778397bd19801ec9210c965cc920e', '97b6b97bd19801ec95f8c965cc920f',
+        '97bd09801d98082c95f8e1cfcc920f', '97bd097bd097c36b0b6fc9210c8dc2', '9778397bd197c36c9210c9274c91aa',
+        '97b6b97bd19801ec95f8c965cc920e', '97bd09801d98082c95f8e1cfcc920f', '97bd097bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec95f8c965cc920e', '97bcf97c3598082c95f8e1cfcc920f',
+        '97bd097bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c3598082c95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e', '97bcf97c3598082c95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f',
+        '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f', '97bd097bd07f595b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9210c8dc2', '9778397bd19801ec9210c9274c920e', '97b6b97bd19801ec95f8c965cc920f',
+        '97bd07f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c920e',
+        '97b6b97bd19801ec95f8c965cc920f', '97bd07f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bd07f1487f595b0b0bc920fb0722',
+        '7f0e397bd097c36b0b6fc9210c8dc2', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e', '97bcf7f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf7f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c9274c920e', '97bcf7f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c91aa', '97b6b97bd197c36c9210c9274c920e', '97bcf7f0e47f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c920e',
+        '97b6b7f0e47f531b0723b0b6fb0722', '7f0e37f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36b0b70c9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721', '7f0e37f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc9210c8dc2', '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0787b0721', '7f0e27f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c91aa', '97b6b7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9210c8dc2', '977837f0e37f149b0723b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f5307f595b0b0bc920fb0722', '7f0e397bd097c35b0b6fc9210c8dc2',
+        '977837f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e37f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc9210c8dc2', '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
+        '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
+        '977837f0e37f14998082b0723b06bd', '7f07e7f0e37f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f1487f595b0b0bb0b6fb0722', '7f0e37f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e37f1487f531b0b0bb0b6fb0722', '7f0e37f0e37f14898082b072297c35', '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e37f0e37f14898082b072297c35',
+        '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f149b0723b0787b0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14998082b0723b06bd',
+        '7f07e7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722', '7f0e37f0e366aa89801eb072297c35',
+        '7ec967f0e37f14998082b0723b06bd', '7f07e7f0e37f14998083b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14898082b0723b02d5', '7f07e7f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e36665b66aa89801e9808297c35', '665f67f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0722', '7f0e36665b66a449801e9808297c35',
+        '665f67f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e36665b66a449801e9808297c35', '665f67f0e37f14898082b072297c35', '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e26665b66a449801e9808297c35', '665f67f0e37f1489801eb072297c35',
+        '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
+    ];
+    if ($year < 1900 || $year > 2100) {
+        return -1;
+    }
+    if ($no < 1 || $no > 24) {
+        return -1;
+    }
+    $solarTermsOfYear = array_map('hexdec', str_split($solarTerms[$year - 1900], 5));
+    $positions = [
+        0 => [0, 1],
+        1 => [1, 2],
+        2 => [3, 1],
+        3 => [4, 2],
+    ];
+    $group = intval(($no - 1) / 4);
+    list($offset, $length) = $positions[($no - 1) % 4];
+    return substr($solarTermsOfYear[$group], $offset, $length);
+}
+
+/*
+ * 作用: 判断是否是节气
+ * 参数: int    $year       公历年份
+ * 参数: int    $month      公历月份（1-12）
+ * 参数: int    $month      公历日期
+ * 返回值:  string 节气名或空字符串
+ */
+function is_jieqi($year, $month, $day){
+    $cnt = ($month - 1)*2 + 1;
+    $cnt1 = ($month - 1)*2 + 2;
+    $idx = -1;
+    $solar_terms=["小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","立夏","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"];
+    if ($day == get_term_day($year, $cnt)) {
+        $idx = $cnt -1;
+    }
+    else if ($day == get_term_day($year, $cnt1)) {
+        $idx = $cnt1 -1;
+    }
+    if($idx<0||$idx>23) {
+        return "";
+    }
+    return $solar_terms[$idx];
+}
+
 /**
  * 作用: 显示节日文字。
- * 来源: http://www.phpernote.com/php-function/867.html
- * URL:
+ * 来源: 自产
+ * 参数: int    $post_id        post号。非0时取post号，0使用get_the_ID()
  */
 function apip_festival($post_id=0) {
     $chinese_festivals=array(
         "正月初一"=>"春节",
-        "正月十三"=>"海神娘娘生日",
+        "正月十三"=>"海神生日",
         "正月十五"=>"元宵节",
+        "二月初二"=>"龙抬头",
         "三月初三"=>"歌节",
         "四月初八"=>"浴佛节",
         "五月初五"=>"端午节",
@@ -220,40 +438,55 @@ function apip_festival($post_id=0) {
     $solar_festivals=array(
         "02/14"=>"圣瓦伦丁日",
         "04/01"=>"愚人节",
-        "04/05"=>"清明",
         "04/30"=>"魔女之夜",
         "11/26"=>"破袜子日",
         "12/06"=>"圣尼可拉斯节",
         "12/22"=>"冬至",
-        "12/24"=>"耶诞节",
+        "12/24"=>"耶诞节前夜",
+        "12/25"=>"耶诞节",
     );
-    $chistian_festivals=array(
-        "5_2_7"=>"母亲节",
-        "6_3_7"=>"父亲节",
-        "7_3_1"=>"海之日",
+    $disp_solar_terms=array(
+        "清明"=>"清明节",
+        "立春"=>"立春",
+        "立秋"=>"立秋",
+        "冬至"=>"冬至",
     );
-    //仲夏夜 6/19至25之间的星期五
 
-    $ret = '';
     if ( 0 == $post_id) {
         $year = get_post_time('Y',false,get_the_ID());
         $month = get_post_time('m',false,get_the_ID());
         $day = get_post_time('j',false,get_the_ID());
+        $weekday = get_post_time('w',false,get_the_ID());
     }
     else {
         $year = get_post_time('Y',false,$post_id);
         $month = get_post_time('m',false,$post_id);
         $day = get_post_time('j',false,$post_id);
+        $weekday = get_post_time('w',false,$post_id);
     }
+    $ret = "";
     $lunar=new Lunar();
     $lunar_day = $lunar->convertSolarToLunar($year,$month,$day);
+
+    //特殊节日
+    //除夕 因为重要最先判断
+    $tmp = $lunar->isChuxi($lunar_day[0],$lunar_day[2],$lunar_day[3]);
+    if ($tmp !== "") {
+        if ($ret !== "") {
+            $ret .= " / ";
+        }
+        $ret .= $tmp;
+    }
+
+    //农历节日
     if (array_key_exists($lunar_day[1], $chinese_festivals)) {
+        if ($ret !== "") {
+            $ret .=" / ";
+        }
         $ret .= $chinese_festivals[$lunar_day[1]];
     }
-    $ret .= $lunar->isChuxi($lunar_day[0],$lunar_day[2],$lunar_day[3]);
-    if ($ret !== "") {
-        $ret = " / ".$ret;
-    }
+
+    //公历节日
     $solar = $month."/".$day;
     if (array_key_exists($solar, $solar_festivals)) {
         if ($ret !== "") {
@@ -261,6 +494,81 @@ function apip_festival($post_id=0) {
         }
         $ret .= $solar_festivals[$solar];
     }
+
+    //节日节气
+    $tmp = is_jieqi($year,$month,$day);
+    if ($tmp !== "") {
+        if (array_key_exists($tmp, $disp_solar_terms)) {
+            if ($ret !== "") {
+                $ret .=" / ";
+            }
+            $ret .= $disp_solar_terms[$tmp];
+        }
+    }
+
+    //星期有关的节日
+    $tmp = is_cristian_festivel($month, $day, $weekday);
+    if ($tmp !== "") {
+        if ($ret !== "") {
+            $ret .= " / ";
+        }
+        $ret .= $tmp;
+    }
+
+    //特殊判断方法的节日
+    //仲夏夜
+    if (is_mid_summer_festivel($month, $day, $weekday)) {
+        if ($ret !== "") {
+            $ret .=" / ";
+        }
+        $ret .="仲夏夜";
+    }
+
+    //复活节
+    if ( 3==$month+0 || 4==$month+0 && 0 == $weekday ) {
+        $eastern = easter_date($year);
+        //easter_date取的是零点时间戳，此时转换出来的$day是12点以前的，所以要+1
+        if ($day+0 == 1) {
+            $estr = "03-31";
+        } else {
+            $estr = sprintf("%02d-%02d",$month+0, $day - 1);
+        }
+        
+        if (date("m-d", $eastern) == $estr) {
+            if ($ret !== "") {
+                $ret .=" / ";
+            }
+            $ret .="复活节";
+        }
+    }
+
+    //入伏 夏至后的第三个庚日，如果夏至本身是庚日，那就往后记20天。
+    if (7 == $month && $day > 10) {
+        $xiazhi_day = get_term_day($year, 12);
+        $xiazhiganzhi = get_ganzhi($year, 6, $xiazhi_day);
+        $xiazhigan = ($xiazhiganzhi['num'] - 1) % 10;
+        if ($xiazhigan == 7) {
+            //夏至为庚日
+            $delta = 0;
+        }
+        else if ($xiazhigan<7) {
+            //夏至在庚日前
+            $delta = 7 - $xiazhigan;
+        }
+        else {
+            //夏至在庚日后
+            $delta = 10 - ($xiazhigan - 7);
+        }
+        $tgt_day = $xiazhi_day + $delta + 20 - 30;//一定在阳历7月，所以要减去30号。
+        if ($tgt_day == $day) {
+            if ($ret !== "") {
+                $ret .=" / ";
+            }
+            $ret .="入伏";
+        }
+    }
+
+
     if ($ret) {
         $ret = '<span class="festival">'.$ret."</span>";
     }
@@ -931,6 +1239,7 @@ function apip_disable_embeds_flush_rewrite_rules() {
 	remove_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
 	flush_rewrite_rules();
 }
+
 
 function apip_media_upload_nextgen() {
 
