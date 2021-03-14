@@ -525,6 +525,7 @@ function apip_festival($post_id=0) {
     }
 
     //复活节
+    /*
     if ( 3==$month+0 || 4==$month+0 && 0 == $weekday ) {
         $eastern = easter_date($year);
         //easter_date取的是零点时间戳，此时转换出来的$day是12点以前的，所以要+1
@@ -541,7 +542,7 @@ function apip_festival($post_id=0) {
             $ret .="复活节";
         }
     }
-
+*/
     //入伏 夏至后的第三个庚日，如果夏至本身是庚日，那就往后记20天。
     if (7 == $month && $day > 10) {
         $xiazhi_day = get_term_day($year, 12);
