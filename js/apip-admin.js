@@ -66,7 +66,7 @@ jQuery(document).ready(function($) {
 			type: 'GET',
             data: data,
             cache: false,
-            timeout: 10000,
+            timeout: 30000,
             beforeSend: function () {
 				mybar.value="获取中...";
 			},

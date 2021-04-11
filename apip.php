@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.5
+ * Version:     1.33.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -243,6 +243,18 @@ function apip_init()
     /** 04 */
     //4.1 头像替换
     add_filter('get_avatar','apip_get_cavatar');
+    if (apip_option_check('local_gravatar')) {
+        //如果选择保存到本地
+        add_action( 'draft_to_publish','apip_delete_local_gravatars',99,1);
+        add_action( 'new_to_publish','apip_delete_local_gravatars',99,1);
+        add_filter( 'cron_schedules', 'apip_add_schdule' );
+        if(!wp_get_schedule( 'apip_delete_local_gravatars' ) ) {
+            wp_schedule_event( current_time( 'timestamp' ), '10Days', 'apip_delete_local_gravatars' );
+        }
+    }
+    else {
+        wp_clear_scheduled_hook( 'apip_delete_local_gravatars' );
+    }
     //4.2 表情链接替换
     add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
 
@@ -1270,9 +1282,8 @@ function apip_get_cavatar($source) {
     $abs = APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
     $dest = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1];
     $default =  APIP_GALLERY_URL.'gravatar_cache/default.png';
-    $cache_key = 'gravatar_local_'.$tmp[1];
 
-    if (!is_file($abs)||1 != get_transient( $cache_key )){
+    if (!is_file($abs)){
         //$src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
         //$src = $g;
         $response = @wp_remote_get( 
@@ -1286,11 +1297,43 @@ function apip_get_cavatar($source) {
         if (is_wp_error($response)) {
             return '<img alt="" src="'.$default.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
         }
-        delete_transient( $cache_key );
-        set_transient($cache_key, 1, 60*60*24*91);
     }
     return '<img alt="" src="'.$dest.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
 }
+
+//4.1 保存到本地时建立计划任务时间
+function apip_add_schdule( $schedules ) {
+    $schedules['10Days'] = array(
+        'interval' => 864000,   //3600*24*10
+        'display' => '10 days'
+    );
+    $schedules['5min'] = array(
+        'interval' => 120,  
+        'display' => '5mins'
+    );
+    return $schedules;
+}
+
+//4.1 清理超期的gravatar头像
+//参照:php遍历路径下的文件 https://blog.csdn.net/u012732259/article/details/41645569
+function apip_delete_local_gravatars($post) {
+    //其实跟post没什么关系
+    $catch_dir =APIP_GALLERY_DIR . 'gravatar_cache/';
+    $dirarr1 = glob($catch_dir.'*');
+    $dirarr2 = glob($catch_dir.'*.jpg');
+    $files = array_merge($dirarr1, $dirarr2);
+    foreach($files as $f){
+        if (!is_file($f)) {
+            unlink($f);
+        } else {
+            if (time()-filemtime($f) > 3600 * 24 * 91) {
+                //删除91天以上的缓存头像
+                unlink($f);
+            }
+        }
+    }
+}
+
 //4.2
 /**
  * 作用: 替换emoji服务器地址
@@ -1556,7 +1599,7 @@ function apip_build_cat_html( $cat, $is_child = 0 ) {
         }
         $post_html .= '</ul>';
     }
-    $html .= sprintf("<li class = \"achp-parent %s \"><a class=\"achp-sig\" href=\"#\" title=\"%s\"><span class=\"achp-symbol suffix \">[+]</span></a><a href=\"%s\" title=\"%s\">%s<span class=\"achp_count\">(%s)</span></a>%s%s</li>",
+    $html = sprintf("<li class = \"achp-parent %s \"><a class=\"achp-sig\" href=\"#\" title=\"%s\"><span class=\"achp-symbol suffix \">[+]</span></a><a href=\"%s\" title=\"%s\">%s<span class=\"achp_count\">(%s)</span></a>%s%s</li>",
                     $is_child ? 'apip-no-disp' : '',
                     $cat->cat_name,
                     get_category_link($cat->term_id),
@@ -2298,6 +2341,7 @@ function apip_save_heweather ( $post )
     $addr = "https://free-api.heweather.com/s6/weather/now?key=".$token."&location=CN101070209";
     $args = array(
         'sslverify' => false,
+        'timeout' => 20,
         'headers' => array(
           'Content-Type' => 'application/json;charset=UTF-8',
           'Accept' => 'application/json',
@@ -2692,7 +2736,7 @@ function apip_fetch_from_douban_page($url, $abs, $type, $wanttitle='0') {
     $body = wp_remote_retrieve_body($response);
     if ('1' == $wanttitle) {
         $start_pos = strpos($body, "<title>", 0);
-        $end_pos = strpos($body, "</title>", $end_pos);
+        $end_pos = strpos($body, "</title>", $start_pos);
         $title_str = "";
         if ( $start_pos>0 && $end_pos > $start_pos) {
             $title_str = substr($body, $start_pos, ($end_pos - $start_pos)+strlen("</title>") );
