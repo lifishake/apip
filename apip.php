@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.6
+ * Version:     1.33.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -257,6 +257,7 @@ function apip_init()
     }
     //4.2 表情链接替换
     add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
+    add_filter( 'emoji_svg_url', 'apip_rep_emoji_url_svg', 99, 1);
 
     /** 05 */
     //5.1 广告关键字替换，抢在akimest前面
@@ -390,18 +391,44 @@ add_action('init', 'apip_init_actions', 999);
 function apip_init_actions()
 {   
     //0.A    移除没用的过滤项
-    remove_action('wp_head','feed_links_extra',3);
-    remove_action('wp_head','rsd_link' );
-    remove_action('wp_head','wlwmanifest_link' );
-    remove_action('wp_head','adjacent_posts_rel_link_wp_head',10,0);
-    remove_action('wp_head','wp_generator');
-    remove_filter('the_content','capital_P_dangit',11);
-    remove_filter('the_title','capital_P_dangit',11);
-    remove_filter('wp_title','capital_P_dangit',11);
-    remove_filter('comment_text','capital_P_dangit',31);
-    add_filter( 'use_default_gallery_style', '__return_false' );    //不使用默认gallery
-    add_filter('xmlrpc_enabled', '__return_false');     //不使用xmlrpc
-    add_filter( 'feed_links_show_comments_feed', '__return_false' ); //不输出comments的rss,4.4以上
+    remove_action('wp_head',                            'feed_links_extra',                 3           );
+    remove_action('wp_head',                            'rsd_link'                                      );
+    remove_action('wp_head',                            'wlwmanifest_link'                              );
+    remove_action('wp_head',                            'adjacent_posts_rel_link_wp_head',  10,     0   );
+    remove_action('wp_head',                            'wp_generator'                                  );
+    remove_action('wp_head',                            'rest_output_link_wp_head'                      );
+    remove_action('xmlrpc_rsd_apis',                    'rest_output_rsd'                               );
+    remove_action('template_redirect',                  'rest_output_link_header',          11,     0   );
+    remove_action('wp_head',                            'wp_oembed_add_discovery_links'                 );
+    remove_action('auth_cookie_malformed',              'rest_cookie_collect_status'                    );
+    remove_action('auth_cookie_expired',                'rest_cookie_collect_status'                    );
+    remove_action('auth_cookie_bad_username',           'rest_cookie_collect_status'                    );
+    remove_action('auth_cookie_bad_hash',               'rest_cookie_collect_status'                    );
+    remove_action('auth_cookie_valid',                  'rest_cookie_collect_status'                    );
+    remove_action('user_request_action_confirmed',      '_wp_privacy_account_request_confirmed'         );
+    remove_action('user_request_action_confirmed',      '_wp_privacy_send_request_confirmation_notification', 12);
+    remove_action('init',                               'wp_schedule_delete_old_privacy_export_files'   );
+    remove_action('wp_privacy_delete_old_export_files', 'wp_privacy_delete_old_export_files'            );
+    remove_action('rest_api_init',                      'rest_api_default_filters',         10,     1   );
+    remove_action('rest_api_init',                      'register_initial_settings',        10          );
+    remove_action('rest_api_init',                      'create_initial_rest_routes',       99          );
+    remove_action('init',                               'rest_api_init'                                 );
+    remove_action( 'parse_request', 'rest_api_loaded' );
+    remove_filter('the_content',                        'capital_P_dangit',                 11          );
+    remove_filter('the_title',                          'capital_P_dangit',                 11          );
+    remove_filter('wp_title',                           'capital_P_dangit',                 11          );
+    remove_filter('comment_text',                       'capital_P_dangit',                 31          );
+    remove_filter('rest_authentication_errors',         'rest_cookie_check_errors',         100         );
+    remove_filter('wp_privacy_personal_data_exporters', 'wp_register_comment_personal_data_exporter'    );
+    remove_filter('wp_privacy_personal_data_exporters', 'wp_register_media_personal_data_exporter'      );
+    remove_filter('wp_privacy_personal_data_exporters', 'wp_register_user_personal_data_exporter', 1    );
+    remove_filter('wp_privacy_personal_data_erasers',   'wp_register_comment_personal_data_eraser'      );
+
+    add_filter('use_default_gallery_style',         '__return_false'            );//不使用默认gallery
+    add_filter('xmlrpc_enabled',                    '__return_false'            );//不使用xmlrpc
+    add_filter('feed_links_show_comments_feed',     '__return_false'            );//不输出comments的rss,4.4以上
+    add_filter('rest_enabled',                      '__return_false'            );//禁用REST API,4.4以上
+    add_filter('rest_jsonp_enabled',                '__return_false'            );//禁用REST API,4.4以上
 
     ////0A.1屏蔽ngg带来的无用钩子
     if( class_exists('M_Third_Party_Compat') ) {
@@ -1344,8 +1371,19 @@ function apip_rep_emoji_url( $url )
     global $apip_options;
     if ( !apip_option_check('replace_emoji') )
         return $url;
-    return '//coding.net/u/MinonHeart/p/twemoji/git/raw/gh-pages/72x72/' ;
+    return '//twemoji.maxcdn.com/2/72x72/' ;
 }
+/**
+ * 作用: 替换emoji服务器地址,同时会修改'dns-prefetch'
+ * 来源: 自创
+ */
+function apip_rep_emoji_url_svg($url) {
+    global $apip_options;
+    if ( !apip_option_check('replace_emoji') )
+        return $url;
+    return '//twemoji.maxcdn.com/svg/' ;
+}
+
 /*                                          05终了                             */
 
 /******************************************************************************/
