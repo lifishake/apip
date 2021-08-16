@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.7
+ * Version:     1.33.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -113,7 +113,8 @@ function apip_settings_link($action_links, $plugin_file){
     return $action_links;
 }
 add_filter('plugin_action_links','apip_settings_link',10,2);
-
+//add_action('current_screen', 'apip_remove_admin_help');
+//add_action('in_admin_header', 'apip_remove_admin_help');
 /*变量初期化*/
 add_action('plugins_loaded', 'apip_init', 99);
 function apip_init()
@@ -166,6 +167,9 @@ function apip_init()
     remove_action('personal_options_update', 'send_confirmation_on_profile_email');
     //0.21 设置chrome内核浏览器的tab颜色
     add_action('wp_head', 'apip_set_theme_color', 20);
+    //0.22 移除后台的help
+    add_action('in_admin_header', 'apip_remove_admin_help');
+    
     /** 01 */
     //颜色目前没有函数
 
@@ -218,7 +222,7 @@ function apip_init()
     if  ( apip_option_check('remove_core_updates') ) {
         add_filter('pre_site_transient_update_core','remove_core_updates');
     }
-
+    
     if ( is_admin() ) {
         define('NGG_DISABLE_RESOURCE_MANAGER', FALSE);
     } else {
@@ -511,6 +515,8 @@ function apip_init_actions()
 
 function apip_header_actions()
 {
+    
+
 }
 
 /*
@@ -536,6 +542,7 @@ $options
     0.19                                autop与shortcode冲突问题
     0.20                                改用户profile不需要邮件确认
     0.21                                设置chrome的标签颜色
+    0.22                                移除后台画面的help
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -972,6 +979,12 @@ function apip_set_theme_color() {
     //echo '<meta name="theme-color" content="#db5945">';
 }
 
+//0.22 移除后台各个画面上的help
+//来源:分析代码
+function apip_remove_admin_help( ) {
+    get_current_screen()->remove_help_tabs();
+}
+
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -1163,6 +1176,7 @@ function apip_e2i_redirect() {
         exit;
     }
 }
+
 /*                                          02终了                             */
 
 /******************************************************************************/
@@ -1295,8 +1309,9 @@ function apip_get_cavatar($source) {
     if( !apip_option_check('local_gravatar') )
     {
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
-        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);
-        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cn.gravatar.com/gravatar', $source);
+        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);        
+        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cn.gravatar.com/gravatar', $source);
+        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//gravatar.loli.net/avatar', $source);
         //gravatar.eqoe.cn
 
     //$source = str_replace( $src, $replace, $source);
@@ -1486,16 +1501,6 @@ function apip_get_social()
         if ( apip_option_check('social_share_sina') )
         {
             $ret .= '<a class="sharebar-weibo" rel="nofollow" id="sina-share" title="sina" ></a>' ;
-            $count++;
-        }
-        if ( apip_option_check('social_share_tencent') )
-        {
-            $ret .= '<a class="sharebar-tencent-weibo" rel="nofollow" id="tencent-share" title="tencent" ></a>' ;
-            $count++;
-        }
-        if ( apip_option_check('social_share_googleplus') )
-        {
-            $ret .= '<a class="sharebar-googleplus" rel="nofollow" id="googleplus-share" title="g+" ></a>' ;
             $count++;
         }
         if ( apip_option_check('social_share_facebook') )
