@@ -443,12 +443,6 @@ a.tagged6 {
 .sharebar-weibo:before {
   content: "\f18a";
 }
-.sharebar-tencent-weibo:before {
-  content: "\f1d5";
-}
-.sharebar-googleplus:before {
-  content: "\f0d5";
-}
 .sharebar-facebook:before {
   content: "\f230";
 }
