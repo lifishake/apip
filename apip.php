@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.33.9
+ * Version:     1.34.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -355,7 +355,7 @@ function apip_init()
     //8.12 我的引文
     add_shortcode('mysup', 'apip_sup_detail');
     add_filter( 'the_content', 'apip_make_sup_anchors', 101);
-    add_filter( 'the_content_feed', 'apip_make_sup_anchors', 101);
+    //add_filter( 'the_content_feed', 'apip_make_sup_anchors', 101);
 
     /** 09  */
     //9.1 后台taglist增加private和draft计数列
@@ -2343,7 +2343,7 @@ function apip_game_detail($atts, $content = null) {
         $str_the_platform = apip_convert_dou_array_to_string($data, 'platforms', 'abbreviation', '不明');
         $str_the_platform = str_replace( array('NES','GEN','SNES'), array('FC','MD','SFC'), $str_the_platform);
     }
-    $str_platform = sprintf('<span class="platform">类型：%s</span>', $str_the_platform);
+    $str_platform = sprintf('<span class="platform">机种：%s</span>', $str_the_platform);
 
     $str_download = '';
     if ( $download !== '' ){
