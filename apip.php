@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.0
+ * Version:     1.34.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -563,6 +563,8 @@ $options
     3.4     excerpt_ellipsis            摘要结尾字符
 04.     GFW选项
     4.1     local_gravatar              头像本地缓存
+    4.1.1   gravatar_mirror             头像镜像地址
+    4.1.2   available_gravatar_mirrors  头像镜像可用地址
     4.2     replace_emoji               替换emoji地址
 05.    留言者控制
    5.1  blocked_commenters              替换广告留言用户名和网址
@@ -1308,10 +1310,13 @@ function apip_excerpt( $text )
 function apip_get_cavatar($source) {
     if( !apip_option_check('local_gravatar') )
     {
+        //https://gravatar.loli.net/avatar/1555b3ecaabb715d5124f8beda5d1ebf?s=32&d=mm&r=g
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);        
         //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cn.gravatar.com/gravatar', $source);
-        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//gravatar.loli.net/avatar', $source);
+        global $apip_options;
+        $str_mirror = isset( $apip_options['gravatar_mirror'] ) ? $apip_options['gravatar_mirror'] : '//gravatar.loli.net/avatar';
+        $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', $str_mirror, $source);
         //gravatar.eqoe.cn
 
     //$source = str_replace( $src, $replace, $source);
