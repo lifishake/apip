@@ -375,7 +375,7 @@ function apip_options_page(  ) {
         ?>
     <div id="apip_page_content" class="wrap apip-option" >
   <h1><span>A</span>ll <span>P</span>lugins <span>I</span>n <span>P</span>ewae</h1>
-  <div class="description">This is description of the page.</div>
+  <div class="description">【基本操作】页是作者认为中文环境下使用WordPress必须使用的一些设置和强化；<br/>【清理工具】可以对后台数据库进行分析和清理。</div>
             <?php settings_errors(); ?>
 
             <h2 class="nav-tab-wrapper">

@@ -6,6 +6,52 @@
 //add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
 
 //add_action('admin_print_footer_scripts','apip_quicktags_a');
+
+//add_filter( 'sanitize_title', 'apip_title_unicode', 1 );
+//来源： https://so-wp.com/plugins/
+function apip_title_unicode($strTitle) {
+    $PSL = get_option( 'slug_length', 100 );
+
+    $origStrTitle = $strTitle;
+    $containsChinese = false;
+
+    if ( get_bloginfo( 'charset' ) !="UTF-8" ) {
+        $strTitle = iconv( get_bloginfo( "charset" ), "UTF-8", $strTitle );
+    }
+    
+    if ( $PSL>0 ) {
+        $strTitle=substr( $strTitle, 0, $PSL );
+    }
+    for ( $i = 0; $i < strlen( $strTitle ); $i++ ) {
+        $byte1st = ord( substr( $strTitle, $i, 1 ) );
+        if ( $byte1st >= 224 && $byte1st <= 239 ) {
+            $containsChinese = true;
+            $aChinese = sprintf("%02x%02x%02x-", ord(substr( $strTitle, $i, 1 )), ord(substr( $strTitle, $i+1, 1 )), ord(substr( $strTitle, $i+2, 1 )));
+            $i += 2;
+            $strRet .= $aChinese;
+        } else {
+            $strRet .= preg_replace( '/[^A-Za-z0-9\-]/', '$0', chr( $byte1st ) );
+        }
+    }
+
+    if (! $containsChinese ) { 
+        $strRet = $origStrTitle;
+    }
+    $strRet = rtrim($strRet, "-");
+
+    return $strRet;
+}
+
+function apip_slug($slug) {
+	if (false === strpos($slug, "%")) {
+		return $slug;
+	}
+	$str_tmp = str_replace("-","^^_^^",$slug);
+	$str_tmp = str_replace("%","",ltrim($str_tmp,'%'));
+	$str_tmp = str_replace("^^_^^","-",$str_tmp);
+	return $str_tmp;
+}
+
 function apip_quicktags_a()
 {
 ?>

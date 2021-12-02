@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.1
+ * Version:     1.34.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -160,7 +160,9 @@ function apip_init()
     //0.17 针对苹果旧设备的访问，减少404
     add_filter('site_icon_meta_tags','apip_add_apple_touch_icon');
     //0.18 汉字标题自动转utf8字符
-    add_filter( 'sanitize_title', 'apip_slug', 1 );
+	//原来的sanitize_title范围太大，改为生成post slug和term slug的两个filter20211201
+	add_filter('wp_unique_term_slug', 'apip_unique_term_slug', 10, 3);
+	add_filter('wp_unique_post_slug', 'apip_unique_post_slug', 10, 6);
     //0.19 autop与shortcode冲突问题
     add_filter( 'the_content', 'apip_fix_shortcodes');
     //0.20 改用户profile不需要邮件确认
@@ -720,7 +722,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20200804', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20211201', true);
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
@@ -924,40 +926,38 @@ function apip_add_apple_touch_icon($meta_tags){
 }
 
 //0.18 处理汉字slug
-//来源： https://so-wp.com/plugins/
-function apip_slug($strTitle) {
-    $PSL = get_option( 'slug_length', 100 );
+//20211201 原来函数处理的是title,是unicode汉字字符串。现在处理的对象变成了slug，是转换后的%xx形式，所以以前的字符串转换函数不适用。
+function apip_unique_term_slug($slug, $term, $original_slug){
+	return apip_slug_unicode($slug);
+}
+function apip_unique_post_slug($slug, $post_ID, $post_status, $post_type, $post_parent, $original_slug){
+	$public_pts = get_post_types(array( 'public' => true ));
+	if (!in_array($post_type, $public_pts)){
+		return $slug;
+	}
+	return apip_slug_unicode($slug);
+}
 
-    $origStrTitle = $strTitle;
-    $containsChinese = false;
-    $strRet = "";
-    
-    if ( get_bloginfo( 'charset' ) !="UTF-8" ) {
-        $strTitle = iconv( get_bloginfo( "charset" ), "UTF-8", $strTitle );
-    }
-    
-    if ( $PSL>0 ) {
-        $strTitle=substr( $strTitle, 0, $PSL );
-    }
-    for ( $i = 0; $i < strlen( $strTitle ); $i++ ) {
-        $byte1st = ord( substr( $strTitle, $i, 1 ) );
-        if ( $byte1st >= 224 && $byte1st <= 239 ) {
-            $containsChinese = true;
-            $aChinese = sprintf("%02x%02x%02x-", ord(substr( $strTitle, $i, 1 )), ord(substr( $strTitle, $i+1, 1 )), ord(substr( $strTitle, $i+2, 1 )));
-            $i += 2;
-            $strRet .= $aChinese;
-        } else {
-            $strRet .= preg_replace( '/[^A-Za-z0-9\-]/', '$0', chr( $byte1st ) );
+function apip_slug_unicode($strSlug) {
+    $c_count = 0;
+    $strRet="";
+    for ( $i = 0; $i < strlen( $strSlug ); $i++ ) {
+        $ch1 = substr( $strSlug, $i, 1 );
+        $byte1st = ord( $ch1 );
+        if ('%' == $ch1){
+            $chs = substr($strSlug, $i, 9);
+            $str_tmp = str_replace("%","",$chs);
+            $strRet .= $str_tmp."-";
+            $i += 8;
+        }else{
+            $strRet .= $ch1; 
         }
     }
-
-    if (! $containsChinese ) { 
-        $strRet = $origStrTitle;
-    }
     $strRet = rtrim($strRet, "-");
-
     return $strRet;
 }
+
+
 
 //0.19 给短代码擦屁股
 //来源：https://www.wpexplorer.com/clean-up-wordpress-shortcode-formatting/
@@ -2588,15 +2588,16 @@ apip_optimize_boxes 函数在admin_menu的钩子里调用。
 */
 function apip_optimize_boxes() {
     //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
-    remove_meta_box('authordiv', 'post', 'normal');//移除[author]，顺道。
-    remove_meta_box('trackbacksdiv', 'post', 'normal');//移除[trackback]，顺道。
-    remove_meta_box('postexcerpt', 'post', 'normal');//移除[excerpt]，顺道。
-    remove_meta_box('postcustom', 'post', 'normal');//移除[custom fields]，顺道。
-    remove_meta_box('slugdiv', 'post', 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+	$post_types = get_post_types(array( 'public' => true ));
+    remove_meta_box('authordiv', $post_types, 'normal');//移除[author]，顺道。
+    remove_meta_box('trackbacksdiv', $post_types, 'normal');//移除[trackback]，顺道。
+    remove_meta_box('postexcerpt', $post_types, 'normal');//移除[excerpt]，顺道。
+    remove_meta_box('postcustom', $post_types, 'normal');//移除[custom fields]，顺道。
+    remove_meta_box('slugdiv', $post_types, 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
     //8.7
     add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
     //8.9
-    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', 'post', 'normal', 'core');
+    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', $post_types, 'normal', 'core');
     //8.10
     add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
@@ -2746,7 +2747,7 @@ function apip_load_myfv_img($id, $series=0) {
     }
 }
 
-function trim_fetched_item($value) {
+function apip_trim_fetched_item($value) {
     $value = trim($value);
     $value = str_replace(array("[", "]", "&nbsp;", ""),array("【", "】", "", "N/A"), $value);
     return $value;
@@ -3197,7 +3198,7 @@ function apip_items_implode($items) {
     if ($count > 8) {
         $items = array_slice($items, 0, 8);
     }
-    $items = array_map('trim_fetched_item', $items);
+    $items = array_map('apip_trim_fetched_item', $items);
     if (1 == $count) {
         return $items[0];
     } else {

@@ -7,15 +7,33 @@ function dec_to_hex_string(dec, length) {
 }
 
 String.prototype.hexEncode = function(){
-    var hex, i;
+    var hex, i, ud, slash;
     var s = unescape(encodeURIComponent(this))
     var result = "";
+	var chineseStart = 0;
     for (i=0; i<s.length; i++) {
-        hex = s.charCodeAt(i).toString(16);
-        if (i>0 && i%3==0) {
-            result += "-";
-        }
+		ud = s.charCodeAt(i);
+		if (0==chineseStart && ud>=224 && ud<=239)
+		{
+			chineseStart++;
+			hex = ud.toString(16);
+		}else if (1==chineseStart){
+			chineseStart++;
+			hex = ud.toString(16);
+		}else if (2==chineseStart){
+			hex = ud.toString(16);
+			chineseStart = 0;
+			if (i!=s.length-1) {
+				slash = 1;
+			}
+		}else {
+			hex = ud;
+		}
         result += hex;
+		if (slash) {
+			result += '-';
+			slash = 0;
+		}
     }
 
     return result;
