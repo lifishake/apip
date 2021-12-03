@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.2
+ * Version:     1.34.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2377,6 +2377,9 @@ function apip_save_heweather ( $post )
 {
     $meta_key = 'apip_heweather';
     global $apip_options;
+    if($post->post_type != 'post') {
+        return;
+    }
     $token = $apip_options['heweather_key'];
     if (!$token) {
         return;
