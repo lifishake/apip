@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.3
+ * Version:     1.34.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1118,7 +1118,7 @@ function check_referrer_comment() {
  * URL: http://www.wpbeginner.com/wp-tutorials/how-to-exclude-pages-from-wordpress-search-results/
  */
 function remove_page_search($query) {
-    if ($query->is_search) {
+    if ($query->is_search && !$query->is_admin) {
         $query->set('post_type', 'post');
     }
     return $query;
