@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.4
+ * Version:     1.34.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -19,6 +19,7 @@ define('APIP_GALLERY_DIR', ABSPATH.'wp-content/gallery/');
 register_activation_hook( __FILE__, 'apip_plugin_activation' );
 register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
+
 
 /* 打log用 */
 function apip_log(  $any )
@@ -121,6 +122,10 @@ function apip_init()
 {
     /** 00 */
     global $wpdb;
+	
+	//20210106统一整理admin_init
+	add_action('admin_init','apip_admin_init');
+	
     //0.1 插件自带脚本控制
     add_action( 'wp_enqueue_scripts', 'apip_scripts' );
     add_action( 'admin_enqueue_scripts', 'apip_admin_scripts' );
@@ -333,22 +338,11 @@ function apip_init()
     add_action( 'auto-draft_to_private','apip_save_heweather',99,1);
     add_action( 'new_to_publish','apip_save_heweather',99,1);
     add_action( 'new_to_private','apip_save_heweather',99,1);
-    //在后台update区域增加手动更新天气的checkbox
-    if (is_admin())  {
-        add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
-    }
-    //8.8 留言验证问题
-    if(is_admin() && apip_option_check('apip_commentquiz_enable') ) {
-        add_action('admin_init','apip_commentquiz_init');
-    }
-    //8.10 特色图主颜色按钮
-    if(is_admin()) {
-        add_action('admin_menu','apip_optimize_boxes');
-        //增加ajax回调函数
-        add_action( 'wp_ajax_apip_accept_color', 'apip_accept_color' );
-        add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
-        add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
-    }
+    
+	//8.10 特色图主颜色按钮
+	//必须在admin_init以前
+	add_action('admin_menu','apip_optimize_boxes');
+	
     //8.11 我的收藏第一版
     add_shortcode('myfv', 'apip_myfv_detail');
     //add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
@@ -357,27 +351,9 @@ function apip_init()
     //8.12 我的引文
     add_shortcode('mysup', 'apip_sup_detail');
     add_filter( 'the_content', 'apip_make_sup_anchors', 101);
-    //add_filter( 'the_content_feed', 'apip_make_sup_anchors', 101);
-
-    /** 09  */
-    //9.1 后台taglist增加private和draft计数列
-    if(is_admin()) {
-        add_filter( "manage_edit-post_tag_columns", 'apip_edit_post_tag_column_header', 10);
-        add_action( "manage_post_tag_custom_column", 'apip_edit_post_tag_content', 10, 3);
-    }
-    //9.2
-    if(is_admin()) {
-        add_filter( 'post_tag_row_actions', 'apip_convert_post_tag_slug_to_utf', 10, 2 );
-    }
 
     // Add to the admin_init action hook
     //add_filter('current_screen', 'my_current_screen' );
-    
-    function my_current_screen($screen) {
-        if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return $screen;
-        print_r($screen);
-        return $screen;
-    }
 
     //0X 暂时不用了
     //三插件冲突
@@ -388,6 +364,12 @@ function apip_init()
         require APIP_PLUGIN_DIR.'/apip-widgets.php';
     }
 
+}
+
+function my_current_screen($screen) {
+	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return $screen;
+	print_r($screen);
+	return $screen;
 }
 
 register_activation_hook( __FILE__, 'apip_disable_embeds_remove_rewrite_rules' );
@@ -508,17 +490,46 @@ function apip_init_actions()
     */
 
     //8.3 结果集内跳转的先决条件
+	/*
     if( !session_id() )
     {
         session_start();
     }
+	*/
+	if (session_status()!=PHP_SESSION_ACTIVE) {
+		session_start();
+	}
     include (plugin_dir_path( __FILE__ )."apip-local-debug.php");
 }
 
 function apip_header_actions()
 {
-    
+}
 
+function apip_admin_init() {
+	/** 08  */
+	//8.7
+	//在后台update区域增加手动更新天气的checkbox
+    add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
+    //8.8 留言验证问题
+    if( apip_option_check('apip_commentquiz_enable') ) {
+        add_meta_box('apipcommentquiz', '留言验证问题', 'apip_commentquiz_meta_box', 'post', 'side', 'high');
+    }
+	//增加ajax回调函数
+	add_action( 'wp_ajax_apip_accept_color', 'apip_accept_color' );
+	add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
+	add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
+
+	/** 09  */
+    //9.1 后台taglist增加private和draft计数列
+    add_filter( "manage_edit-post_tag_columns", 'apip_edit_post_tag_column_header', 10);
+    add_action( "manage_post_tag_custom_column", 'apip_edit_post_tag_content', 10, 3);
+
+    //9.2 post tag的slug转成utf-8
+    add_filter( 'post_tag_row_actions', 'apip_convert_post_tag_slug_to_utf', 10, 2 );
+	
+	//9.3 postlist页增加post_tag的下拉过滤项
+	add_action( 'restrict_manage_posts', 'apip_add_post_tag_filter_ddl');
 }
 
 /*
@@ -589,6 +600,8 @@ $options
     8.11                                自定义收藏的添加和显示
 09.     后台维护相关
     9.1                                 后台taglist增加private和draft计数列
+	9.2									post tag的slug转成utf-8
+	9.3									后台postlist增加post_tag筛选下拉框
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -2513,10 +2526,6 @@ function apip_weather_manual_update(){
 license：GPLv3
 修改内容：css风格，js简化，汉化，插件风格统一。
 */
-function apip_commentquiz_init() {
-    add_meta_box('apipcommentquiz', '留言验证问题', 'apip_commentquiz_meta_box', 'post', 'side', 'high');
-}
-
 function apip_commentquiz_meta_box($post)
 {
     //插入一个空问题
@@ -3459,6 +3468,30 @@ function apip_convert_post_tag_slug_to_utf($actions, $tag){
     $new_slug=apip_mb_str2_hex($tag->name);
     $actions['convert_unicode_slug'] = $action;
     return $actions;
+}
+
+//9.3 postlist页面增加根据post_tag筛选的下拉框
+function apip_add_post_tag_filter_ddl($post_type) {
+	if('post'!==$post_type) { //只在post列表显示。如果想在page列表里同样支持，可以更改判断条件。
+		return;
+	}
+	$key='tag';//要针对post_tag进行过滤。
+	$selection = '';//特别重要，记录当前选中项，设错了没法过滤。
+	if (isset($_GET[$key]) && !empty($_GET[$key])) {
+		$selection = $_GET[$key];
+	}
+
+	$dropdown_arg = array(
+		'show_option_none' => 'No Tag',
+		'option_none_value' => '',
+		'orderby' => 'count',
+		'order' => 'DESC',
+		'name' => $key,	//post_tag特殊，内部检索时一定要用“tag”而不是post_tag
+		'value_field' => 'slug',
+		'taxonomy' => 'post_tag',
+		'selected' => $selection,
+	);
+	wp_dropdown_categories($dropdown_arg);
 }
 
 /*                                          09终了                             */

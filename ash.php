@@ -451,6 +451,51 @@ function apip_get_dou_content( $id, $type )  {
 }
 
 /**
+* 作用: taxonomy和meta在list中排序。
+* 来源: 网络
+*/
+//add_filter( 'posts_clauses', array($this, 'custom_taxonomy_posts_clauses'), 10, 2 );
+public function custom_taxonomy_posts_clauses( $pieces, $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return $pieces;
+		}
+		global $wpdb;
+		$post_type = $query->get( 'post_type' );
+		$orderby = $query->get( 'orderby' );
+		$this->set_working_mode($post_type);
+		if (!isset($this->total_items[$orderby])||
+			!$this->total_items[$orderby]['show_admin_column']) {
+			return $pieces;
+		}
+
+		$item = $this->total_items[$orderby];
+		$order = strtoupper( $query->get( 'order' ) );
+		if ($order != 'DESC') $order = 'ASC';
+		if ('tax' == $item['type']) {
+			$pieces[ 'join' ] .= ' LEFT JOIN ' . $wpdb->term_relationships . ' AS tr ON ' . $wpdb->posts . '.ID = tr.object_id'
+			. ' LEFT JOIN ' . $wpdb->term_taxonomy . ' AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id'
+			. ' LEFT JOIN ' . $wpdb->terms . ' AS t ON tt.term_id = t.term_id';
+			$pieces[ 'fields' ] .= ', group_concat(t.name ORDER BY t.name ' . $order . ') AS ' . $orderby;
+			$pieces[ 'groupby' ] = $wpdb->posts . '.ID';
+			$pieces[ 'orderby' ] = $orderby . ' ' . $order . ', ' . $wpdb->posts . '.post_title ASC';
+			//$pieces['where'] = 'AND ( tr.object_id IS NULL OR t.name = \'' . $orderby . '\') ' . $pieces['where'];
+		}
+		if ('meta' == $item['type']) {
+			$pieces[ 'groupby' ] = $wpdb->posts . '.ID';
+			$pieces[ 'join' ] = ' LEFT JOIN ' . $wpdb->postmeta . ' ON ('. $wpdb->posts .'.ID = '. $wpdb->postmeta .'.post_id AND ' . $wpdb->postmeta . '.meta_key = \'' . $orderby . '\' ) '
+			. ' LEFT JOIN ' . $wpdb->postmeta . ' AS mt1 ON ( ' . $wpdb->posts . '.ID = mt1.post_id )';
+			$pieces['where'] = 'AND ( ' . $wpdb->postmeta . '.post_id IS NULL OR mt1.meta_key = \'' . $orderby . '\') ' . $pieces['where'];
+			if ($item['inputstyle'] == 'number') {
+				$pieces[ 'orderby' ] = 'CAST(' . $wpdb->postmeta . '.meta_value AS SIGNED)'. $order;
+			} else {
+				$pieces[ 'orderby' ] = $wpdb->postmeta . '.meta_value '. $order;
+			}
+		}
+
+		return $pieces;
+	}
+
+/**
 * 作用: 用于保存图像缓存的子函数。
 * 来源: 大发
 */
