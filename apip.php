@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.5
+ * Version:     1.34.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -324,8 +324,6 @@ function apip_init()
         //包跳转类含头文件
         require_once ( APIP_PLUGIN_DIR.'/class/apip-image.php') ;
     }
-
-    add_shortcode('myimdb', 'apip_imbd_detail');
 
     //8.6 每夜一游
     add_shortcode('mygame', 'apip_game_detail');
@@ -837,7 +835,6 @@ function apip_quicktags()
 ?>
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_myimdb', 'imdb', '[myimdb id="', '" cname="" score="99" nipple="no" /]', 'p' );
         QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
         QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
         QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
@@ -2040,115 +2037,6 @@ function apip_slim_dou_cache($cache, $type) {
         }
     }
     return $ret;
-}
-
-/**
-* 作用: theimdbapi.org取得电影资料，用于豆瓣无资料的电影。
-* 来源: 受大发启示，自作
-* API格式： https://www.omdbapi.com/?i=tt3896198&apikey=36edb41f
-*/
-function apip_imbd_detail($atts, $content = null){
-    $atts = shortcode_atts( array( 'id' => '0', 'cname'=>'','alias'=>'','score'=>'','nipple'=>'no' ), $atts );
-    extract( $atts );
-    $cache_key = 'imdb_'.$id;
-    $content = get_transient($cache_key);
-    global $apip_options;
-    //for local debug
-    if ( apip_is_debug_mode() ){
-        //$content = apip_debug_imdb_content();
-    }
-    if ( !$content )
-    {
-        $apikey = $apip_options['omdb_key'];
-        if( empty($apikey) )
-        {
-            return false;
-        }
-        $url = "https://www.omdbapi.com/?i=".$id."&apikey=".$apikey;
-
-
-        delete_transient($cache_key);
-
-        $response = @wp_remote_get($url);
-        if (is_wp_error($response))
-        {
-            return false;
-        }
-        $content = json_decode(wp_remote_retrieve_body($response),true);
-        $content = apip_slim_dou_cache($content, "imdb");
-        set_transient($cache_key, $content, 60*60*24*30*6);
-    }
-
-    $img_src = APIP_GALLERY_DIR . 'douban_cache/'.$id.'.jpg';
-    $img_url = $content['Poster'];
-    if ( !is_file($img_src) /*&& !apip_is_debug_mode()*/ ) {
-        $response = @wp_remote_get( 
-            htmlspecialchars_decode($img_url), 
-            array( 
-                'timeout'  => 300, 
-                'stream'   => true, 
-                'filename' => $img_src 
-            ) 
-        );
-        if ( is_wp_error( $response ) )
-        {
-            return false;
-        }
-        /*
-        if (!@copy(htmlspecialchars_decode($img_url), $img_src))
-        {
-            $errors= error_get_last();
-            return false;
-        }
-        */
-        $image = new Apip_SimpleImage();
-        $image->load($img_src);
-        $image->resize(100, 150);
-        $image->save($img_src);
-    }
-    $imdb_url = "https://www.imdb.com/title/".$id;
-    $img_url = APIP_GALLERY_URL.'douban_cache/'. $id .'.jpg';
-
-    $template = '<div class="apip-item"><div class="mod"><div class="%5$s"><div class="apiplist-post">%1$s</div><div class="title">%2$s</div><div class="rating">%3$s</div><div class="abstract">%4$s</div></div></div></div>';
-
-    $subject_class="v-overflowHidden doulist-subject";//5
-    $img_str=sprintf('<img src="%1$s" alt="%2$s"></img>',
-                        $img_url,
-                        base64_encode($content["Title"]));//1
-    $title_str=sprintf('<a href="%1$s" class="cute" target="_blank" rel="external nofollow">%2$s</a>',
-                        $imdb_url,
-                        $cname !== ''?$cname:$content["Title"]);//2
-    $rating_str="";//3
-    $star_dou=sprintf('<span class="dou-stars-%s"></span>',
-                        round(floatval($content["imdbRating"])));    
-    $star_my="";
-    
-    $str_rnum="";
-    $abstract_str="";//4
-    
-    if ( $score !== '' && $score !="99" ) {
-        $subject_class .= " my-score-".$score;
-        $str_rnum = sprintf('<span class="rating_nums">(%1$s / %2$s)</span>',$score, $content["imdbRating"]);
-        $star_my = sprintf('<span class="my-stars-%s"></span>', $score);
-    }
-    else  {
-        $str_rnum = sprintf('<span class="rating_nums">(%1$s)</span>', $content["imdbRating"]);
-    }
-    $rating_str = sprintf('<span class="allstardark">%1$s%2$s</span>%3$s', $star_dou,$star_my,$str_rnum);
-
-    $str_director=sprintf('<span class="director">导演：%s</span>', $content["Director"]);
-    $str_casts=sprintf('<span class="casts">演员：%s</span>', str_replace(',','/',$content["Actors"]));   
-    $str_genres=sprintf('<span class="genres">类型：%s</span>', str_replace(',','/',$content["Genre"]));
-    $str_year = sprintf('<span class="year">年份：%s</span>', $content["Year"]);
-    $abstract_str = $str_director.$str_casts.$str_genres.$str_countries.$str_year;
-
-    if ("yes"===$nipple) {
-        $abstract_str .= '<span class="feature">奶</span>';
-    }
-
-    $out = sprintf($template, $img_str, $title_str, $rating_str, $abstract_str, $subject_class);
-    return $out;
-
 }
 
 /**
