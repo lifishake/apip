@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.6
+ * Version:     1.34.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -783,8 +783,7 @@ function apip_remove_styles()
     global $wp_styles;
     foreach ($wp_styles->registered as $libs){
     //替换google字体
-        $libs->src = str_replace('//fonts.googleapis.com', '//gapis.geekzu.org/g-fonts', $libs->src);
-        //fonts.gmirror.org
+        $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
         }
     if ( !is_admin() )
     {
@@ -2099,8 +2098,10 @@ function apip_game_detail($atts, $content = null) {
     
     $arg = array();
     //20200325 增加对代理的使用
+    //20220528 函数从file_get_content改成curl，放弃对代理的使用
+    /*
     $proxy = new WP_HTTP_Proxy();
-        if ($proxy->is_enabled()) {
+    if ($proxy->is_enabled()) {
         $proxy_str = $proxy->host().":".$proxy->port();
         $stream_default_opts = array(
             'http'=>array(
@@ -2121,6 +2122,7 @@ function apip_game_detail($atts, $content = null) {
         }
     
     //$context = stream_context_create(['http' => ['user_agent' => 'API Test UA']]);
+    */
     if ( !$content )
     {
         if ( $nodata  ) {
@@ -2129,11 +2131,20 @@ function apip_game_detail($atts, $content = null) {
             $content['results']["site_detail_url"] = get_the_permalink();
             $content['results']["name"] = $ename!=''?$ename:($cname!=''?$cname: get_the_title());
         } else {
-            $url = "http://www.giantbomb.com/api/game/".$id."?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
+            $url = "https://www.giantbomb.com/api/game/".$id."/?api_key=".$token."&format=json&field_list=site_detail_url,genres,image,platforms,original_release_date,name,publishers";
            
             delete_transient($cache_key);
+            $curl = curl_init($url);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curl, CURLOPT_USERAGENT, 'API Test UA');
+            curl_setopt($curl, CURLOPT_TIMEOUT, 180);
+            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 60);
+            curl_setopt ($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+            $response = curl_exec($curl);
+            curl_close($curl);
+
             //从链接取数据            
-            $response = @file_get_contents($url, false, $cxContext);
             if ($response) {
                 $content = json_decode($response,true);
                 set_transient($cache_key, $content, 60*60*24*30*6);
