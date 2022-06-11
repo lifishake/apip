@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.7
+ * Version:     1.34.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1074,8 +1074,10 @@ function apip_locale( $locale )
 
 function apip_block_open_sans ($styles)
 {
-    $open_sans = $styles->registered{'open-sans'};
-    $open_sans->src = null;
+    $open_sans = $styles->registered['open-sans'];
+    if (is_object($open_sans)) {
+        $open_sans->src = null;
+    }   
     return $styles;
 }
 //2.6
