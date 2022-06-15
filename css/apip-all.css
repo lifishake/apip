@@ -44,6 +44,7 @@ span.suffix {
     margin:2em auto 0.5em;
     max-width: 800px;
     text-align: left;
+    font-family: Helvetica, Arial, Calibri, Avenir, serif, 'Microsoft YaHei', SimHei, sans-serif;
 }
 .doulist-subject {
     line-height:1.5;
