@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.34.9
+ * Version:     1.35.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -834,12 +834,12 @@ function apip_quicktags()
 ?>
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
-        QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
-        QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
-        QTags.addButton( 'eg_myfavmusic', '收藏音乐', '[myfv id="x" type="music" title="', '" img="x" link="" score="99" abs="出版年份:;出版公司:;表演者:;doulink:;douscore:;" series="0"/]', 'p' );
-        QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
-        QTags.addButton( 'eg_myfavauto', '收藏自动', '[myfv id="x" type="auto" img="x" link="', '" score="99" /]', 'p' );
+        //QTags.addButton( 'eg_mygame', '每夜一游', '[mygame id="', '" cname="" ename="" jname="" alias="" year="" publisher=""  platform="" download="" genres="" poster="" /]', 'p' );
+        //QTags.addButton( 'eg_myfavbook', '收藏书', '[myfv id="x" type="book" title="', '" img="x" link="" score="99" abs="doulink:;douscore:;作者:;译者:;出版年份:;出版社:;" series="0"/]', 'p' );
+        //QTags.addButton( 'eg_myfavbooklist', '收藏书系', '[myfv id="x" type="book" title="', '" img="" link="" score="99" abs="作者:;译者:;出版年份:;出版社:;全套册数:" series="1"/]', 'p' );
+        //QTags.addButton( 'eg_myfavmusic', '收藏音乐', '[myfv id="x" type="music" title="', '" img="x" link="" score="99" abs="出版年份:;出版公司:;表演者:;doulink:;douscore:;" series="0"/]', 'p' );
+        //QTags.addButton( 'eg_myfavmovie', '收藏电影', '[myfv id="x" type="movie" title="', '" img="x" link="" score="99" abs="年份:;导演:;演员:;类型:;nipple:;doulink:;douscore:;" series="0"/]', 'p' );
+        //QTags.addButton( 'eg_myfavauto', '收藏自动', '[myfv id="x" type="auto" img="x" link="', '" score="99" /]', 'p' );
         QTags.addButton( 'eg_mysup', '引文', '[mysup sup_content="', '" /]', 'p' );
     </script>
 <?php
