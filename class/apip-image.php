@@ -114,4 +114,7 @@ class Apip_SimpleImage {
       $this->image = $new_image;
    }
 
+   function rotate($degrees) {
+      $this->image = @imagerotate($this->image, $degrees, 0);
+   }
 }

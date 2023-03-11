@@ -888,7 +888,6 @@ function apip_festival($post_id=0) {
 function apip_get_heweather( $style='', $post_id=0)
 {
     $ret = '';
-    //$weather_result = array();
     if ( 0 == $post_id) {
         $weather_result = get_post_meta(get_the_ID(),'apip_heweather',false);
     }
@@ -906,6 +905,9 @@ function apip_get_heweather( $style='', $post_id=0)
     }
 
     $then = $weather_result[0]['result'];
+    if (!isset($then['cond_code']) && isset($then['icon'])) {
+        return apip_get_heweather_v7($then, $style);
+    }
     $cond_code = (int)($then['cond_code']);
     switch($cond_code) {
         case	100	:	//	晴
@@ -1032,6 +1034,150 @@ function apip_get_heweather( $style='', $post_id=0)
     if ('plain' == $style)
     {
         $ret = $then['cond_txt'].$wind_str.$then['tmp'].'&#8451;';
+    }
+    return $ret;
+}
+
+function apip_get_heweather_v7( $then, $style)
+{
+    $ret = '';
+    if (!is_array($then)) {
+        return "ERROR";
+    }
+    $cond_code = (int)($then['icon']);
+    switch($cond_code) {
+        case	100	:	//	晴
+        case	150	:	//	晴（夜）
+        case	102	:	//	少云
+        case	152	:	//	少云（夜）
+        case	201	:	//	平静
+        case	202	:	//	微风
+            $w_icon_str = 'wi-day-sunny';
+            break;
+        case	101	:	//	多云
+        case	151	:	//	多云（夜）
+        case	103	:	//	晴间多云
+        case	153	:	//	晴间多云（夜）
+            $w_icon_str = 'wi-day-cloudy-high';
+            break;
+        case	104	:	//	阴
+            $w_icon_str = 'wi-cloudy';
+            break;
+        case	200	:	//	有风
+            $w_icon_str = 'wi-cloudy';
+            break;
+        case	203	:	//	和风
+        case	204	:	//	清风
+            $w_icon_str = 'wi-day-light-wind';
+            break;
+        case	205	:	//	强风/劲风
+        case	206	:	//	疾风
+        case	207	:	//	大风
+        case	208	:	//	烈风
+            $w_icon_str = 'wi-day-windy';
+            break;
+        case	209	:	//	风暴
+        case	210	:	//	狂爆风
+        case	211	:	//	飓风
+            $w_icon_str = 'wi-strong-wind';
+            break;
+        case	212	:	//	龙卷风
+            $w_icon_str = 'wi-tornado';
+            break;
+        case	213	:	//	热带风暴
+            $w_icon_str = 'wi-hurricane';
+            break;
+        case	309	:	//	毛毛雨/细雨
+        case	300	:	//	阵雨
+        case	301	:	//	强阵雨        
+        case	350	:	//	阵雨（夜）
+        case	351	:	//	强阵雨（夜）
+            $w_icon_str = 'wi-showers';
+            break;
+        case	302	:	//	雷阵雨
+        case	303	:	//	强雷阵雨
+            $w_icon_str = 'wi-storm-showers';
+            break;
+        case	304	:	//	雷阵雨伴有冰雹
+            $w_icon_str = 'wi-hail';
+            break;
+        case	305	:	//	小雨
+        case	306	:	//	中雨
+        case    399 :   //  雨
+            $w_icon_str = 'wi-rain';
+            break;
+        case	307	:	//	大雨
+            $w_icon_str = 'wi-rain-mix';
+            break;
+        case	308	:	//	极端降雨
+        case	310	:	//	暴雨
+        case	311	:	//	大暴雨
+        case	312	:	//	特大暴雨
+            $w_icon_str = 'wi-raindrops';
+            break;
+        case	313	:	//	冻雨
+            $w_icon_str = 'wi-sleet';
+            break;
+        case	400	:	//	小雪
+        case	401	:	//	中雪
+        case	402	:	//	大雪
+        case	403	:	//	暴雪
+        case	404	:	//	雨夹雪
+        case	405	:	//	雨雪天气
+        case	406	:	//	阵雨夹雪
+        case	407	:	//	阵雪
+        case	456	:	//	阵雨夹雪（夜）
+        case	457	:	//	阵雪（夜）
+            $w_icon_str = 'wi-snow';
+            break;
+        case	500	:	//	薄雾
+        case	501	:	//	雾
+            $w_icon_str = 'wi-fog';
+            break;
+        case	502	:	//	霾
+            $w_icon_str = 'wi-smog';
+            break;
+        case	503	:	//	扬沙
+        case	504	:	//	浮尘
+            $w_icon_str = 'wi-dust';
+            break;
+        case	507	:	//	沙尘暴
+        case	508	:	//	强沙尘暴
+            $w_icon_str = 'wi-sandstorm';
+            break;
+        case	900	:	//	热
+            $w_icon_str = 'wi-hot';
+            break;
+        case	901	:	//	冷
+            $w_icon_str = 'wi-snowflake-cold';
+            break;
+        case	999	:	//	未知
+        default:
+            $w_icon_str = 'wi-na';
+            break;
+    }
+    $wind_str = '';
+    if ((int)$then['windSpeed'] > 38) {
+        $wind_icon_str = "from-".$then['wind360']."-deg";
+        $wind_str = $then['windDir'].$then['windScale']."级 ";
+    }
+    $ret = '<i class="wi '.$w_icon_str.' icon"></i>';
+    if ('notext'!=$style) {
+        $ret .= $then['text'];
+    }
+    if ( '' !== $wind_str) {
+        $ret .= '  <i class="wi wi-wind '.$wind_icon_str.'"></i> ';
+        if ('notext'!=$style) {
+            $ret .= $wind_str;
+        }
+    }
+    if ('notext'!=$style) {
+        $ret .= '  <i class="wi wi-thermometer"></i> ';
+        $ret .= $then['temp'].'&#8451;';
+    }
+    if ('plain' == $style)
+    {
+        $ret = $then['text'].$wind_str.$then['temp'].'&#8451;';
     }
     return $ret;
 }
