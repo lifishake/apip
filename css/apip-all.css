@@ -20,7 +20,32 @@
     font-display: swap;
   }
 
-  /*dou*/
+/*本地化字体*/
+@font-face{
+	font-family:'Noto Sans SC';	/*思源黑*/
+	src: url('../fonts/noto-sans.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+  }
+
+@font-face{
+  font-family:'Noto Serif SC';	/*思源宋*/
+  src: url('../fonts/noto-serif.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*lazyload*/
+img[data-unveil="true"] {
+    opacity: 0;
+    -webkit-transition: opacity .3s ease-in;
+    -moz-transition: opacity .3s ease-in;
+    -o-transition: opacity .3s ease-in;
+    transition: opacity .3s ease-in;
+}
+
 span.func-after,
 span.func-before {
                     font-family: monospace, monospace;
@@ -39,275 +64,6 @@ span.suffix {
 
 .album-photo img:last-child {
     margin-right:0;
-}
-.apip-item {
-    margin:2em auto 0.5em;
-    max-width: 800px;
-    text-align: left;
-    font-family: Helvetica, Arial, Calibri, Avenir, serif, 'Microsoft YaHei', SimHei, sans-serif;
-}
-.doulist-subject {
-    line-height:1.5;
-    overflow:hidden;
-    padding:13px;
-    border-top: 1px solid #e7e7e7;
-    border-bottom: 1px solid #e7e7e7;
-}
-
-.doulist-subject::before{
-    position: absolute;
-    content: '\f02e';
-    z-index: 1;
-    font-family: 'FontAwesome';
-    font-size: 1.5em;
-    width: 2em;
-    height: 2em;
-    left: -0.4em;
-    top: -0.65em;  
-    color: #f99b01;
-    text-shadow: 2px 3px 3px #b2b7b3;
-}
-
-.doulist-subject::after{
-    position: absolute;
-    content: '';
-    z-index: 1;
-    font-family: 'FontAwesome';
-    font-size: 1.5em;
-    width: 5em;
-    height: 2em;
-    right: 0.4em;
-    top: -0.65em;  
-    color: #F75C02;
-    text-shadow: 2px 3px 3px #b2b7b3;
-    text-align: right;
-}
-
-[class*="my-score-"]::before {
-    color: #f99b01;
-}
-
-.my-score-0:after {
-    content:"\f165";
-    color:#b2b7b3;
-}
-.my-score-1:after {
-  content:"\f123";
-  color:#F4E802;
-}
-.my-score-2:after {
-  content:"\f005";
-  color:#F4E802;
-}
-.my-score-3:after {
-  content:"\f005\f123";
-  color:#F2BE02;
-}
-.my-score-4:after {
-  content:"\f005\f005";
-  color:#F2BE02;
-}
-.my-score-5:after {
-  content:"\f005\f005\f123";
-  color:#f99b01;
-}
-.my-score-6:after {
-  content:"\f005\f005\f005";
-  color:#f99b01;
-}
-.my-score-7:after {
-  content:"\f005\f005\f005\f123";
-  color:#f99b01;
-}
-.my-score-8:after {
-  content:"\f005\f005\f005\f005";
-  color:#EF6D02;
-}
-.my-score-9:after {
-  content:"\f005\f005\f005\f005\f123";
-  color:#EF6D02;
-}
-.my-score-10:after {
-  content:"\f005\f005\f005\f005\f005";
-  color:#EF4502;
-}
-
-/*
-.doulist-subject::after {
-    left: -0.5em;
-    top: -0.5em;
-    color: #b2b7b3;    
-}
-*/
-
-.doulist-subject .apiplist-post {
-    float:left;
-    margin-right:20px;
-}
-
-.doulist-subject .apiplist-post a img {
-    box-shadow: 0 0 0 2px #666;
-}
-
-.doulist-subject .apiplist-score {
-    margin-right:20px;
-    font-size:36px;
-    max-width: 125px;
-    box-shadow:0 5px 15px -22px #FF783A;
-    position: absolute;
-    right:0;
-    line-height:1;
-}
-
-.apip-score-plus {
-    color:#CC6666;
-}
-
-.apip-score-minus{
-    color:#66CC93;
-}
-
-.apip-score-equal {
-    color:#969696;
-}
-
-.title a {
-    text-decoration:none!important;
-}
-.doulist-subject .title {
-    margin-bottom:6px;
-}
-.doulist-subject .rating {
-    margin:6px 0 4px 120px;
-    font-size:12px;
-}
-.doulist-subject .abstract {
-    margin-left:120px;
-    font-size:12px;
-}
-.doulist-subject .abstract-left {
-    margin-left:5px;
-    margin-bottom:0.5em;
-    font-size:12px;
-}
-.apip-item .mod {
-    color:inherit;
-    padding: 0 0 0 5px;
-    position:relative;
-    word-wrap:break-word;
-}
-.album-photo img {
-    margin-right: 2%;
-    max-width: 23.5%;
-}
-
-.allstardark:before {
-    font-family:"FontAwesome" !important;
-    font-size:inherit;
-    font-style:normal;
-    -webkit-font-smoothing: antialiased;
-    -webkit-text-stroke-width: 0.2px;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  .allstardark{position:relative;color:rgba(178,183,189,.3);display: inline-block;vertical-align: top;letter-spacing:2px;}
-  .allstardark:before{content:"\f006\f006\f006\f006\f006"}
-  .allstardark:hover{color:rgba(178,183,189,.8);}
-
-  [class*="dou-stars-"],
-  [class*="my-stars-"]{
-    position:absolute;
-    left:0;
-    height:18px;
-    overflow:hidden;
-  }
-
-  [class*="dou-stars-"]:before,[class*="my-stars"]:before {
-    font-family:"FontAwesome" !important;
-    font-size:inherit;
-    font-style:normal;
-    -webkit-font-smoothing: antialiased;
-    -webkit-text-stroke-width: 0.2px;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  [class*="dou-stars-"]:before {
-    color:#b2b7b3;
-  }  
-  [class*="my-stars"]:before {
-    color:#f99b01;
-  }
-
-  
-  .dou-stars-0:before,
-  .my-stars-0:before {
-      content:"";
-  }
-  .dou-stars-1:before,
-  .my-stars-1:before {
-    content:"\f123";
-  }
-  .dou-stars-2:before,
-  .my-stars-2:before {
-    content:"\f005";
-  }
-  .dou-stars-3:before,
-  .my-stars-3:before {
-    content:"\f005\f123";
-  }
-  .dou-stars-4:before,
-  .my-stars-4:before {
-    content:"\f005\f005";
-  }
-  .dou-stars-5:before,
-  .my-stars-5:before {
-    content:"\f005\f005\f123";
-  }
-  .dou-stars-6:before,
-  .my-stars-6:before {
-    content:"\f005\f005\f005";
-  }
-  .dou-stars-7:before,
-  .my-stars-7:before {
-    content:"\f005\f005\f005\f123";
-  }
-  .dou-stars-8:before,
-  .my-stars-8:before {
-    content:"\f005\f005\f005\f005";
-  }
-  .dou-stars-9:before,
-  .my-stars-9:before {
-    content:"\f005\f005\f005\f005\f123";
-  }
-  .dou-stars-10:before,
-  .my-stars-10:before {
-    content:"\f005\f005\f005\f005\f005";
-  }
-
-.rating_nums {
-  color:rgba(178,183,189,.8);
-  padding-left: 0.5em;
-}
-
-.abstract span,
-.abstract-left span {
-  display: block;
-}
-
-.abstract .feature {
-  font-family: apipicon;
-  font-size: 24px;
-  line-height: 28px;
-  letter-spacing: 4px;
-  color: #b2b7b3;
-}
-
-/*lazyload*/
-img[data-unveil="true"] {
-    opacity: 0;
-    -webkit-transition: opacity .3s ease-in;
-    -moz-transition: opacity .3s ease-in;
-    -o-transition: opacity .3s ease-in;
-    transition: opacity .3s ease-in;
 }
 
 /*tagcloud page*/

@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.35.2
+ * Version:     1.35.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -686,7 +686,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20211201', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20230608', true);
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
