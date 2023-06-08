@@ -20,23 +20,6 @@
     font-display: swap;
   }
 
-/*本地化字体*/
-@font-face{
-	font-family:'Noto Sans SC';	/*思源黑*/
-	src: url('../fonts/noto-sans.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-  }
-
-@font-face{
-  font-family:'Noto Serif SC';	/*思源宋*/
-  src: url('../fonts/noto-serif.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 /*lazyload*/
 img[data-unveil="true"] {
     opacity: 0;
