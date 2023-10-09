@@ -188,59 +188,60 @@ a.tagged6 {
 }
 
 /*pretty print*/
+pre .str { color: #fec243; } /* string  - eggyolk gold */
+pre .kwd { color: #8470FF; } /* keyword - light slate blue */
+pre .com { color: #32cd32; font-style: italic; } /* comment - green */
+pre .typ { color: #6ecbcc; } /* type - turq green */
+pre .lit { color: #d06; } /* literal - cherry red */
+pre .pun { color: #8B8970;  } /* punctuation - lemon chiffon4  */
+pre .pln { color: #f0f0f0; } /* plaintext - white */
+pre .tag { color: #9c9cff; } /* html/xml tag  (bluey)  */
+pre .htm { color: #dda0dd; } /* html tag  light purply*/
+pre .xsl { color: #d0a0d0; } /* xslt tag  light purply*/
+pre .atn { color: #46eeee; font-weight: normal;} /* html/xml attribute name  - lt turquoise */
+pre .atv { color: #EEB4B4; } /* html/xml attribute value - rosy brown2 */
+pre .dec { color: #3387CC; } /* decimal - blue */
+
 pre.prettyprint {
-    display: block;
-    background-color: #333;
-    text-shadow: none;
-    }
-pre .nocode {
-    background-color:none;
-    color: #000;
-    }
-pre .str {
-    color: #ffa0a0;
-    }
-pre .kwd {
-    color: #f0e68c;
-    font-weight: 700;
-    }
-pre .com {
-    color: #87ceeb;
-    }
-pre .typ {
-    color: #98fb98;
-    }
-pre .lit {
-    color: #cd5c5c;
-    }
-pre .pun {
-    color: #fff;
-    }
-pre .pln {
-    color: #fff;
-    }
-pre .tag {
-    color: #f0e68c;
-    font-weight: 700;
-    }
-pre .atn {
-    color: #bdb76b;
-    font-weight: 700;
-    }
-pre .atv {
-    color: #ffa0a0;
-    }
-pre.dec {
-    color: #98fb98;
-    }
-ol.linenums {
-    margin-top: 0;
-    margin-bottom: 0;
-    color: #AEAEAE;
-    }
-li.L0, li.L1, li.L2, li.L3, li.L5, li.L6, li.L7, li.L8 {
-    list-style-type: none;
-    }
+  font-family: Consolas, Arial, monospace, "Courier New";
+  font-size: 0.9375rem;
+  background-color: #0f0f0f;
+  border-radius: 8px;
+  border: 1px solid #888; 
+  text-shadow: none;
+  width: 95%;
+  margin: 1em auto;
+  padding: 1em;
+  white-space: pre-wrap;
+}
+
+pre.prettyprint a {
+   text-decoration:none;
+}
+
+code.prettyprint { 
+    font-family: Consolas, Arial, monospace, "Courier New";
+    padding: 0.5em 1em; 
+    border: 1px solid #888; 
+    text-shadow: none; 
+    border-radius: 8px;
+    width: 95%;
+    margin: 1em auto; 
+}
+code .str { color: #639B5C }  /* string content */
+code .lit { color: #639B5C }  /* a literal value */
+code .kwd { color: #D06353 }  /* a keyword */
+code .com { color: #9D9EA3 }  /* a comment */
+code .typ { color: #B6852E }  /* a type name */
+code .pun { color: #487CE0 }
+code .opn { color: #487CE0 }
+code .clo { color: #487CE0 }
+code .tag { color: #000 }  /* a markup tag name */
+code .atn { color: #000 }  /* a markup attribute name */
+code .atv { color: #487CE0 }  /* a markup attribute value */
+code .dec { color: #B6852E }  /* a declaration; a variable name */
+code .var { color: #B6852E }  /* a declaration; a variable name */
+code .fun { color: #D06353 }  /* a function name */
 
 /*quiz*/    
 .apipcommentquiz,

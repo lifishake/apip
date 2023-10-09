@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.35.4
+ * Version:     1.35.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -126,8 +126,7 @@ function apip_init()
     //0.13 替换human_time_diff函数中的英文单词
     add_filter( 'human_time_diff', 'apip_replaced_human_time_diff', 10, 1 );
     //0.14 改善代码在feed里的表现
-    add_filter('the_content_feed', 'apip_code_highlight') ;
-    add_filter('the_content_feed', 'so_handle_038', 199, 1);
+    add_filter('the_content_feed', 'apip_code_highlight', 199, 1) ;
     //0.15 移除后台界面的WP版本升级提示 -->因为会引起downgrade失败,所以改为有配置项的2.11
     //0.16 修改AdminBar
     add_action( 'wp_before_admin_bar_render', 'apip_admin_bar', 199 );
@@ -542,6 +541,7 @@ $options
     7.3     apip_achive_page            自定义归档页
 08.     比较复杂的设定
     8.1     apip_codehighlight_enable   代码高亮
+            available_codehighlight_tags    代码高亮的tag
     8.2     apip_lazyload_enable        LazyLoad
     8.3                                 结果集内跳转
     8.4.    notify_comment_reply        有回复时邮件提示
@@ -573,7 +573,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20220613' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20231009' );
     wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20200418", true);
     $css = '';
 
@@ -660,10 +660,15 @@ function apip_scripts()
         wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), "20191105", true);
     }
     //8.1
-    if ( /*is_single() &&*/ (in_category('code_share') || has_tag('testcode')) && apip_option_check('apip_codehighlight_enable') == 1 )
+    $agm = array();
+    if (isset($apip_options['available_codehighlight_tags'])&& trim($apip_options['available_codehighlight_tags'])!=="") {
+        $agm = explode(",", $apip_options['available_codehighlight_tags']);
+    } else {
+        $agm[] = "testcode";
+    }
+    if ((in_category('code_share') || has_tag($agm)) && apip_option_check('apip_codehighlight_enable') == 1 )
     {
         add_filter('the_content', 'apip_code_highlight') ;
-        add_filter('the_content', 'so_handle_038', 199, 1);
         wp_enqueue_script('apip-js-prettify', APIP_PLUGIN_URL . 'js/apip-prettify.js', array(), "20191101", true);
     }
     //8.2
@@ -1759,8 +1764,8 @@ function wch_stripslashes($code){
 }
 /**
  * 作用: 追加prettyprint风格
- * 来源: 自产
- * URL:
+ * 来源: prettyprint
+ * URL: https://github.com/mre/prettyprint
  */
 function apip_code_highlight($content) {
     $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
@@ -1772,13 +1777,6 @@ function apip_code_highlight($content) {
 function wch_stripaddr($code){
     $code = str_replace(array("&#038;","&amp;"), "&", $code); 
     return $code;
-}
-
-function so_handle_038($content) {
-    $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
-        return '<pre class=" prettyprint ">' . wch_stripaddr($matches[2]) . '</pre>';
-   }, $content);
-   return $result ;
 }
 
 //8.2 Lazyload相关

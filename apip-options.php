@@ -327,6 +327,9 @@ function apip_heavy_tools_render()
   ?>
   <span>    使用code_heighlight(js+css+content_filter)：</span>
   <input type='checkbox' name='apip_settings[apip_codehighlight_enable]' <?php checked( $options['apip_codehighlight_enable'], 1 ); ?> value='1'><br />
+  <span>    识别code highlight功能的tag（逗号分隔）:     </span>
+  <br />
+    <textarea rows='4' cols='40' name='apip_settings[available_codehighlight_tags]' ><?php echo htmlspecialchars(stripslashes($options['available_codehighlight_tags'])); ?></textarea>
   <span>    使用lazy_load(js+content_filter)：</span>
   <input type='checkbox' name='apip_settings[apip_lazyload_enable]' <?php checked( $options['apip_lazyload_enable'], 1 ); ?> value='1'><br />
     <span>    查询、归档页进入单页后，“上一页”、“下一页”在该范围内跳转(js)：</span>
