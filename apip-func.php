@@ -974,15 +974,15 @@ function apip_get_heweather( $style='', $post_id=0)
             $w_icon_str = 'wi-raindrops';
             break;
         case	313	:	//	冻雨
+        case	404	:	//	雨夹雪
+        case	405	:	//	雨雪天气
+        case	406	:	//	阵雨夹雪
             $w_icon_str = 'wi-sleet';
             break;
         case	400	:	//	小雪
         case	401	:	//	中雪
         case	402	:	//	大雪
         case	403	:	//	暴雪
-        case	404	:	//	雨夹雪
-        case	405	:	//	雨雪天气
-        case	406	:	//	阵雨夹雪
         case	407	:	//	阵雪
             $w_icon_str = 'wi-snow';
             break;
@@ -1116,17 +1116,17 @@ function apip_get_heweather_v7( $then, $style)
             $w_icon_str = 'wi-raindrops';
             break;
         case	313	:	//	冻雨
+        case	404	:	//	雨夹雪、
+        case	405	:	//	雨雪天气
+        case	406	:	//	阵雨夹雪
+        case	456	:	//	阵雨夹雪（夜）
             $w_icon_str = 'wi-sleet';
             break;
         case	400	:	//	小雪
         case	401	:	//	中雪
         case	402	:	//	大雪
         case	403	:	//	暴雪
-        case	404	:	//	雨夹雪
-        case	405	:	//	雨雪天气
-        case	406	:	//	阵雨夹雪
         case	407	:	//	阵雪
-        case	456	:	//	阵雨夹雪（夜）
         case	457	:	//	阵雪（夜）
             $w_icon_str = 'wi-snow';
             break;

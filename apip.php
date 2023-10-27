@@ -1384,7 +1384,7 @@ function hm_check_user ( $comment ) {
     $str_author_url = $comment['comment_author_url'];
     $str_author_email = '2b@pewae.com';
     $str_include = $apip_options['blocked_commenters'] ;
-    $str_replacement = "关键字【彪】" ;
+    $str_replacement = "癞皮狗" ;
     $show_random = 'false';
     $forbiddens = explode(',',$str_include);
     $f = 0 ;
