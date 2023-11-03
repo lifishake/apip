@@ -2073,7 +2073,6 @@ function apip_save_heweather ( $post )
     add_post_meta($post->ID, $meta_key, $weather, false);
 }
 
-
 function apip_heweather_field()
 {
     global $post;
