@@ -205,6 +205,7 @@ pre .dec { color: #3387CC; } /* decimal - blue */
 pre.prettyprint {
   font-family: Consolas, Arial, monospace, "Courier New";
   font-size: 0.9375rem;
+  color:#E0E0E0;
   background-color: #0f0f0f;
   border-radius: 8px;
   border: 1px solid #888; 

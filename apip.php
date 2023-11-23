@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.35.6
+ * Version:     1.35.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -335,11 +335,11 @@ function apip_init_actions()
     remove_action('wp_head',                            'feed_links_extra',                 3           );
     remove_action('wp_head',                            'rsd_link'                                      );
     remove_action('wp_head',                            'wlwmanifest_link'                              );
-    remove_action('wp_head',                            'adjacent_posts_rel_link_wp_head',  10,     0   );
+    remove_action('wp_head',                            'adjacent_posts_rel_link_wp_head',  10          );
     remove_action('wp_head',                            'wp_generator'                                  );
     remove_action('wp_head',                            'rest_output_link_wp_head'                      );
     remove_action('xmlrpc_rsd_apis',                    'rest_output_rsd'                               );
-    remove_action('template_redirect',                  'rest_output_link_header',          11,     0   );
+    remove_action('template_redirect',                  'rest_output_link_header',          11          );
     remove_action('wp_head',                            'wp_oembed_add_discovery_links'                 );
     remove_action('auth_cookie_malformed',              'rest_cookie_collect_status'                    );
     remove_action('auth_cookie_expired',                'rest_cookie_collect_status'                    );
@@ -350,7 +350,7 @@ function apip_init_actions()
     remove_action('user_request_action_confirmed',      '_wp_privacy_send_request_confirmation_notification', 12);
     remove_action('init',                               'wp_schedule_delete_old_privacy_export_files'   );
     remove_action('wp_privacy_delete_old_export_files', 'wp_privacy_delete_old_export_files'            );
-    remove_action('rest_api_init',                      'rest_api_default_filters',         10,     1   );
+    remove_action('rest_api_init',                      'rest_api_default_filters',         10,         );
     remove_action('rest_api_init',                      'register_initial_settings',        10          );
     remove_action('rest_api_init',                      'create_initial_rest_routes',       99          );
     remove_action('init',                               'rest_api_init'                                 );
@@ -413,10 +413,13 @@ function apip_init_actions()
         apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
     }*/
     //删除原来插入时的class
-    remove_action('media_upload_nextgen','media_upload_nextgen');
-    if (is_admin()){
-        add_action('media_upload_nextgen','apip_media_upload_nextgen');
+    if (has_action('media_upload_nextgen')) {
+        if (is_admin()){
+            remove_action('media_upload_nextgen','media_upload_nextgen');
+            add_action('media_upload_nextgen','apip_media_upload_nextgen');
+        }
     }
+    
 
     ////0A.2
     ////禁用4.4以后的embed功能
@@ -483,6 +486,10 @@ function apip_admin_init() {
 	
 	//9.3 postlist页增加post_tag的下拉过滤项
 	add_action( 'restrict_manage_posts', 'apip_add_post_tag_filter_ddl');
+
+    //9.4 后台增加显示今天要更新天气的贴。
+    add_action( 'wp_user_dashboard_setup', 'apip_add_dashboard_widget');
+	add_action( 'wp_dashboard_setup', 'apip_add_dashboard_widget');
 }
 
 /*
@@ -553,6 +560,7 @@ $options
     9.1                                 后台taglist增加private和draft计数列
 	9.2									post tag的slug转成utf-8
 	9.3									后台postlist增加post_tag筛选下拉框
+    9.4                                 后台显示今日待追加天气的post
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -573,7 +581,7 @@ function apip_scripts()
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20231009' );
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20231116' );
     wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20200418", true);
     $css = '';
 
@@ -707,7 +715,7 @@ function apip_admin_scripts() {
 function apip_remove_scripts()
 {
     global $wp_scripts;
-    if ( !is_array($wp_scripts) || empty($wp_scripts) || empty($wp_scripts->registered) )
+    if ( !is_object($wp_scripts) || empty($wp_scripts) || empty($wp_scripts->registered) )
         return;
     foreach ($wp_scripts->registered as $libs){
         $libs->src = str_replace('//ajax.googleapis.com', '//gapis.geekzu.org/ajax', $libs->src);
@@ -1403,7 +1411,7 @@ function hm_check_user ( $comment ) {
         $comment['comment_author'] = $str_replacement ;
         $comment['comment_author_email'] = $str_author_email ;
         if ( 'true' == $show_random ) {
-            $rand_posts = get_posts('numberposts=1&orderby=rand');
+            $rand_posts = get_posts(array('numberposts'=>1,'orderby'=>'rand'));
             $comment['comment_author_url'] = get_permalink($rand_posts[0]->ID);
         }
         else{
@@ -2443,6 +2451,46 @@ function apip_add_post_tag_filter_ddl($post_type) {
 	);
 	wp_dropdown_categories($dropdown_arg);
 }
+
+//9.4 后台显示还有多少的天气需要更新
+function apip_add_dashboard_widget() {
+    wp_add_dashboard_widget( 'dashboard_apip_today_weather', 'APIP Weather today', 'apip_today_weather_widget');
+}
+
+function apip_today_weather_widget() {
+    echo '<div id="apip-today-weather-widget">';
+    global $wpdb;
+    $sql = "SELECT ID FROM ".$wpdb->prefix."v_weather_tbd ";
+    $tmp = $wpdb->get_results($sql, ARRAY_A);
+    $totals = count($tmp);
+
+    $today = date('m-d');
+    $sql .= "  WHERE tdate = '$today' ORDER BY ID ASC ";
+    $ids = $wpdb->get_results($sql);
+    echo '<div id="lost-weathers" class="activity-block">';
+    echo '<h3>These need to be update.</h3><ul>';
+    if ( $ids) {
+        foreach ( $ids as $o_id ) {
+            $id =$o_id->ID;
+            $draft_or_post_title = _draft_or_post_title($id);
+            //$p = get_post($id);
+			$m_time_t = get_post_time('Y-m-d', false, $id, false);
+			printf(
+				'<li><span>%1$s</span> <a href="%2$s" aria-label="%3$s">%4$s</a></li>',
+				$m_time_t,
+				get_edit_post_link($id),
+				esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $draft_or_post_title ) ),
+				$draft_or_post_title
+			);
+        }
+    }
+    else {
+        echo '<li>Today is clearly.</li>';
+    }
+    printf('<li><b>%d</b> need to be updated.</li>', $totals);	
+	echo '</ul></div></div>';
+}
+
 
 /*                                          09终了                             */
 
