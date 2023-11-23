@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.35.7
+ * Version:     1.35.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2461,11 +2461,12 @@ function apip_today_weather_widget() {
     echo '<div id="apip-today-weather-widget">';
     global $wpdb;
     $sql = "SELECT ID FROM ".$wpdb->prefix."v_weather_tbd ";
-    $tmp = $wpdb->get_results($sql, ARRAY_A);
+    $tmp = $wpdb->get_results($sql, ARRAY_N);
     $totals = count($tmp);
 
-    $today = date('m-d');
-    $sql .= "  WHERE tdate = '$today' ORDER BY ID ASC ";
+    $today = date('n-j');
+    $sql .= "  WHERE tdate = '$today' COLLATE utf8mb4_unicode_ci ORDER BY ID ASC ";
+    
     $ids = $wpdb->get_results($sql);
     echo '<div id="lost-weathers" class="activity-block">';
     echo '<h3>These need to be update.</h3><ul>';
