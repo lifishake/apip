@@ -1046,6 +1046,7 @@ function apip_get_heweather( $style='', $post_id=0)
             $eng_str='rain';
             break;
         case	307	:	//	大雨
+        case    315 :   //  中到大雨
             $w_icon_str = 'wi-rain-mix';
             $eng_str='heavy-rain';
             break;
@@ -1216,6 +1217,7 @@ function apip_get_heweather_v7( $then, $style)
             $eng_str='rain';
             break;
         case	307	:	//	大雨
+        case    315 :   //  中到大雨
             $w_icon_str = 'wi-rain-mix';
             $eng_str='heavy-rain';
             break;
