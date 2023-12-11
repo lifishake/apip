@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.35.9
+ * Version:     1.36.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -290,12 +290,12 @@ function apip_init()
 
     //8.7 发帖天气
     //当作每篇文章都会存草稿.草稿转成公开的时刻为发表时刻
-    add_action( 'draft_to_publish','apip_save_heweather',99,1);
-    add_action( 'draft_to_private','apip_save_heweather',99,1);
-    add_action( 'auto-draft_to_publish','apip_save_heweather',99,1);
-    add_action( 'auto-draft_to_private','apip_save_heweather',99,1);
-    add_action( 'new_to_publish','apip_save_heweather',99,1);
-    add_action( 'new_to_private','apip_save_heweather',99,1);
+    //add_action( 'draft_to_publish','apip_save_heweather',99,1);
+    //add_action( 'draft_to_private','apip_save_heweather',99,1);
+    //add_action( 'auto-draft_to_publish','apip_save_heweather',99,1);
+    //add_action( 'auto-draft_to_private','apip_save_heweather',99,1);
+    //add_action( 'new_to_publish','apip_save_heweather',99,1);
+    //add_action( 'new_to_private','apip_save_heweather',99,1);
     
 	//8.10 特色图主颜色按钮
 	//必须在admin_init以前
@@ -2457,13 +2457,31 @@ function apip_add_dashboard_widget() {
     wp_add_dashboard_widget( 'dashboard_apip_today_weather', 'APIP Weather today', 'apip_today_weather_widget');
 }
 
+ /**
+ * 作用: 后台显示还有多少的天气需要更新--具体函数
+ * 来源: 自创
+ * 备注: 表是临时表
+ */
+/*
+SELECT `posts`.`ID` AS `ID`,`posts`.`post_date` AS `post_date`,`posts`.`post_title` AS `post_title`,CONCAT(MONTH(`posts`.`post_date`),'-',DAYOFMONTH(`posts`.`post_date`)) AS `tdate`
+FROM `posts`
+WHERE (1 AND (`posts`.`post_type` = 'post') 
+AND (`posts`.`post_status` = 'publish')
+AND (NOT(`posts`.`ID` IN (
+    SELECT `postmeta`.`post_id`
+    FROM `postmeta`
+    WHERE (`postmeta`.`meta_key` = 'apip_heweather')))))
+ORDER BY MONTH(`posts`.`post_date`), DAYOFMONTH(`posts`.`post_date`),`posts`.`post_date`
+*/
 function apip_today_weather_widget() {
     echo '<div id="apip-today-weather-widget">';
     global $wpdb;
     $sql = "SELECT ID FROM ".$wpdb->prefix."v_weather_tbd ";
     $tmp = $wpdb->get_results($sql, ARRAY_N);
     $totals = count($tmp);
-
+    $script_tz = date_default_timezone_get();
+    date_default_timezone_set('Asia/Shanghai');
+    $script_tz = date_default_timezone_get();
     $today = date('n-j');
     $sql .= "  WHERE tdate = '$today' COLLATE utf8mb4_unicode_ci ORDER BY ID ASC ";
     
