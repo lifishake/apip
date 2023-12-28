@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.36.0
+ * Version:     1.36.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -516,6 +516,7 @@ $options
     0.20                                改用户profile不需要邮件确认
     0.21                                设置chrome的标签颜色
     0.22                                移除后台画面的help
+    0.23                                禁止edit_lock
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -955,6 +956,30 @@ function apip_set_theme_color() {
 function apip_remove_admin_help( ) {
     get_current_screen()->remove_help_tabs();
 }
+
+//0.23 禁止edit_lock
+//来源:https://wordpress.stackexchange.com/questions/120179/how-to-disable-the-post-lock-edit-lock
+function apip_remove_post_locked() {
+    $current_post_type = get_current_screen()->post_type;   
+
+    // Disable locking for page, post and some custom post type
+    $post_types_arr = array(
+        'page',
+        'post',
+        'movie',
+        'book',
+        'game',
+        'album'
+    );
+
+    if(in_array($current_post_type, $post_types_arr)) {
+        add_filter( 'show_post_locked_dialog', '__return_false' );
+        add_filter( 'wp_check_post_lock_window', '__return_false' );
+        wp_deregister_script('heartbeat');
+    }
+}
+add_action('load-edit.php', 'apip_remove_post_locked');
+add_action('load-post.php', 'apip_remove_post_locked');
 
 /*                                          00终了                             */
 
@@ -2042,7 +2067,7 @@ function apip_convert_dou_array_to_string($data, $key, $name_key="name", $unknow
 
 function apip_save_heweather ( $post )
 {
-    $meta_key = 'apip_heweather';
+    $meta_key = 'Apip_Weather';
     global $apip_options;
     if($post->post_type != 'post') {
         return;
@@ -2075,9 +2100,27 @@ function apip_save_heweather ( $post )
         $cache = json_decode(wp_remote_retrieve_body($response),true);
     }
 
-    //$got = $cache["now"];
-    $weather["time"] = $cache["updateTime"];
-    $weather["result"] = $cache["now"];
+    $got = $cache["now"];
+    if ( !array_key_exists('windSpeed', $got) ||
+         !array_key_exists('wind360', $got) ||
+         !array_key_exists('windDir', $got) ||
+         !array_key_exists('windScale', $got) ||
+         !array_key_exists('icon', $got) ||
+         !array_key_exists('text', $got) ||
+         !array_key_exists('temp', $got) ||
+         !array_key_exists('obsTime', $got) ) {
+        return;
+    }
+    $tmpTime = str_replace(array("T","+08:00"), array(" ",""), $got["obsTime"]);
+    $weather["Time"] = $tmpTime;
+    $weather["Tmp"] = $got['temp'];
+    $weather["Txt"] = $got["text"];
+    $weather["Ico"] = $got["icon"];
+    $weather["WndScl"] = $got["windScale"];
+    $weather["WndDir"] = $got["windDir"];
+    $weather["WndDeg"] = $got["wind360"];
+    $weather["WndSpd"] = $got["windSpeed"];
+    
     add_post_meta($post->ID, $meta_key, $weather, false);
 }
 
@@ -2130,7 +2173,7 @@ function apip_heweather_retrieve($postid)
 function apip_weather_meta_box( $post ){
     if (get_post_type($post) != 'post') return false;
 
-    $value = get_post_meta($post->ID, 'apip_heweather', true);
+    $value = get_post_meta($post->ID, 'Apip_Weather', true);
     if ( empty($value) )
     {
         $str = 'none';
@@ -2163,7 +2206,7 @@ function apip_weather_manual_update(){
     /*注意，这个时候没有全局的$post！*/
     $post_id = $_GET['id'];
     $post = get_post($post_id);
-    delete_post_meta($post_id, 'apip_heweather');
+    delete_post_meta($post_id, 'Apip_Weather');
     apip_save_heweather($post);
     $str = apip_get_heweather('plain', $post_id);
     /*把取得的字符串再传给ajax的success，让它动态更新天气框*/
