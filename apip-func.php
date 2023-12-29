@@ -287,10 +287,13 @@ function apip_blanks($cnt) {
 function echo_option_item($item, $ind, $tail, $key){
     $item = maybe_unserialize($item);
     if (is_array($item)) {
+        $header = apip_blanks($ind).$key;
+        if (0 == $ind) {
+            $header = "<span style = 'color:#FFC020;'>$header</span>";
+        }
+        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         $ind++;
         $tail = $tail.".".$key;
-        $header = apip_blanks($ind).$key;
-        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         foreach ($item as $nkey => $value) {
             echo_option_item($value, $ind, $tail, $nkey);
         }
@@ -299,6 +302,9 @@ function echo_option_item($item, $ind, $tail, $key){
         printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, "@@@IS AN OBJECT!!!@@@", $tail);
     } else {
         $header = apip_blanks($ind).$key;
+        if (0 == $ind) {
+            $header = "<span style = 'color:#FFC020;'>$header</span>";
+        }
         printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
     }
 }
