@@ -294,9 +294,12 @@ function echo_option_item($item, $ind, $tail, $key){
         foreach ($item as $nkey => $value) {
             echo_option_item($value, $ind, $tail, $nkey);
         }
+    } elseif(is_object($item)) {
+        $header = apip_blanks($ind).$key;
+        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, "@@@IS AN OBJECT!!!@@@", $tail);
     } else {
         $header = apip_blanks($ind).$key;
-        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, $item, $tail);
+        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
     }
 }
 
