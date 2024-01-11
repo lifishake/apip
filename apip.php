@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.36.4
+ * Version:     1.36.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -464,9 +464,6 @@ function apip_header_actions()
 
 function apip_admin_init() {
 	/** 08  */
-	//8.7
-	//在后台update区域增加手动更新天气的checkbox
-    add_action( 'post_submitbox_misc_actions', 'apip_heweather_field' );
     //8.8 留言验证问题
     if( apip_option_check('apip_commentquiz_enable') ) {
         add_meta_box('apipcommentquiz', '留言验证问题', 'apip_commentquiz_meta_box', 'post', 'side', 'high');
@@ -474,7 +471,13 @@ function apip_admin_init() {
 	//增加ajax回调函数
 	add_action( 'wp_ajax_apip_accept_color', 'apip_accept_color' );
 	add_action( 'wp_ajax_apip_new_thumbnail_color', 'apip_new_thumbnail_color' );
+    //8.7
 	add_action( 'wp_ajax_apip_weather_manual_update', 'apip_weather_manual_update' );
+
+    //8.11
+	//在后台update区域增加不更新gmt的checkbox
+    add_action( 'post_submitbox_misc_actions', 'modify_no_gmt_field' );
+    add_filter( 'wp_insert_post_data', 'apip_adjust_modified_date_update', 10, 2 );
 
 	/** 09  */
     //9.1 后台taglist增加private和draft计数列
@@ -557,6 +560,7 @@ $options
     8.8     apip_commentquiz_enable     回复前答题
     8.9     apip_title_hex_meta_box     手动将标题转换成unicode值的按钮
     8.10    apip_colorthief_meta_box    取特色图片主色调相关内容
+    8.11    apip_adjust_modified_date_update 在后台update区域增加不更新gmt的checkbox
 09.     后台维护相关
     9.1                                 后台taglist增加private和draft计数列
 	9.2									post tag的slug转成utf-8
@@ -2124,36 +2128,35 @@ function apip_save_heweather ( $post )
     add_post_meta($post->ID, $meta_key, $weather, false);
 }
 
-function apip_heweather_field()
+//8.11
+//在后台update区域增加不更新gmt的checkbox
+/**
+* 作用: 在后台显示一个不更新修改时间的checkbox。
+* 来源: 自作
+*/
+function modify_no_gmt_field()
 {
     global $post;
 
     if (get_post_type($post) != 'post') return false;
-    $str = apip_get_heweather();
 
     ?>
         <div class="misc-pub-section">
-            <label><input type="checkbox"<?php echo ($check==1 ? ' checked="checked"' : null) ?> value="1" name="Apip_Weather" />和天气：<?php echo $str;  ?></label>
+            <label><input type="checkbox"<?php echo ' unchecked '; ?> value="1" name="keep_modified_gmt" />不更新修改时间</label>
         </div>
     <?php
 }
-
-add_action( 'save_post', 'apip_heweather_retrieve');
-
-function apip_heweather_retrieve($postid)
-{
-    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
-
-    if ( !current_user_can( 'edit_page', $postid ) ) return false;
-
-    if (!isset($_POST)) return false;
-
-    if(empty($postid) || !isset($_POST['post_type']) || $_POST['post_type'] != 'post' ) return false;
-
-    if(isset($_POST['Apip_Weather'])){
-        delete_post_meta($postid, 'Apip_Weather');
-        apip_save_heweather(get_post($postid));
+/**
+* 作用: 不更新修改时间的钩子函数
+* 来源: 自作
+* 资料：https://wordpress.stackexchange.com/questions/237878/how-to-prevent-wordpress-from-updating-the-modified-time
+*/
+function apip_adjust_modified_date_update( $new, $old ) {
+    if(isset($_POST['keep_modified_gmt'])){
+        $new['post_modified'] = $old['post_modified'];
+        $new['post_modified_gmt'] = $old['post_modified_gmt'];
     }
+    return $new;
 }
 
 function apip_weather_meta_box( $post ){

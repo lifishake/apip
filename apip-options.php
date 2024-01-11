@@ -581,6 +581,11 @@ function apip_check_rubbish_options_field_render() {
       "widget_apip_widget_hook_list"=>"",
       "category_children"=>"",
       "_transient_doing_cron"=>"",
+      "uninstall_plugins"=>"", //记录插件反安装处理
+      "widget_historypostontheday"=>"",
+      "widget_recentmodifyed"=>"",
+      "theme_mods_contango"=>"",
+      
     );
     $default_options["theme_mods_".get_stylesheet()]="";
     $arrnew = array_diff_key($arrnew, $default_options);

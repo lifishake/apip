@@ -236,6 +236,7 @@ function get_ganzhi($year, $month, $day) {
 */
 function is_cristian_festivel($month, $day, $w) {
     $chistian_festivals=array(
+        "5_1_5"=>"无裤节",
         "5_2_0"=>"母亲节",
         "6_3_0"=>"父亲节",
         "7_3_1"=>"海之日",
