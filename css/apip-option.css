@@ -48,3 +48,8 @@ textarea{
     padding:5px 10px;
     /*border-left: 1px solid #E6E8EA;*/
 }
+
+select.apip-selector {
+  line-height: 28px;
+  height: 74px;
+}

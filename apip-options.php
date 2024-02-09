@@ -21,6 +21,7 @@ function apip_add_admin_menu(  ) {
 function apip_settings_init(  ) {
 
   register_setting( 'apip_option_tab', 'apip_settings' );
+  register_setting( 'apip_uploader_tab', 'uploader_options' );
 
   add_settings_section(
   'apip_pluginPage_section',
@@ -28,6 +29,13 @@ function apip_settings_init(  ) {
   'apip_settings_section_callback',
   'apip_option_tab'
   );
+
+  add_settings_section(
+    'apip_uploader_section',
+    'APIP文件上传',
+    'apip_settings_section_callback',
+    'apip_uploader_tab'
+    );
 
   add_settings_section(
   'apip_cleaner_section',
@@ -118,6 +126,15 @@ function apip_settings_init(  ) {
   'apip_option_tab',
   'apip_pluginPage_section'
   );
+
+  add_settings_field(
+  'uploader_options',
+  '上传目录',
+  'apip_uploader_options_field_render',
+  'apip_uploader_tab',
+  'apip_uploader_section'
+  );
+
    add_settings_field(
   'check_rubbish_options',
   '检查后台option表',
@@ -359,6 +376,60 @@ function apip_local_widgets_render()
   <?php
 }
 
+function apip_uploader_options_field_render()
+{
+  $options = get_option( 'apip_settings' );
+  $nonce = wp_create_nonce('gallery-upload');
+  $dirs = scandir(APIP_GALLERY_DIR, 1);
+  $dest_dirs =array();
+  $toyear = date('Y');
+  $last_year = $toyear - 1;
+  foreach ($dirs as $dir) {
+    if ("." === $dir || ".." === $dir) {
+      continue;
+    }
+    if (!is_dir(APIP_GALLERY_DIR.$dir)) {
+      continue;
+    }
+    if (strstr($dir, 'sucai')) {
+      if (strstr($dir, strval($toyear)) || strstr($dir, strval($last_year))) {
+        $dest_dirs[] = $dir;
+      }
+    } else {
+      $dest_dirs[] = $dir;
+    }
+  }
+  ?>
+    <input type="file" name="files" id="upload_files" multiple="true" accept=".png, .jpg, .jpeg, .gif">
+    <select id='apip_upload_destination_paths' size='<?php echo sizeof($dest_dirs); ?>' class='apip-selector'>
+    <?php 
+      foreach($dest_dirs as $dir) {
+        printf('<option value = "%1$s">%2$s</option>', $dir, $dir);
+      }
+    ?>
+    </select><br />
+    <button class='button' type='button' id='image_upload_btn' wpnonce='<?php echo $nonce; ?>'>Upload</button>
+    <label id='image_upload_status'>...</label>
+  <?php
+}
+
+function upload_user_file( $file = array(), $path ) {
+  if(!empty($file)) 
+  {
+
+      $upload_dir=$path;
+      $uploaded=move_uploaded_file($file['tmp_name'], $upload_dir.$file['name']);
+      if($uploaded) 
+      {
+          echo "uploaded successfully ";
+
+      }else
+      {
+          echo "some error in upload " ;print_r($file['error']);  
+      }
+  }
+}
+
 function apip_settings_section_callback(  ) {
 
   echo '<span>一些基本设定项目，抄自多个插件</span>';
@@ -383,6 +454,7 @@ function apip_options_page(  ) {
 
             <h2 class="nav-tab-wrapper">
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_option" class="nav-tab <?php echo $active_tab == 'tab_option' ? 'nav-tab-active' : ''; ?>">基本功能</a>
+                <a href="?page=<?php echo __FILE__;?>&tab=tab_uploader" class="nav-tab <?php echo $active_tab == 'tab_uploader' ? 'nav-tab-active' : ''; ?>">上传工具</a>
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_cleaner" class="nav-tab <?php echo $active_tab == 'tab_cleaner' ? 'nav-tab-active' : ''; ?>">清理工具</a>
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_extra" class="nav-tab <?php echo $active_tab == 'tab_extra' ? 'nav-tab-active' : ''; ?>">实验台</a>
             </h2>
@@ -395,6 +467,10 @@ function apip_options_page(  ) {
         do_settings_sections( 'apip_option_tab' );
         submit_button();
         break;
+      case 'tab_uploader':
+          settings_fields( 'apip_uploader_tab' );
+          do_settings_sections( 'apip_uploader_tab' );
+          break;
       case 'tab_cleaner':
         settings_fields( 'apip_cleaner_tab' );
         do_settings_sections( 'apip_cleaner_tab' );
@@ -434,7 +510,7 @@ function apip_test_field_render() {
 //https://wp-kama.com/1609/wordpress-options-list
 function apip_check_rubbish_options_field_render() {
     ?>
-    <span>TODO</span>
+    <span>配置项目</span>
     <?php
     $alloptions = wp_load_alloptions();
     $registered_settings = get_registered_settings();
@@ -589,6 +665,6 @@ function apip_check_rubbish_options_field_render() {
     );
     $default_options["theme_mods_".get_stylesheet()]="";
     $arrnew = array_diff_key($arrnew, $default_options);
-    apip_debug_page($arrnew ,"ccccccccc");
+    apip_maintenance_page($arrnew);
 }
 ?>

@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.36.5
+ * Version:     1.36.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -493,6 +493,13 @@ function apip_admin_init() {
     //9.4 后台增加显示今天要更新天气的贴。
     add_action( 'wp_user_dashboard_setup', 'apip_add_dashboard_widget');
 	add_action( 'wp_dashboard_setup', 'apip_add_dashboard_widget');
+
+    //9.5 后台维护option表
+    add_action( 'wp_ajax_apip_db_maintain', 'apip_db_maintain' );
+
+    //9.6 图片上传
+    add_action('wp_ajax_apip_upload_image', 'apip_upload_image');
+    add_action('wp_ajax_nopriv_apip_upload_image','apip_upload_image');
 }
 
 /*
@@ -566,6 +573,8 @@ $options
 	9.2									post tag的slug转成utf-8
 	9.3									后台postlist增加post_tag筛选下拉框
     9.4                                 后台显示今日待追加天气的post
+    9.5                                 后台维护option表
+    9.6                                 后台上传图片功能
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -701,10 +710,10 @@ function apip_scripts()
 function apip_admin_scripts() {
     global $apip_options;
     wp_enqueue_style( 'wp-color-picker' );
-    wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css' );
-    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css' );
+    wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), '20240209' );
+    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20240209' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20230608', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240209', true);
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
@@ -725,7 +734,7 @@ function apip_remove_scripts()
     foreach ($wp_scripts->registered as $libs){
         $libs->src = str_replace('//ajax.googleapis.com', '//gapis.geekzu.org/ajax', $libs->src);
         //fonts.gmirror.org
-        }
+    }
     if ( !is_admin() )
     {
         wp_dequeue_script( 'photocrati_ajax' );
@@ -806,6 +815,7 @@ function apip_quicktags()
     <script type="text/javascript" charset="utf-8">
         QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
         QTags.addButton( 'eg_mysup', '引文', '[mysup sup_content="', '" /]', 'p' );
+        QTags.addButton( 'eg_any', 'any', any_callback );
     </script>
 <?php
 }
@@ -2487,6 +2497,35 @@ function apip_add_post_tag_filter_ddl($post_type) {
 //9.4 后台显示还有多少的天气需要更新
 function apip_add_dashboard_widget() {
     wp_add_dashboard_widget( 'dashboard_apip_today_weather', 'APIP Weather today', 'apip_today_weather_widget');
+}
+
+//9.5 维护页面的ajax处理
+function apip_db_maintain() {
+    if(!isset($_POST['id']))
+    {
+        return;
+    }
+    $key = $_POST['id'];
+    $nonce = "maintain-do-".$key;
+    if (!wp_verify_nonce($_POST['nonce'], $nonce)){
+        return;
+    }
+    delete_option ($key);
+}
+
+//9.6 上传图片的ajax处理
+function apip_upload_image() {
+    if (!wp_verify_nonce($_POST['nonce'], 'gallery-upload')){
+        return;
+    }
+    $dest_path = $_POST['dest_path'];
+    foreach ($_FILES as $file) {
+        $f_name = $file['name'];
+        $f_disk_name = $file['tmp_name'];
+        $dest = APIP_GALLERY_DIR.$dest_path."/".$f_name;
+        move_uploaded_file($f_disk_name, $dest);
+    }
+    
 }
 
  /**

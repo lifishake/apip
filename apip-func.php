@@ -289,12 +289,20 @@ function echo_option_item($item, $ind, $tail, $key){
     $item = maybe_unserialize($item);
     if (is_array($item)) {
         $header = apip_blanks($ind).$key;
-        if (0 == $ind) {
-            $header = "<span style = 'color:#FFC020;'>$header</span>";
+        if (0 == $ind) {           
+            printf('<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
+                    <td><button class="button"  type="button" name="apip_maintain_do" id="%1$s" wpnonce="%3$s">Delete</button></td>
+                    </tr>', 
+                    $key,
+                    admin_url('admin-post.php'),
+                    wp_create_nonce('maintain-do-'.$key)
+                );
+
+        } else {
+            printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         }
-        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         $ind++;
-        $tail = $tail.".".$key;
+        $tail .= $key;
         foreach ($item as $nkey => $value) {
             echo_option_item($value, $ind, $tail, $nkey);
         }
@@ -304,9 +312,18 @@ function echo_option_item($item, $ind, $tail, $key){
     } else {
         $header = apip_blanks($ind).$key;
         if (0 == $ind) {
-            $header = "<span style = 'color:#FFC020;'>$header</span>";
+            printf('<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
+                    <td>%4$s<button class="button"  type="button" name="apip_maintain_do" id="%1$s" wpnonce="%3$s">Delete</button></td>
+                    </tr>', 
+                    $key,
+                    admin_url('admin-post.php'),
+                    wp_create_nonce('maintain-do-'.$key),
+                    esc_html($item),
+                );
+        } else {
+            printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
         }
-        printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
+        
     }
 }
 
@@ -317,11 +334,22 @@ function echo_option_item($item, $ind, $tail, $key){
 function apip_debug_page($val, $name)
 {
     echo count($val);
-    echo "</td></tr>";
+    echo $name;
+}
+
+/*
+ * 作用: 显示option维护页面
+ * 来源: 自产
+*/
+function apip_maintenance_page($val)
+{
+    echo count($val);
+    echo "</td><td>操作</td></tr>";
     foreach ($val as $key => $value) {
         echo_option_item($value, 0, "", $key);
     }
 }
+
 
 /*
  * 作用: 根据节气编号取节气日期（1900-2100）

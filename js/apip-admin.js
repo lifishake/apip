@@ -62,8 +62,6 @@ function any_callback(element, canvas, ed){
     canvas.focus();
 }
 
-QTags.addButton( 'eg_any', 'any', any_callback );
-
 function rgb_to_hex_string(rgb_array) {
     var hex_string = '';
     for( var i = 0; i < rgb_array.length; i++) {
@@ -147,6 +145,67 @@ jQuery(document).ready(function($) {
 				}
 			}
 		});
+    })
+    $('button[name="apip_maintain_do"]').click(function(){
+        var parent = $(this).parent();
+        var mybar = parent.prev();
+        var data = {
+            action: 'apip_db_maintain',
+            nonce: this.getAttribute('wpnonce'),
+            id:this.getAttribute('id'),
+		};
+        $.ajax({
+            url: ajaxurl,
+			type: 'POST',
+            data: data,
+            beforeSend: function () {
+				mybar[0].textContent="删除中...";
+			},
+            success: function (response) {
+                mybar[0].textContent="已删除";
+            },
+            error: function() {
+                mybar[0].textContent="异常";
+			},
+        });
+    })
+    $("#image_upload_btn").click(function(){        
+        var files = $("#upload_files")[0].files;
+        var wpnonce = this.getAttribute('wpnonce');
+        var i, str_disp="";
+        var fd = new FormData();
+        var dest_path = $('#apip_upload_destination_paths').find(":selected").val();
+        fd.append('action', 'apip_upload_image');
+               
+        for(i=0; i< files.length; ++i) {
+            if (i > 0) {
+                str_disp += " , ";
+            }
+            fd.append('file_'+i, files[i]);
+            str_disp += files[i].name;
+        }
+        fd.append('file_count',i);
+        fd.append('nonce', wpnonce);
+        fd.append('dest_path', dest_path);
+        
+        $.ajax({
+            url: ajaxurl,
+			type: 'POST',
+            data: fd,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $("#image_upload_status").text(str_disp)
+            },
+            error: function() {
+                /*
+                var id = '#image_upload_status';
+                jQuery(id).html('');
+                jQuery(id).append(fd);
+                resetvalues();
+                */
+			},
+        });
     })
 })
 
