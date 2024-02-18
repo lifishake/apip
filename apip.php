@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.36.6
+ * Version:     1.36.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -713,7 +713,7 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), '20240209' );
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20240209' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240209', true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240218', true);
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
@@ -2516,7 +2516,8 @@ function apip_db_maintain() {
 //9.6 上传图片的ajax处理
 function apip_upload_image() {
     if (!wp_verify_nonce($_POST['nonce'], 'gallery-upload')){
-        return;
+        wp_send_json_error('invalid nonce.');
+        die();
     }
     $dest_path = $_POST['dest_path'];
     foreach ($_FILES as $file) {
@@ -2524,8 +2525,38 @@ function apip_upload_image() {
         $f_disk_name = $file['tmp_name'];
         $dest = APIP_GALLERY_DIR.$dest_path."/".$f_name;
         move_uploaded_file($f_disk_name, $dest);
+        if ('wptm_utils' === $dest_path) {
+            $upload_dir = wp_upload_dir();
+            $basedir = $upload_dir['basedir'];
+            $thumbs_dir = implode(DIRECTORY_SEPARATOR, array($basedir, 'ngg_featured'));
+            $target_path = path_join($thumbs_dir, $f_name);
+            if (@file_exists($target_path)) {
+                wp_send_json_error('got same name.');
+                continue;
+            }
+            $target_dir = dirname($target_path);
+            if (!@is_dir($target_dir)) {
+                wp_mkdir_p($target_dir);
+            }
+            @copy($dest, $target_path);
+            $filetype = wp_check_filetype( basename( $dest ), null );
+            $guid = implode(DIRECTORY_SEPARATOR, array($upload_dir['base_url'], 'ngg_featured', $f_name));
+            $attachment = array(
+                'guid'           => $guid,
+                'post_mime_type' => $filetype['type'],
+                'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $f_name ) ),
+                'post_content'   => 'apip upload '.basename( $f_name ),
+                'post_status'    => 'attachment',
+                'post_parent'    => 0,
+            );
+            
+            $attach_id = wp_insert_attachment( $attachment, $target_path, 0);
+            $attach_data = wp_generate_attachment_metadata( $attach_id, $target_path);
+            wp_update_attachment_metadata( $attach_id, $attach_data );
+        }
     }
-    
+    wp_send_json_success();
+    die();
 }
 
  /**

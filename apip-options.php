@@ -413,23 +413,6 @@ function apip_uploader_options_field_render()
   <?php
 }
 
-function upload_user_file( $file = array(), $path ) {
-  if(!empty($file)) 
-  {
-
-      $upload_dir=$path;
-      $uploaded=move_uploaded_file($file['tmp_name'], $upload_dir.$file['name']);
-      if($uploaded) 
-      {
-          echo "uploaded successfully ";
-
-      }else
-      {
-          echo "some error in upload " ;print_r($file['error']);  
-      }
-  }
-}
-
 function apip_settings_section_callback(  ) {
 
   echo '<span>一些基本设定项目，抄自多个插件</span>';

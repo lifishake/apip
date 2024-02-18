@@ -194,8 +194,15 @@ jQuery(document).ready(function($) {
             data: fd,
             contentType: false,
             processData: false,
+            beforeSend: function () {
+				$("#image_upload_status").text("...");
+			},
             success: function (response) {
-                $("#image_upload_status").text(str_disp)
+                if (response.success) {
+                    $("#image_upload_status").text(str_disp);
+                } else {
+                    $("#image_upload_status").text(response.data);
+                }
             },
             error: function() {
                 /*
