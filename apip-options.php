@@ -12,6 +12,8 @@ add_action( 'admin_init', 'apip_settings_init' );
 function apip_add_admin_menu(  ) {
   $myicon = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB5PSIwIiB4PSIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSLlnJblsaRfMSIgdmVyc2lvbj0iMS4xIiB3aWR0aD0iMTI4cHgiIGhlaWdodD0iMTI4cHgiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiBzdHlsZT0id2lkdGg6MTAwJTtoZWlnaHQ6MTAwJTtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsIDI1NSwgMjU1KTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48ZyBjbGFzcz0ibGRsLXNjYWxlIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo1MCUgNTAlIDBweDt0cmFuc2Zvcm06cm90YXRlKDBkZWcpIHNjYWxlKDAuOCk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PHBhdGggZD0iTTQyLjQgMTBoMzYuNHYxNC4zSDQyLjR6IiBmaWxsPSIjMzMzIiBzdHlsZT0iZmlsbDpyZ2IoNTEsIDUxLCA1MSk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PC9wYXRoPg0KPHBhdGggZmlsbD0iIzMzMyIgZD0iTTQxLjcgNDguM2wtMTIuNSA4LjNjLS40LjMtLjguNi0xLjMuOS4xLjEuMi4xLjMuMi4zLjIuNS40LjguNi40LjMuNy42IDEuMS45LjMuMi41LjUuOC43LjMuMy43LjYgMSAxIC4zLjIuNS41LjcuOC4zLjMuNi43IDEgMSAuMi4zLjUuNS43LjguMy40LjYuNy45IDEuMS4yLjMuNC41LjcuOGwuOSAxLjJjLjIuMy40LjUuNi44LjMuNC42LjkuOSAxLjMuMi4yLjMuNS41LjcuNC43LjggMS4zIDEuMiAyIDAgLjEuMS4yLjEuMi40LjcuNyAxLjMgMSAyIC4xLjMuMi41LjMuOC4yLjUuNCAxIC42IDEuNC4xLjMuMi42LjQuOS4yLjUuMy45LjUgMS40LjEuMy4yLjcuMyAxIC4xLjQuMy45LjQgMS4zLjEuMy4yLjcuMyAxIC4xLjQuMi45LjMgMS40LjEuMy4yLjcuMiAxIC4xLjUuMi45LjMgMS40LjEuMy4xLjcuMiAxIC4xLjUuMSAxIC4yIDEuNCAwIC4zLjEuNy4xIDF2LjNjMS41LS41IDMtMS4yIDQuMy0yLjFsMTQtOS4zYzAtLjItLjEtLjMtLjEtLjUtLjEtLjItLjEtLjUtLjItLjdsLS4zLTEuMmMwLS4yLS4xLS41LS4xLS43LS4xLS40LS4xLS45LS4yLTEuMyAwLS4yLS4xLS40LS4xLS42LS4xLS42LS4xLTEuMy0uMS0xLjkgMC0uNyAwLTEuMy4xLTIgMC0uMi4xLS40LjEtLjYgMC0uNC4xLS45LjItMS4zIDAtLjMuMS0uNS4yLS43LjEtLjQuMS0uOC4yLTEuMS4xLS4zLjEtLjUuMi0uOC4xLS40LjItLjcuMy0xLjEuMS0uMy4yLS41LjMtLjguMS0uMy4yLS43LjQtMSAuMS0uMy4yLS41LjQtLjguMS0uMy4zLS42LjUtLjkuMS0uMi4zLS41LjQtLjcuMi0uMy4zLS42LjUtLjkuMi0uMi4zLS41LjUtLjcuMi0uMy40LS42LjYtLjguMi0uMi4zLS40LjUtLjcuMi0uMy40LS41LjctLjhsLjYtLjYuNy0uNy42LS42Yy4zLS4yLjUtLjUuOC0uNy4yLS4yLjUtLjQuNy0uNS4zLS4yLjUtLjQuOC0uNi4yLS4yLjUtLjMuNy0uNS4zLS4yLjYtLjQuOS0uNS4zLS4yLjUtLjMuOC0uNC4zLS4yLjYtLjMuOS0uNS4zLS4xLjUtLjMuOC0uNC4zLS4xLjYtLjMuOS0uNGwuOS0uM2MuMSAwIC4zLS4xLjQtLjFWMjcuNEg0Mi40VjQ3YzAgLjYtLjIgMS4xLS43IDEuM3oiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8cGF0aCBmaWxsPSIjMzMzIiBkPSJNNzguOSA1NC42di0zLjJjLS4zLjEtLjUuMi0uOC4zbC0uNi4zYy0uNC4yLS43LjMtMSAuNS0uMS4xLS4zLjEtLjQuMi0uNS4zLS45LjYtMS40LjktLjEuMS0uMi4yLS4zLjItLjMuMi0uNy41LTEgLjctLjIuMS0uMy4zLS41LjQtLjMuMi0uNS40LS44LjdsLS41LjUtLjcuNy0uNS41Yy0uMi4yLS40LjUtLjYuNy0uMS4yLS4zLjQtLjQuNi0uMi4yLS40LjUtLjUuNy0uMS4yLS4zLjQtLjQuNi0uMi4zLS4zLjUtLjUuOGwtLjMuNmMtLjEuMy0uMy41LS40LjgtLjEuMi0uMi40LS4zLjctLjEuMy0uMi42LS4zLjgtLjEuMi0uMi40LS4yLjdsLS4zLjljLS4xLjItLjEuNC0uMi43LS4xLjMtLjEuNi0uMiAxIDAgLjItLjEuNC0uMS42LS4xLjQtLjEuNy0uMSAxLjEgMCAuMiAwIC40LS4xLjUgMCAuNi0uMSAxLjEtLjEgMS43IDAgLjUgMCAxLjEuMSAxLjZ2LjRjMCAuNC4xLjguMiAxLjIgMCAuMSAwIC4zLjEuNC4xLjUuMi45LjMgMS40bDIuMS0xLjRjNi43LTQuNCAxMC43LTExLjggMTAuNy0xOS44eiIgc3R5bGU9ImZpbGw6cmdiKDUxLCA1MSwgNTEpO2FuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjwvcGF0aD4NCjxwYXRoIGZpbGw9IiMzMzMiIGQ9Ik0yNC4yIDgxLjljMy45IDUuOSAxMSA4LjkgMTcuOSA3Ljl2LS42YzAtLjQtLjEtLjctLjEtMS4xIDAtLjQtLjEtLjgtLjItMS4zIDAtLjMtLjEtLjctLjItMS0uMS0uNC0uMS0uOC0uMi0xLjItLjEtLjMtLjEtLjctLjItMWwtLjMtMS4yYy0uMS0uMy0uMi0uNy0uMy0xLS4xLS40LS4yLS44LS40LTEuMmwtLjMtLjljLS4xLS40LS4zLS44LS41LTEuM2wtLjMtLjljLS4yLS41LS40LS45LS42LTEuNC0uMS0uMi0uMi0uNS0uMy0uNy0uMy0uNy0uNi0xLjMtMS0xLjkgMCAwIDAtLjEtLjEtLjEtLjQtLjctLjctMS4zLTEuMS0xLjktLjEtLjItLjMtLjQtLjQtLjYtLjMtLjQtLjUtLjgtLjgtMS4zLS4yLS4yLS40LS41LS41LS43LS4zLS40LS41LS43LS44LTEuMS0uMi0uMy0uNC0uNS0uNi0uNy0uMy0uMy0uNi0uNy0uOS0xLS4yLS4yLS40LS41LS43LS43bC0uOS0uOS0uNy0uNy0uOS0uOWMtLjMtLjItLjUtLjUtLjgtLjctLjMtLjMtLjctLjYtMS0uOC0uMy0uMi0uNS0uNC0uOC0uNi0uMi0uMS0uMy0uMi0uNS0uNC01LjQgNS45LTYuMSAxNS0xLjUgMjEuOXoiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8bWV0YWRhdGEgeG1sbnM6ZD0iaHR0cHM6Ly9sb2FkaW5nLmlvL3N0b2NrLyIgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjxkOm5hbWUgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPnNvY2tzPC9kOm5hbWU+DQoNCg0KPGQ6dGFncyBzdHlsZT0iYW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+c29ja3Msc3RvY2tpbmdzLGJyZWVjaGVzLHdlYXI8L2Q6dGFncz4NCg0KDQo8ZDpsaWNlbnNlIHN0eWxlPSJhbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID5ieTwvZDpsaWNlbnNlPg0KDQoNCjxkOnNsdWcgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjZidDF3bTwvZDpzbHVnPjwvbWV0YWRhdGE+PC9nPjwhLS0gZ2VuZXJhdGVkIGJ5IGh0dHBzOi8vbG9hZGluZy5pby8gLS0+PC9zdmc+";
   add_menu_page( 'APIP设置', 'APIP设置', 'manage_options', __FILE__, 'apip_options_page', 'data:image/svg+xml;base64,' . $myicon );
+  add_submenu_page(__FILE__, 'APIP上传工具', 'APIP上传工具', 'manage_options', __FILE__.'&tab=tab_uploader', 'apip_options_page');
+  add_submenu_page(__FILE__, 'APIP清理工具', 'APIP清理工具', 'manage_options', __FILE__.'&tab=tab_cleaner', 'apip_options_page');
 }
 /*
 支持的功能列表
@@ -495,6 +497,7 @@ function apip_check_rubbish_options_field_render() {
     ?>
     <span>配置项目</span>
     <?php
+    global $wpdb;
     $alloptions = wp_load_alloptions();
     $registered_settings = get_registered_settings();
     $arrnew = array_diff_key($alloptions, $registered_settings);
@@ -644,7 +647,23 @@ function apip_check_rubbish_options_field_render() {
       "widget_historypostontheday"=>"",
       "widget_recentmodifyed"=>"",
       "theme_mods_contango"=>"",
-      
+      "wpmm_version"=>"", //Plugin:Mantince Mode
+      "wpmm_settings"=>"", //Plugin:Mantince Mode
+      "theme_mods_lifi_child_rectangulum"=>"", //Theme:lifi_child_rectangulum	
+      "akismet_spam_count"=>"", //Plugin:Akismet
+      "akismet_comment_form_privacy_notice"=>"", //Plugin:Akismet
+      "theme_mods_twentyfourteen"=>"", //Theme:twentyfourteen
+      "theme_mods_pinkapple"=>"", //Theme:pinkapple
+      "theme_mods_ciguoe"=>"", //Theme:ciguoe
+      "theme_mods_bluefly"=>"", //Theme:bluefly
+      "theme_mods_skywarp2"=>"", //Theme:skywarp2 
+      "theme_mods_protamine"=>"", //Theme:protamine
+      "theme_mods_shisan"=>"", //Theme:shisan
+      "gmail_smtp_options"=>"", //Plugin:Gmail SMTP
+      "tadv_settings"=>"", //Plugin:Gmail SMTP
+      "wsblc_options"=>"", //Plugin:Broken Link Checker
+      "blc_installation_log"=>"", //Plugin:Broken Link Checker
+      $wpdb->prefix."user_roles"=>"",
     );
     $default_options["theme_mods_".get_stylesheet()]="";
     $arrnew = array_diff_key($arrnew, $default_options);

@@ -302,7 +302,7 @@ function echo_option_item($item, $ind, $tail, $key){
             printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         }
         $ind++;
-        $tail .= $key;
+        $tail .= "/".$key;
         foreach ($item as $nkey => $value) {
             echo_option_item($value, $ind, $tail, $nkey);
         }
