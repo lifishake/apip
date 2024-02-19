@@ -1708,66 +1708,6 @@ function apip_disable_embeds_flush_rewrite_rules() {
 	flush_rewrite_rules();
 }
 
-
-function apip_media_upload_nextgen() {
-
-    // Not in use
-    $errors = false;
-
-	// Generate TinyMCE HTML output
-	if ( isset($_POST['send']) ) {
-		$keys = array_keys($_POST['send']);
-		$send_id = (int) array_shift($keys);
-		$image = $_POST['image'][$send_id];
-		$alttext = stripslashes( htmlspecialchars ($image['alttext'], ENT_QUOTES));
-		$description = stripslashes (htmlspecialchars($image['description'], ENT_QUOTES));
-
-		// here is no new line allowed
-		$clean_description = preg_replace("/\n|\r\n|\r$/", " ", $description);
-		$img = nggdb::find_image($send_id);
-		$thumbcode = $img->get_thumbcode();
-
-        // Create a shell displayed-gallery so we can inspect its settings
-        $registry = C_Component_Registry::get_instance();
-        $mapper   = $registry->get_utility('I_Displayed_Gallery_Mapper');
-        $factory  = $registry->get_utility('I_Component_Factory');
-        $args = array(
-            'display_type' => NGG_BASIC_SINGLEPIC
-        );
-        $displayed_gallery = $factory->create('displayed_gallery', $args, $mapper);
-        $domain = str_replace(array('http://','https://'), '', get_bloginfo('url'));
-        $urls = array();
-        $urls[] = 'http://'.$domain;
-        $urls[] = 'https://'.$domain;
-        $image['thumb'] = str_replace($urls, '', $image['thumb']);
-        $image['url'] = str_replace($urls, '', $image['url']);
-		// Build output
-		if ($image['size'] == "thumbnail")
-			$html = "<img src='{$image['thumb']}' alt='{$alttext}' />";
-        else
-            $html = '';
-
-		// Wrap the link to the fullsize image around
-		$html = "<a {$thumbcode} href='{$image['url']}' title='{$clean_description}'>{$html}</a>";
-
-		if ($image['size'] == "full" || $image['size'] == "singlepic")
-			$html = "<img src='{$image['url']}' alt='{$alttext}' />";
-
-
-		media_upload_nextgen_save_image();
-
-		// Return it to TinyMCE
-		return media_send_to_editor($html);
-	}
-
-	// Save button
-	if ( isset($_POST['save']) ) {
-		media_upload_nextgen_save_image();
-	}
-
-	return wp_iframe( 'media_upload_nextgen_form', $errors );
-}
-
 /**
  * 作用: HEX描述的颜色值转成RGB
  * 来源: Oblique原版

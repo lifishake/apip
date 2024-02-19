@@ -1651,6 +1651,114 @@ function apip_game_detail($atts, $content = null) {
 
 }
 
+    ////0A.1屏蔽ngg带来的无用钩子
+    if( class_exists('M_Third_Party_Compat') ) {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
+    }
+    if( class_exists('C_NextGen_Shortcode_Manager') ) {
+        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
+    }
+    if( class_exists('M_Gallery_Display') ) {
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
+    }
+    if( class_exists('M_NextGen_Basic_Singlepic') ) {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_NextGen_Basic_Singlepic', 'enqueue_singlepic_css' );
+    }
+    //静态函数
+    remove_filter('the_content', 'NextGEN_shortcodes::convert_shortcode');
+    remove_action('wp_head', 'nggGallery::nextgen_version');
+    if( class_exists('C_NextGen_Shortcode_Manager') )  {
+        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'parse_content' );
+        apip_remove_anonymous_object_hook( 'widget_text', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
+    }
+    if( class_exists('M_Attach_To_Post') )  {
+        apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
+        apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
+    }
+    if( class_exists('C_NextGEN_Bootstrap') )  {
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+        //apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
+    }
+    if( class_exists('C_Lightbox_Library_Manager') )  {
+        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
+    }
+    /*
+    if( class_exists('C_Photocrati_Resource_Manager') )
+    {
+    //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
+        apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
+    }*/
+    //删除原来插入时的class
+    if (has_action('media_upload_nextgen')) {
+        if (is_admin()){
+            remove_action('media_upload_nextgen','media_upload_nextgen');
+            add_action('media_upload_nextgen','apip_media_upload_nextgen');
+        }
+    }
+
+    function apip_media_upload_nextgen() {
+
+        // Not in use
+        $errors = false;
+    
+        // Generate TinyMCE HTML output
+        if ( isset($_POST['send']) ) {
+            $keys = array_keys($_POST['send']);
+            $send_id = (int) array_shift($keys);
+            $image = $_POST['image'][$send_id];
+            $alttext = stripslashes( htmlspecialchars ($image['alttext'], ENT_QUOTES));
+            $description = stripslashes (htmlspecialchars($image['description'], ENT_QUOTES));
+    
+            // here is no new line allowed
+            $clean_description = preg_replace("/\n|\r\n|\r$/", " ", $description);
+            $img = nggdb::find_image($send_id);
+            $thumbcode = $img->get_thumbcode();
+    
+            // Create a shell displayed-gallery so we can inspect its settings
+            $registry = C_Component_Registry::get_instance();
+            $mapper   = $registry->get_utility('I_Displayed_Gallery_Mapper');
+            $factory  = $registry->get_utility('I_Component_Factory');
+            $args = array(
+                'display_type' => NGG_BASIC_SINGLEPIC
+            );
+            $displayed_gallery = $factory->create('displayed_gallery', $args, $mapper);
+            $domain = str_replace(array('http://','https://'), '', get_bloginfo('url'));
+            $urls = array();
+            $urls[] = 'http://'.$domain;
+            $urls[] = 'https://'.$domain;
+            $image['thumb'] = str_replace($urls, '', $image['thumb']);
+            $image['url'] = str_replace($urls, '', $image['url']);
+            // Build output
+            if ($image['size'] == "thumbnail")
+                $html = "<img src='{$image['thumb']}' alt='{$alttext}' />";
+            else
+                $html = '';
+    
+            // Wrap the link to the fullsize image around
+            $html = "<a {$thumbcode} href='{$image['url']}' title='{$clean_description}'>{$html}</a>";
+    
+            if ($image['size'] == "full" || $image['size'] == "singlepic")
+                $html = "<img src='{$image['url']}' alt='{$alttext}' />";
+    
+    
+            media_upload_nextgen_save_image();
+    
+            // Return it to TinyMCE
+            return media_send_to_editor($html);
+        }
+    
+        // Save button
+        if ( isset($_POST['save']) ) {
+            media_upload_nextgen_save_image();
+        }
+    
+        return wp_iframe( 'media_upload_nextgen_form', $errors );
+    }
+
 ?>
  <span>    豆瓣条目（css+js）<i>CODE:mydouban</i>：</span>
  <input type='checkbox' name='apip_settings[apip_douban_enable]' <?php checked( $options['apip_douban_enable'], 1 ); ?> value='1'><br />
@@ -1658,3 +1766,5 @@ function apip_game_detail($atts, $content = null) {
  <input type='text' name='apip_settings[douban_key]' size='64' value='<?php echo $options['douban_key']; ?>'/><br />
  <?php
  ?>
+
+ 

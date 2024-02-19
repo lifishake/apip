@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.36.8
+ * Version:     1.36.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -198,16 +198,6 @@ function apip_init()
         add_filter('pre_site_transient_update_core','remove_core_updates');
     }
     
-    if ( is_admin() ) {
-        define('NGG_DISABLE_RESOURCE_MANAGER', FALSE);
-    } else {
-        define('NGG_DISABLE_RESOURCE_MANAGER', TRUE);
-    }
-    if ( is_page('gallery') ) {
-        define('NGG_DISABLE_FILTER_THE_CONTENT', FALSE);
-    }  else {
-        define('NGG_DISABLE_FILTER_THE_CONTENT', TRUE);
-    }
 
     /** 03 */
     if( apip_option_check('better_excerpt') ) {
@@ -370,56 +360,7 @@ function apip_init_actions()
     add_filter('feed_links_show_comments_feed',     '__return_false'            );//不输出comments的rss,4.4以上
     add_filter('rest_enabled',                      '__return_false'            );//禁用REST API,4.4以上
     add_filter('rest_jsonp_enabled',                '__return_false'            );//禁用REST API,4.4以上
-
-    ////0A.1屏蔽ngg带来的无用钩子
-    if( class_exists('M_Third_Party_Compat') ) {
-        apip_remove_anonymous_object_hook( 'the_content', 'M_Third_Party_Compat', 'check_weaverii' );
-    }
-    if( class_exists('C_NextGen_Shortcode_Manager') ) {
-        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
-    }
-    if( class_exists('M_Gallery_Display') ) {
-        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
-        //apip_remove_anonymous_object_hook( 'the_content', 'M_Gallery_Display', '_render_related_images' );
-        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'M_Gallery_Display', 'no_resources_mode' );
-    }
-    if( class_exists('M_NextGen_Basic_Singlepic') ) {
-        apip_remove_anonymous_object_hook( 'the_content', 'M_NextGen_Basic_Singlepic', 'enqueue_singlepic_css' );
-    }
-    //静态函数
-    remove_filter('the_content', 'NextGEN_shortcodes::convert_shortcode');
-    remove_action('wp_head', 'nggGallery::nextgen_version');
-    if( class_exists('C_NextGen_Shortcode_Manager') )  {
-        apip_remove_anonymous_object_hook( 'the_content', 'C_NextGen_Shortcode_Manager', 'parse_content' );
-        apip_remove_anonymous_object_hook( 'widget_text', 'C_NextGen_Shortcode_Manager', 'fix_nested_shortcodes' );
-    }
-    if( class_exists('M_Attach_To_Post') )  {
-        apip_remove_anonymous_object_hook( 'the_content', 'M_Attach_To_Post', 'substitute_placeholder_imgs' );
-        apip_remove_anonymous_object_hook( 'media_buttons', 'M_Attach_To_Post', 'add_media_button' );
-    }
-    if( class_exists('C_NextGEN_Bootstrap') )  {
-        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
-        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
-        //apip_remove_anonymous_object_hook( 'wp_print_scripts', 'C_NextGEN_Bootstrap', 'fix_jquery' );
-    }
-    if( class_exists('C_Lightbox_Library_Manager') )  {
-        //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
-        //apip_remove_anonymous_object_hook( 'wp_enqueue_scripts', 'C_Lightbox_Library_Manager', 'maybe_enqueue' );
-    }
-    /*
-    if( class_exists('C_Photocrati_Resource_Manager') )
-    {
-    //20180320删除。好像插件更新，这个钩子的参数发生了变化，php有错误产生。
-        apip_remove_anonymous_object_hook( 'wp_footer', 'C_Photocrati_Resource_Manager', 'print_marker' );
-    }*/
-    //删除原来插入时的class
-    if (has_action('media_upload_nextgen')) {
-        if (is_admin()){
-            remove_action('media_upload_nextgen','media_upload_nextgen');
-            add_action('media_upload_nextgen','apip_media_upload_nextgen');
-        }
-    }
-    
+   
 
     ////0A.2
     ////禁用4.4以后的embed功能
@@ -740,10 +681,6 @@ function apip_remove_scripts()
         wp_dequeue_script( 'photocrati_ajax' );
         wp_dequeue_script( 'lazy_resources' );
         wp_dequeue_script( 'frame_event_publisher' );
-        wp_dequeue_script( 'ngg-store-js' );
-        wp_dequeue_script( 'nextgen_lightbox_context' );
-        wp_dequeue_script( 'ngg_common' );
-        wp_dequeue_script( 'photocrati-nextgen_basic_thumbnails' );
     }
     if ( !is_page('gallery') )
     {
@@ -768,16 +705,11 @@ function apip_remove_styles()
     if ( !is_admin() )
     {
         wp_dequeue_style( 'fontawesome' );
-        wp_dequeue_style( 'ngg_trigger_buttons' );
-        wp_dequeue_style( 'nextgen_basic_singlepic_style' ) ;
-        wp_dequeue_style( 'nextgen_pagination_style' );
-        wp_dequeue_style( 'nextgen_pagination_style' );
 
     }
     if ( !is_page('gallery') )
     {
         wp_dequeue_style( 'jquery-plugins-slider-style' );
-        wp_dequeue_style( 'ngg-nivoslider-theme' );
     }
 }
 

@@ -494,10 +494,6 @@ function apip_widget_unregister() {
          "WP_Widget_RSS",
          "WP_Widget_Tag_Cloud",
          "WP_Widget_Custom_HTML",
-         /*NGGallerys */
-         "C_Widget_Gallery",
-         "C_Widget_MediaRSS",
-         "C_Widget_Slideshow",
     );
     foreach ($names as $wd) {
           unregister_widget($wd);
