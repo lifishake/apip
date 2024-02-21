@@ -1181,7 +1181,7 @@ function apip_get_total_weather( $w, $style) {
     }
     $ret = '<i class="wi '.$w_icon_str.' icon"></i>';
     if ('notext'!=$style) {
-        $ret .= $w['Txt'];
+        $ret .= $w['Text'];
     }
     if ( '' !== $wind_str) {
         $ret .= '  <i class="wi wi-wind '.$wind_icon_str.'"></i> ';
@@ -1195,7 +1195,7 @@ function apip_get_total_weather( $w, $style) {
     }
     if ('plain' == $style)
     {
-        $ret = $w['Txt'].$wind_str.$w['Tmp'].'&#8451;';
+        $ret = $w['Text'].$wind_str.$w['Tmp'].'&#8451;';
     }
     return $ret;
 }
