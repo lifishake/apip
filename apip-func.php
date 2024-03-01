@@ -318,7 +318,7 @@ function echo_option_item($item, $ind, $tail, $key){
                     $key,
                     admin_url('admin-post.php'),
                     wp_create_nonce('maintain-do-'.$key),
-                    esc_html($item),
+                    esc_html($item)
                 );
         } else {
             printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
