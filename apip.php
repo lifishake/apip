@@ -340,7 +340,7 @@ function apip_init_actions()
     remove_action('user_request_action_confirmed',      '_wp_privacy_send_request_confirmation_notification', 12);
     remove_action('init',                               'wp_schedule_delete_old_privacy_export_files'   );
     remove_action('wp_privacy_delete_old_export_files', 'wp_privacy_delete_old_export_files'            );
-    remove_action('rest_api_init',                      'rest_api_default_filters',         10,         );
+    remove_action('rest_api_init',                      'rest_api_default_filters',         10          );
     remove_action('rest_api_init',                      'register_initial_settings',        10          );
     remove_action('rest_api_init',                      'create_initial_rest_routes',       99          );
     remove_action('init',                               'rest_api_init'                                 );
