@@ -1838,3 +1838,31 @@ function apip_get_bg_colors($color_str,$trancy = 0.3)
     $ret =array_reverse($ret);
     return $ret;
 }
+
+/**
+ * 作用: 获取此post的真实序号
+ * 来源: 自创
+ */
+
+function apip_get_real_post_id() {
+    if ( !is_single() ){
+        return;
+    }
+    global $post;
+    if ( 'publish' !== $post->post_status && 'private' !== $post->post_status) {
+        return;
+    }
+    $args = array(
+        'post_type' => 'post',
+        'post__not_in' => array($post->ID),
+        'post_status' => array('publish', 'private'),
+        'post_per_page' => -1,
+        'fields' => 'ids',
+        'date_query' => array(
+            'before' => $post->post_date,
+            'inclusive' => true,
+        ),
+    );
+    $the_query = new WP_Query($args);
+    return $the_query->post_count;
+}
