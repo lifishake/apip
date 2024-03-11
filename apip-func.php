@@ -480,7 +480,7 @@ function is_jieqi($year, $month, $day){
  * 来源: 自产
  * 参数: int    $post_id        post号。非0时取post号，0使用get_the_ID()
  */
-function apip_festival($post_id=0) {
+function apip_festival($post_id=0, $is_arr_ret=false) {
     $chinese_festivals=array(
         "正月初一"=>"春节",
         "正月十三"=>"海神生日",
@@ -903,42 +903,50 @@ function apip_festival($post_id=0) {
     $lunar=new Lunar();
     $lunar_day = $lunar->convertSolarToLunar($year,$month,$day);
 
+    $arr_ret = array();
+
     //特殊节日
     //除夕 因为重要最先判断
     $tmp = $lunar->isChuxi($lunar_day[0],$lunar_day[2],$lunar_day[3]);
     if ($tmp !== "") {
-        $ret .= " / ".$tmp;
+        //$ret .= " / ".$tmp;
+        $arr_ret[] = $tmp;
     }
 
     //农历节日
     if (array_key_exists($lunar_day[1], $chinese_festivals)) {
-        $ret .= " / ".$chinese_festivals[$lunar_day[1]];
+        //$ret .= " / ".$chinese_festivals[$lunar_day[1]];
+        $arr_ret[] = $chinese_festivals[$lunar_day[1]];
     }
 
     //公历节日
     $solar = $month."/".$day;
     if (array_key_exists($solar, $solar_festivals)) {
-        $ret .= " / ".$solar_festivals[$solar];
+        //$ret .= " / ".$solar_festivals[$solar];
+        $arr_ret[] = $solar_festivals[$solar];
     }
 
     //节日节气
     $tmp = is_jieqi($year,$month,$day);
     if ($tmp !== "") {
         if (array_key_exists($tmp, $disp_solar_terms)) {
-            $ret .= " / ".$disp_solar_terms[$tmp];
+            //$ret .= " / ".$disp_solar_terms[$tmp];
+            $arr_ret[] = $disp_solar_terms[$tmp];
         }
     }
 
     //星期有关的节日
     $tmp = is_cristian_festivel($month, $day, $weekday);
     if ($tmp !== "") {
-        $ret .= " / ".$tmp;
+        //$ret .= " / ".$tmp;
+        $arr_ret[] = $tmp;
     }
 
     //特殊判断方法的节日
     //仲夏夜
     if (is_mid_summer_festivel($month, $day, $weekday)) {
-        $ret .=" / 仲夏夜";
+        //$ret .=" / 仲夏夜";
+        $arr_ret[] = "仲夏夜";
     }
 
     //复活节
@@ -985,7 +993,8 @@ function apip_festival($post_id=0) {
         }
         $tgt_day = $xiazhi_day + $delta + 20 - 30;//一定在阳历7月，所以要减去30号。
         if ($tgt_day == $day) {
-            $ret .=" / 入伏";
+            //$ret .=" / 入伏";
+            $arr_ret[] ="入伏";
         }
     }
 
@@ -993,17 +1002,28 @@ function apip_festival($post_id=0) {
 	$tmp = sprintf("%04d/%02d/%02d",$year+0, $month+0, $day+0);
 	//基督教节日
 	if (array_key_exists($tmp, $static_festivals_christian)) {
-        $ret .= " / ".$static_festivals_christian[$tmp];
+        //$ret .= " / ".$static_festivals_christian[$tmp];
+        $arr_ret[] = $static_festivals_christian[$tmp];
     }
 	//伊斯兰节日
 	//重要性最低，最后查。
 	if (array_key_exists($tmp, $static_festivals_muslim)) {
-        $ret .= " / ".$static_festivals_muslim[$tmp];
+        //$ret .= " / ".$static_festivals_muslim[$tmp];
+        $arr_ret[] = $static_festivals_muslim[$tmp];
     }
-    if ($ret) {
-        $ret = '<span class="festival">'.$ret."</span>";
+    if (empty($arr_ret)) {
+        $ret = "";
     }
-    return $ret;
+    else {
+        $ret = '<span class="festival">'." / ".implode(" / ", $arr_ret)."</span>";
+    }
+    if ($is_arr_ret) {
+        return $arr_ret;
+    }
+    else {
+        return $ret;
+    }
+
 }
 
 /**
