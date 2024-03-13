@@ -1417,7 +1417,7 @@ function apip_show_advertise_comment_details( $actions, $comment ){
 }
 
 function apip_replace_triditional_comment_placeholder_text( $default ) {
-    $text = '请不要留下无趣的东西浪费大家时间。';
+    $text = '请保持有趣。因为您的意见对我完全没有任何意义。';
     $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
     return $default;
 }
