@@ -503,6 +503,7 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
         "腊月廿三"=>"小年",
     );
     $solar_festivals=array(
+        "01/01"=>"元旦",
         "02/14"=>"圣瓦伦丁日",
         "03/14"=>"白色情人节",
         "04/01"=>"愚人节",
@@ -883,7 +884,9 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     $disp_solar_terms=array(
         "清明"=>"清明节",
         "立春"=>"立春",
+        "春分"=>"春分",
         "立秋"=>"立秋",
+        "秋分"=>"秋分",
         "冬至"=>"冬至",
     );
 
