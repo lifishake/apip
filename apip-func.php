@@ -245,7 +245,7 @@ function is_cristian_festivel($month, $day, $w) {
     );
     $count = 0;
     $d = $day;
-    while($d >=0 ) {
+    while($d > 0) {
         $count++;
         $d -=7;
     }
@@ -923,7 +923,7 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
 
     //公历节日
-    $solar = $month."/".$day;
+    $solar = sprintf("%02d/%02d", $month+0, $day+0);
     if (array_key_exists($solar, $solar_festivals)) {
         //$ret .= " / ".$solar_festivals[$solar];
         $arr_ret[] = $solar_festivals[$solar];
@@ -939,7 +939,7 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
 
     //星期有关的节日
-    $tmp = is_cristian_festivel($month, $day, $weekday);
+    $tmp = is_cristian_festivel($month+0, $day+0, $weekday+0);
     if ($tmp !== "") {
         //$ret .= " / ".$tmp;
         $arr_ret[] = $tmp;
