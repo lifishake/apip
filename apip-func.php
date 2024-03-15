@@ -1869,11 +1869,11 @@ function apip_get_bg_colors($color_str,$trancy = 0.3)
 
 function apip_get_real_post_id() {
     if ( !is_single() ){
-        return;
+        return -1;
     }
     global $post;
     if ( 'publish' !== $post->post_status && 'private' !== $post->post_status) {
-        return;
+        return -1;
     }
     $args = array(
         'post_type' => 'post',
