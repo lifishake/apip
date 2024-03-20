@@ -1880,6 +1880,7 @@ function apip_get_real_post_id() {
         'post__not_in' => array($post->ID),
         'post_status' => array('publish', 'private'),
         'post_per_page' => -1,
+        'nopaging' => true,
         'fields' => 'ids',
         'date_query' => array(
             'before' => $post->post_date,
