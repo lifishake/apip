@@ -1128,6 +1128,7 @@ function apip_get_total_weather( $w, $style) {
             break;
         case	305	:	//	小雨
         case	306	:	//	中雨
+        case    314 :   //  小到中雨
         case    399 :   //  雨
             $w_icon_str = 'wi-rain';
             $eng_str='rain';
