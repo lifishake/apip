@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.37.5
+ * Version:     1.37.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -225,8 +225,21 @@ function apip_init()
         wp_clear_scheduled_hook( 'apip_delete_local_gravatars' );
     }
     //4.2 表情链接替换
-    add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
-    add_filter( 'emoji_svg_url', 'apip_rep_emoji_url_svg', 99, 1);
+    if ( apip_option_check('replace_emoji') ) {
+        remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+        remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
+        remove_action( 'wp_print_styles', 'print_emoji_styles' );
+        remove_action( 'admin_print_styles', 'print_emoji_styles' );	
+        remove_filter( 'the_content_feed', 'wp_staticize_emoji' );
+        remove_filter( 'comment_text_rss', 'wp_staticize_emoji' );	
+        remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
+        add_filter( 'wp_resource_hints', 'apip_disable_emojis_remove_dns_prefetch', 10, 2 );
+        //似乎emoji的转换分两步，第一步是是否把 :P 之类的转换后成unicode，第二步是把emoji的unicode转换成svg。
+        //目前认为第一步可以保留，第二步是脱裤子放屁。升一个小版本验证。验证后再升一个版本。
+    }
+    //TODO: to delete next version
+    //add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
+    //add_filter( 'emoji_svg_url', 'apip_rep_emoji_url_svg', 99, 1);
 
     /** 05 */
     //5.1 广告关键字替换，抢在akimest前面
@@ -1345,6 +1358,30 @@ function apip_rep_emoji_url_svg($url) {
         return $url;
     return '//twemoji.maxcdn.com/svg/' ;
 }
+
+/**
+ * 作用: 替换emoji服务器地址,同时会修改'dns-prefetch'
+ * 来源: Ryan Hellyer 
+ * URL： https://geek.hellyer.kiwi/plugins/disable-emojis/
+ * 说明: 这个方法比之前的替换emoji_url的方法介入的早，所以使用这个方法。未来可以扩展到其他需要替换的被强的网址。
+ */
+
+function apip_disable_emojis_remove_dns_prefetch( $urls, $relation_type ) {
+
+	if ( 'dns-prefetch' == $relation_type ) {
+
+		$emoji_svg_url_bit = 'https://s.w.org/images/core/emoji/';
+		foreach ( $urls as $key => $url ) {
+			if ( strpos( $url, $emoji_svg_url_bit ) !== false ) {
+				unset( $urls[$key] );
+			}
+		}
+
+	}
+
+	return $urls;
+}
+
 
 /*                                          05终了                             */
 
