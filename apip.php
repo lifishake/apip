@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.37.6
+ * Version:     1.37.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -224,7 +224,7 @@ function apip_init()
     else {
         wp_clear_scheduled_hook( 'apip_delete_local_gravatars' );
     }
-    //4.2 表情链接替换
+    //4.2 禁止wordpress把emoji的unicode转换成图片
     if ( apip_option_check('replace_emoji') ) {
         remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
         remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
@@ -237,9 +237,6 @@ function apip_init()
         //似乎emoji的转换分两步，第一步是是否把 :P 之类的转换后成unicode，第二步是把emoji的unicode转换成svg。
         //目前认为第一步可以保留，第二步是脱裤子放屁。升一个小版本验证。验证后再升一个版本。
     }
-    //TODO: to delete next version
-    //add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
-    //add_filter( 'emoji_svg_url', 'apip_rep_emoji_url_svg', 99, 1);
 
     /** 05 */
     //5.1 广告关键字替换，抢在akimest前面
@@ -503,7 +500,7 @@ $options
     4.1     local_gravatar              头像本地缓存
     4.1.1   gravatar_mirror             头像镜像地址
     4.1.2   available_gravatar_mirrors  头像镜像可用地址
-    4.2     replace_emoji               替换emoji地址
+    4.2     replace_emoji               禁止wordpress将emoji的unicode转成图片
 05.    留言者控制
    5.1  blocked_commenters              替换广告留言用户名和网址
 06.     social_share_enable             社会化分享使能
@@ -1337,28 +1334,6 @@ function apip_delete_local_gravatars($post) {
 }
 
 //4.2
-/**
- * 作用: 替换emoji服务器地址
- * 来源: 自创
- */
-function apip_rep_emoji_url( $url )
-{
-    global $apip_options;
-    if ( !apip_option_check('replace_emoji') )
-        return $url;
-    return '//twemoji.maxcdn.com/2/72x72/' ;
-}
-/**
- * 作用: 替换emoji服务器地址,同时会修改'dns-prefetch'
- * 来源: 自创
- */
-function apip_rep_emoji_url_svg($url) {
-    global $apip_options;
-    if ( !apip_option_check('replace_emoji') )
-        return $url;
-    return '//twemoji.maxcdn.com/svg/' ;
-}
-
 /**
  * 作用: 替换emoji服务器地址,同时会修改'dns-prefetch'
  * 来源: Ryan Hellyer 

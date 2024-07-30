@@ -3,6 +3,31 @@
 移动不适用的代码到这里，作为备份
 */
 
+//add_filter( 'emoji_url', 'apip_rep_emoji_url', 99, 1);
+//add_filter( 'emoji_svg_url', 'apip_rep_emoji_url_svg', 99, 1);
+
+/**
+ * 作用: 替换emoji服务器地址
+ * 来源: 自创
+ */
+function apip_rep_emoji_url( $url )
+{
+    global $apip_options;
+    if ( !apip_option_check('replace_emoji') )
+        return $url;
+    return '//twemoji.maxcdn.com/2/72x72/' ;
+}
+/**
+ * 作用: 替换emoji服务器地址,同时会修改'dns-prefetch'
+ * 来源: 自创
+ */
+function apip_rep_emoji_url_svg($url) {
+    global $apip_options;
+    if ( !apip_option_check('replace_emoji') )
+        return $url;
+    return '//twemoji.maxcdn.com/svg/' ;
+}
+
 //add_filter('do_shortcode_tag', 'apip_append_linebreak_to_myfv', 10, 2);
 
 //add_action('admin_print_footer_scripts','apip_quicktags_a');

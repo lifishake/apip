@@ -294,7 +294,7 @@ function apip_anti_gfw_render()
         $str_output = sprintf('<label><input type="radio" name="apip_settings[gravatar_mirror]" id="agm_id_%1$d" value="%3$s" %2$s/>%3$s</label><img src="%3$s/a57a69bb73b078072b0c7ca576c26fea?s=16&d=mm&r=g"/><br />', $i, $selected_mirror == $mirror ? "checked='checked'":"", $mirror);
         echo $str_output;
     } ?>
-  <span>    替换emojie地址：</span>
+  <span>    禁用emoji图片转换：</span>
   <input type='checkbox' name='apip_settings[replace_emoji]' <?php checked( $options['replace_emoji'], 1 ); ?> value='1'/><br />
   <?php
 }
