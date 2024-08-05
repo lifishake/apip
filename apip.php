@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.37.7
+ * Version:     1.37.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1642,7 +1642,7 @@ function apip_archive_page() {
         $getpostsargs = array();
         $getpostsargs['posts_per_page'] = -1;
         $getpostsargs['orderby'] = 'date';
-        $getpostsargs['order'] = 'ASC';
+        $getpostsargs['order'] = 'DESC';
         $getpostsargs['include'] = $includes;
         $posts = get_posts($getpostsargs);
         foreach( $posts as $post ) {
