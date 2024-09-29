@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.37.8
+ * Version:     1.37.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2528,9 +2528,16 @@ function apip_today_weather_widget() {
     $script_tz = date_default_timezone_get();
     date_default_timezone_set('Asia/Shanghai');
     $script_tz = date_default_timezone_get();
-    $today = date('n-j');
-    $sql .= "  WHERE tdate = '$today' COLLATE utf8mb4_unicode_ci ORDER BY ID ASC ";
-    
+    $thedays = array();
+    $thedays[] = "'".date('n-j',strtotime('-3 day'))."'";
+    $thedays[] = "'".date('n-j',strtotime('-2 day'))."'";
+    $thedays[] = "'".date('n-j',strtotime('-1 day'))."'";
+    $thedays[] = "'".date('n-j')."'";
+    $thedays[] = "'".date('n-j',strtotime('1 day'))."'";
+    $thedays[] = "'".date('n-j',strtotime('2 day'))."'";
+    $thedays[] = "'".date('n-j',strtotime('3 day'))."'";
+    $the_days_str = implode(' , ', $thedays);
+    $sql .= "  WHERE tdate IN ($the_days_str) ORDER BY ID ASC ";
     $ids = $wpdb->get_results($sql);
     echo '<div id="lost-weathers" class="activity-block">';
     echo '<h3>These need to be update.</h3><ul>';
@@ -2540,9 +2547,10 @@ function apip_today_weather_widget() {
             $draft_or_post_title = _draft_or_post_title($id);
             //$p = get_post($id);
 			$m_time_t = get_post_time('Y-m-d', false, $id, false);
+            $m_time_short = get_post_time('m-d', false, $id, false);
 			printf(
 				'<li><span>%1$s</span> <a href="%2$s" aria-label="%3$s">%4$s</a></li>',
-				$m_time_t,
+				$m_time_short==date('n-j') ? '<b>'.$m_time_t.'</b>' : $m_time_t,
 				get_edit_post_link($id),
 				esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $draft_or_post_title ) ),
 				$draft_or_post_title
