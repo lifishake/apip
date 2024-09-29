@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.0
+ * Version:     1.38.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2542,9 +2542,8 @@ function apip_today_weather_widget() {
     echo '<h3>These need to be update.</h3><ul>';
 	foreach ($thedays as $theday)
     {
-		$sql = wpdb->prepare("SELECT ID FROM `{$wpdb->prefix}v_weather_tbd` WHERE `tdate` = %s COLLATE utf8mb4_unicode_ci ORDER BY ID ASC", $theday);
-		$ids = wpdb->get_results($sql);
-		echo 'SQL= '.$sql.'</br>';
+		$sql = $wpdb->prepare("SELECT ID FROM `{$wpdb->prefix}v_weather_tbd` WHERE `tdate` = %s COLLATE utf8mb4_unicode_ci ORDER BY ID ASC", $theday);
+		$ids = $wpdb->get_results($sql);
 		if ( $ids) {
 			foreach ( $ids as $o_id ) {
 				$id =$o_id->ID;
