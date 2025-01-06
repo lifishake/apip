@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.1
+ * Version:     1.38.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -144,7 +144,6 @@ function apip_init()
     add_action('wp_head', 'apip_set_theme_color', 20);
     //0.22 移除后台的help
     add_action('in_admin_header', 'apip_remove_admin_help');
-    
     /** 01 */
     //颜色目前没有函数
 
@@ -371,7 +370,6 @@ function apip_init_actions()
     add_filter('rest_enabled',                      '__return_false'            );//禁用REST API,4.4以上
     add_filter('rest_jsonp_enabled',                '__return_false'            );//禁用REST API,4.4以上
    
-
     ////0A.2
     ////禁用4.4以后的embed功能
     ////来源:disable-embeds
@@ -451,6 +449,19 @@ function apip_admin_init() {
     //9.6 图片上传
     add_action('wp_ajax_apip_upload_image', 'apip_upload_image');
     add_action('wp_ajax_nopriv_apip_upload_image','apip_upload_image');
+
+    //0.24 debug时忽略wordpress.org的update检查.
+    if (apip_is_debug_mode()) {
+        remove_action( 'upgrader_process_complete', 'wp_update_plugins');
+        remove_action( 'upgrader_process_complete', 'wp_update_themes');
+        remove_action( 'load-plugins.php', 'wp_plugin_update_rows', 20 );
+        remove_action( 'load-themes.php', 'wp_theme_update_rows', 20 );
+        remove_action( 'load-plugins.php', 'wp_update_plugins' );
+        remove_action( 'load-themes.php', 'wp_update_themes' );
+        wp_unschedule_hook( 'wp_version_check' );
+		wp_unschedule_hook( 'wp_update_plugins' );
+		wp_unschedule_hook( 'wp_update_themes' );
+    }
 }
 
 /*
@@ -478,6 +489,7 @@ $options
     0.21                                设置chrome的标签颜色
     0.22                                移除后台画面的help
     0.23                                禁止edit_lock
+    0.24                                debug时忽略wordpress.org的update检查.
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1915,8 +1927,7 @@ function apip_comment_inserted($comment_id, $comment_object) {
 
 function apip_is_debug_mode()
 {
-    if (isset( $_SERVER['REDIRECT_TMP'] ) && strpos($_SERVER['REDIRECT_TMP'], "xampp" ) > 0)
-    {
+    if (isset( $_SERVER['SystemRoot'] ) && strpos($_SERVER['SystemRoot'], "WINDOWS" ) > 0) {
         return 1;
     }
     return 0;
