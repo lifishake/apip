@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.2
+ * Version:     1.38.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -369,7 +369,7 @@ function apip_init_actions()
     add_filter('feed_links_show_comments_feed',     '__return_false'            );//不输出comments的rss,4.4以上
     add_filter('rest_enabled',                      '__return_false'            );//禁用REST API,4.4以上
     add_filter('rest_jsonp_enabled',                '__return_false'            );//禁用REST API,4.4以上
-   
+
     ////0A.2
     ////禁用4.4以后的embed功能
     ////来源:disable-embeds
@@ -2555,21 +2555,21 @@ function apip_today_weather_widget() {
     {
 		$sql = $wpdb->prepare("SELECT ID FROM `{$wpdb->prefix}v_weather_tbd` WHERE `tdate` = %s COLLATE utf8mb4_unicode_ci ORDER BY ID ASC", $theday);
 		$ids = $wpdb->get_results($sql);
-		if ( $ids) {
-			foreach ( $ids as $o_id ) {
-				$id =$o_id->ID;
-				$draft_or_post_title = _draft_or_post_title($id);
-				$m_time_t = get_post_time('Y-m-d', false, $id, false);
-				printf(
-					'<li><span>%1$s</span> <a href="%2$s" aria-label="%3$s">%4$s</a></li>',
+    if ( $ids) {
+        foreach ( $ids as $o_id ) {
+            $id =$o_id->ID;
+            $draft_or_post_title = _draft_or_post_title($id);
+			$m_time_t = get_post_time('Y-m-d', false, $id, false);
+			printf(
+				'<li><span>%1$s</span> <a href="%2$s" aria-label="%3$s">%4$s</a></li>',
 					$m_time_t,
-					get_edit_post_link($id),
-					esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $draft_or_post_title ) ),
-					$draft_or_post_title
-				);
+				get_edit_post_link($id),
+				esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $draft_or_post_title ) ),
+				$draft_or_post_title
+			);
 				$count++;
-			}
-		}
+        }
+    }
 		if ($count>0 && $theday == $today)
 		{
 			break;
