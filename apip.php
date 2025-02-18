@@ -274,6 +274,7 @@ function apip_init()
     if ( apip_option_check('apip_lazyload_enable') )  {
         add_filter('the_content', 'apip_lazyload_filter', 200);
         add_filter('post_thumbnail_html', 'apip_lazyload_filter', 200);
+        wp_localize_script('apip-js-option','lazyload', true);
     }
 
     //8.3 结果集内跳转
