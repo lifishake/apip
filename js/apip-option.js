@@ -24,9 +24,10 @@ queueMicrotask( () => {
 ╠═╝║╣ ║║║╠═╣║╣    ║ ║╠═╝╚═╗
 ╩  ╚═╝╚╩╝╩ ╩╚═╝   ╩ ╩╩  ╚═╝`;
 
-	setTimeout(Log.bind(console, `\n%c${ascll}%c \n`, "color:#ff4f87", ""));
+	setTimeout(Log.bind(console, `\n%c${ascll}%c \n`, "color:#ff4f87;font-family:consolas, menlo, mono;", ""));
 
-	setTimeout(Log.bind(console, "%c※%c 从 %chttps://github.com/lifishake%c 下载主题 %csketchy%c 和插件 %capip%c 的源代码可以获得更好的效果。", "color:#f0ad4e", "","color:#425AEF", "", "color:white; background-color:#ff4f87", "", "color:white; background-color:#ff4f87", ""));
+	setTimeout(Log.bind(console, "%c※%c 主题代码： %chttps://github.com/lifishake/sketchy%c ", "color:#f0ad4e", "","color:4f90d9; background-color:#ffdad8", ""));
+	setTimeout(Log.bind(console, "%c※%c 插件代码： %chttps://github.com/lifishake/apip%c ", "color:#f0ad4e", "","color:4f90d9; background-color:#ffdad8", ""));
 	setTimeout(Log.bind(console, "%c※%c 自取%c勿问%c。", "color:#f0ad4e", "","color:#ff4f87; font-weight:700;", ""));
 }
 );
