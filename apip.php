@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.4
+ * Version:     1.38.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -91,6 +91,56 @@ function apip_init()
 {
     /** 00 */
     global $wpdb;
+    
+    //20250220
+    $default_apip_options = array(
+        "link_color" => "#1A5F99",
+        "font_color" => "#0A161F",
+        "border_color" => "#8A8988",
+        "bg_color" => "#ECE5DF",
+        "tagcloud_link_color" => "#EA3382",
+        "tagcloud_bg_color" => "#9ECECF",
+        "auto_save_disabled" => "",
+        "show_admin_bar" => "",
+        "forground_chinese" => "",
+        "block_open_sans" => "",
+        "show_author_comment" => "",
+        "redirect_if_single" => "",
+        "protect_comment_php" => "",
+        "search_without_page" => "",
+        "redirect_external_link" => "",
+        "remove_core_updates" => "",
+        "better_excerpt" => "",
+        "excerpt_length" => "250",
+        "excerpt_ellipsis" => "...",
+        "header_description" => "",
+        "hd_home_text" => "填写网站描述字符串",
+        "hd_home_keyword" => "填写网站关键字,用半角,逗号,分隔",
+        "available_gravatar_mirrors" => "",
+        "replace_emoji" => "",
+        "blocked_commenters" => "SEO,网站优化,网赚,大全,",
+        "apip_tagcloud_enable" => "",
+        "apip_link_enable" => "",
+        "apip_archive_enable" => "",
+        "apip_codehighlight_enable" => "",
+        "available_codehighlight_tags" => "",
+        "apip_lazyload_enable" => "",
+        "heweather_key" => "",
+        "local_gravatar" => "",
+        "local_widget_enable" => "0",
+        "local_definition_count" => "5",
+        "range_jump_enable" => "",
+        "notify_comment_reply" => "",
+        "social_share_enable" => "",
+        "social_share_twitter" => "",
+        "social_share_sina" => "",
+        "social_share_facebook" => "",
+        "apip_commentquiz_enable" => "",
+	);
+    $option = get_option('apip_settings');
+    if (!$option) {
+        update_option('apip_settings', $default_apip_options, true);
+    }
 	
 	//20210106统一整理admin_init
 	add_action('admin_init','apip_admin_init');
@@ -523,7 +573,7 @@ $options
     7.3     apip_achive_page            自定义归档页
 08.     比较复杂的设定
     8.1     apip_codehighlight_enable   代码高亮
-            available_codehighlight_tags    代码高亮的tag
+            available_codehighlight_tags 代码高亮的tag
     8.2     apip_lazyload_enable        LazyLoad
     8.3                                 结果集内跳转
     8.4.    notify_comment_reply        有回复时邮件提示
