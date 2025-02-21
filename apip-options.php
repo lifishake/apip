@@ -279,7 +279,7 @@ function apip_anti_gfw_render()
   }
   if (isset( $options['available_gravatar_mirrors']) && trim($options['available_gravatar_mirrors'])!=="") {
     $agm = explode(",", $options['available_gravatar_mirrors']); }
-    if ($selected_mirror===""){
+    if ($selected_mirror==="" && !empty($agm)){
         $selected_mirror = $agm[0];
     }
   ?>

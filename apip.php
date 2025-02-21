@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.5
+ * Version:     1.38.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -157,8 +157,7 @@ function apip_init()
     //0.4 在feed中增加关联内容
     add_filter('the_excerpt_rss', 'apip_addi_feed');
     add_filter('the_content_feed', 'apip_addi_feed');
-    //0.5 后台追加的快捷按钮
-    add_action('admin_print_footer_scripts','apip_quicktags');
+    //0.5 后台追加的快捷按钮  -->WP6.0之后添加方法更新，移至admin_enqueue_scripts
     //0.6 去掉后台的OpenSans  -->移至统一的admin_enqueue_scripts
     //0.7 自带的TagCloud格式调整  -->暂时不用
     //0.8 移除后台的“作者”列
@@ -728,10 +727,15 @@ function apip_admin_scripts() {
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20240209' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240218', true);
+    
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
     wp_deregister_style( 'open-sans' );
     wp_register_style( 'open-sans', false );
+
+    //0.5 后台追加的快捷按钮
+    //20250220增加快捷键的方法在6.0之后发生了变化
+    wp_enqueue_script('apip-js-quicktags', APIP_PLUGIN_URL . 'js/apip-quicktags.js', array('jquery', 'quicktags' ), '20250221', true);
 }
 
 //0.2
@@ -806,23 +810,6 @@ function apip_addi_feed($content)
 
     $content.=$addi ;
     return $content ;
-}
-
-//0.5
-/**
- * 作用: 追加代码和网易云的快捷按钮
- * 来源: 自产
- * URL:
- */
-function apip_quicktags()
-{
-?>
-    <script type="text/javascript" charset="utf-8">
-        QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
-        QTags.addButton( 'eg_mysup', '引文', '[mysup sup_content="', '" /]', 'p' );
-        QTags.addButton( 'eg_any', 'any', any_callback );
-    </script>
-<?php
 }
 
 //0.8 移除后台的作者列

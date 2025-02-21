@@ -1790,6 +1790,22 @@ function apip_game_detail($atts, $content = null) {
  <span>    douban API KEY<i>CODE:doubankey</i>：</span>
  <input type='text' name='apip_settings[douban_key]' size='64' value='<?php echo $options['douban_key']; ?>'/><br />
  <?php
+
+ /**
+ * 作用: 追加代码和网易云的快捷按钮
+ * 来源: 自产
+ * URL:
+ */
+function apip_quicktags()
+{
+?>
+    <script type="text/javascript" charset="utf-8">
+        QTags.addButton( 'eg_pre', 'pre', '\n<pre>\n', '\n</pre>\n', 'p' );
+        QTags.addButton( 'eg_mysup', '引文', '[mysup sup_content="', '" /]', 'p' );
+        QTags.addButton( 'eg_any', 'any', any_callback );
+    </script>
+<?php
+}
  ?>
 
  
