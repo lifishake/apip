@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.6
+ * Version:     1.38.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -45,6 +45,43 @@ function apip_plugin_activation()
         @copy (APIP_PLUGIN_DIR."img/default.png", $thumb_path."/default.png");
     }
 
+    //8.7
+    if (!apip_is_table_exists('v_weather_tbd')) {
+        $prefix = $wpdb->prefix;
+        $sql = "CREATE VIEW `{$prefix}v_weather_tbd` AS
+    SELECT `{$prefix}posts`.`ID` AS `ID`,
+    `{$prefix}posts`.`post_date` AS `post_date`,
+    `{$prefix}posts`.`post_title` AS `post_title`,
+    CONCAT(MONTH(`{$prefix}posts`.`post_date`),'-', DAYOFMONTH(`{$prefix}posts`.`post_date`)) AS `tdate` from `{$prefix}posts` WHERE (
+        1 AND (`{$prefix}posts`.`post_type` = 'post')
+        AND (`{$prefix}posts`.`post_status` = 'publish') 
+        AND (NOT(`{$prefix}posts`.`ID` IN (
+            SELECT `{$prefix}postmeta`.`post_id` FROM `{$prefix}postmeta` WHERE (
+                `{$prefix}postmeta`.`meta_key` = 'Apip_Weather')))))
+    ORDER BY 
+        MONTH(`{$prefix}posts`.`post_date`),
+        DAYOFMONTH(`{$prefix}posts`.`post_date`),
+        `{$prefix}posts`.`post_date` ";
+            //$query = $wpdb->prepare($sql);
+            $wpdb->query($sql);
+    }
+    if (!apip_is_table_exists('v_weather_nearby')) {
+        $prefix = $wpdb->prefix;
+        $sql = "CREATE VIEW `{$prefix}v_weather_nearby` AS
+        SELECT `{$prefix}v_weather_tbd`.`ID` AS `ID`,
+        `{$prefix}v_weather_tbd`.`post_date` AS `post_date`,
+        `{$prefix}v_weather_tbd`.`post_title` AS `post_title`,
+        `{$prefix}v_weather_tbd`.`tdate` AS `tdate` FROM `{$prefix}v_weather_tbd` 
+        WHERE ((`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH(NOW()),'-',DAYOFMONTH(NOW()))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() - INTERVAL 3 DAY)),'-',DAYOFMONTH((NOW() - INTERVAL 3 DAY)))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() - INTERVAL 2 DAY)),'-',DAYOFMONTH((NOW() - INTERVAL 2 DAY)))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() - INTERVAL 1 DAY)),'-',DAYOFMONTH((NOW() - INTERVAL 1 DAY)))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() + INTERVAL 1 DAY)),'-',DAYOFMONTH((NOW() + INTERVAL 1 DAY)))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() + INTERVAL 2 DAY)),'-',DAYOFMONTH((NOW() + INTERVAL 2 DAY)))) 
+        OR (`{$prefix}v_weather_tbd`.`tdate` = CONCAT(MONTH((NOW() + INTERVAL 3 DAY)),'-',DAYOFMONTH((NOW() + INTERVAL 3 DAY)))))
+        ";
+        $wpdb->query($sql);
+    }
 }
 
 /*插件反激活*/

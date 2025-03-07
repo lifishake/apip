@@ -1891,3 +1891,16 @@ function apip_get_real_post_id() {
     $the_query = new WP_Query($args);
     return $the_query->post_count;
 }
+
+/**
+ * 作用: 查看TAB在数据库中是否存在
+ * 来源: 自创
+ */
+function apip_is_table_exists($table_name) {
+    global $wpdb;
+    if (false === mb_strstr($table_name, $wpdb->prefix)) {
+        $table_name = $wpdb->prefix.$table_name;
+    }
+    $query = $wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name));
+    return $wpdb->get_var($query) == $table_name;
+}
