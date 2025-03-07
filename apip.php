@@ -548,6 +548,24 @@ function apip_admin_init() {
         wp_unschedule_hook( 'wp_version_check' );
 		wp_unschedule_hook( 'wp_update_plugins' );
 		wp_unschedule_hook( 'wp_update_themes' );
+        remove_action( 'admin_init', '_maybe_update_core' );
+        remove_action( 'wp_version_check', 'wp_version_check' );
+
+        remove_action( 'load-plugins.php', 'wp_update_plugins' );
+        remove_action( 'load-update.php', 'wp_update_plugins' );
+        remove_action( 'load-update-core.php', 'wp_update_plugins' );
+        remove_action( 'admin_init', '_maybe_update_plugins' );
+        remove_action( 'wp_update_plugins', 'wp_update_plugins' );
+
+        remove_action( 'load-themes.php', 'wp_update_themes' );
+        remove_action( 'load-update.php', 'wp_update_themes' );
+        remove_action( 'load-update-core.php', 'wp_update_themes' );
+        remove_action( 'admin_init', '_maybe_update_themes' );
+        remove_action( 'wp_update_themes', 'wp_update_themes' );
+        remove_action( 'update_option_WPLANG', 'wp_clean_update_cache', 10, 0 );
+        remove_action( 'wp_maybe_auto_update', 'wp_maybe_auto_update' );
+        remove_action( 'init', 'wp_schedule_update_checks' );
+        add_filter('user_has_cap', '_debug_ignore_wp_request', 10, 3);
     }
 }
 
@@ -1023,6 +1041,18 @@ function apip_remove_post_locked() {
 }
 add_action('load-edit.php', 'apip_remove_post_locked');
 add_action('load-post.php', 'apip_remove_post_locked');
+
+//0.24 禁止update相关
+//0.24.1 debug时去除update相关权限，因为会有连接服务器超时警告
+function _debug_ignore_wp_request ($allcaps, $caps, $args){
+    $server_caps = array('install_languages', 'update_themes', 'update_plugins', 'update_core');
+    foreach ($caps as $cap) {
+        if ( in_array($cap, $server_caps)) {
+            $allcaps[$cap] = false;
+        }
+    }
+    return $allcaps;
+}
 
 /*                                          00终了                             */
 
