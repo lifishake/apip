@@ -8,6 +8,61 @@
 add_action( 'admin_menu', 'apip_add_admin_menu' );
 add_action( 'admin_init', 'apip_settings_init' );
 
+/*
+取得的选项与默认值合并。注意如果追加新功能要维护默认值。
+*/
+function apip_get_option() {
+  $default_apip_options = array(
+    "link_color" => "#1A5F99",
+    "font_color" => "#0A161F",
+    "border_color" => "#8A8988",
+    "bg_color" => "#ECE5DF",
+    "tagcloud_link_color" => "#EA3382",
+    "tagcloud_bg_color" => "#9ECECF",
+    "auto_save_disabled" => "",
+    "show_admin_bar" => "",
+    "forground_chinese" => "",
+    "block_open_sans" => "",
+    "show_author_comment" => "",
+    "redirect_if_single" => "",
+    "protect_comment_php" => "",
+    "search_without_page" => "",
+    "redirect_external_link" => "",
+    "remove_core_updates" => "",
+    "better_excerpt" => "",
+    "excerpt_length" => "250",
+    "excerpt_ellipsis" => "...",
+    "header_description" => "",
+    "hd_home_text" => "填写网站描述字符串",
+    "hd_home_keyword" => "填写网站关键字,用半角,逗号,分隔",
+    "available_gravatar_mirrors" => "",
+    "replace_emoji" => "",
+    "blocked_commenters" => "SEO,网站优化,网赚,大全,",
+    "apip_tagcloud_enable" => "",
+    "apip_link_enable" => "",
+    "apip_archive_enable" => "",
+    "apip_codehighlight_enable" => "",
+    "available_codehighlight_tags" => "",
+    "apip_lazyload_enable" => "",
+    "heweather_key" => "",
+    "local_gravatar" => "",
+    "local_widget_enable" => "0",
+    "local_definition_count" => "5",
+    "range_jump_enable" => "",
+    "notify_comment_reply" => "",
+    "social_share_enable" => "",
+    "social_share_twitter" => "",
+    "social_share_sina" => "",
+    "social_share_facebook" => "",
+    "apip_commentquiz_enable" => "",
+  );
+  $options = get_option('apip_settings');
+  $options = wp_parse_args($options, $default_apip_options);
+  return $options;
+}
+
+
+
 
 function apip_add_admin_menu(  ) {
   $myicon = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB5PSIwIiB4PSIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSLlnJblsaRfMSIgdmVyc2lvbj0iMS4xIiB3aWR0aD0iMTI4cHgiIGhlaWdodD0iMTI4cHgiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiBzdHlsZT0id2lkdGg6MTAwJTtoZWlnaHQ6MTAwJTtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsIDI1NSwgMjU1KTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48ZyBjbGFzcz0ibGRsLXNjYWxlIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo1MCUgNTAlIDBweDt0cmFuc2Zvcm06cm90YXRlKDBkZWcpIHNjYWxlKDAuOCk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PHBhdGggZD0iTTQyLjQgMTBoMzYuNHYxNC4zSDQyLjR6IiBmaWxsPSIjMzMzIiBzdHlsZT0iZmlsbDpyZ2IoNTEsIDUxLCA1MSk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PC9wYXRoPg0KPHBhdGggZmlsbD0iIzMzMyIgZD0iTTQxLjcgNDguM2wtMTIuNSA4LjNjLS40LjMtLjguNi0xLjMuOS4xLjEuMi4xLjMuMi4zLjIuNS40LjguNi40LjMuNy42IDEuMS45LjMuMi41LjUuOC43LjMuMy43LjYgMSAxIC4zLjIuNS41LjcuOC4zLjMuNi43IDEgMSAuMi4zLjUuNS43LjguMy40LjYuNy45IDEuMS4yLjMuNC41LjcuOGwuOSAxLjJjLjIuMy40LjUuNi44LjMuNC42LjkuOSAxLjMuMi4yLjMuNS41LjcuNC43LjggMS4zIDEuMiAyIDAgLjEuMS4yLjEuMi40LjcuNyAxLjMgMSAyIC4xLjMuMi41LjMuOC4yLjUuNCAxIC42IDEuNC4xLjMuMi42LjQuOS4yLjUuMy45LjUgMS40LjEuMy4yLjcuMyAxIC4xLjQuMy45LjQgMS4zLjEuMy4yLjcuMyAxIC4xLjQuMi45LjMgMS40LjEuMy4yLjcuMiAxIC4xLjUuMi45LjMgMS40LjEuMy4xLjcuMiAxIC4xLjUuMSAxIC4yIDEuNCAwIC4zLjEuNy4xIDF2LjNjMS41LS41IDMtMS4yIDQuMy0yLjFsMTQtOS4zYzAtLjItLjEtLjMtLjEtLjUtLjEtLjItLjEtLjUtLjItLjdsLS4zLTEuMmMwLS4yLS4xLS41LS4xLS43LS4xLS40LS4xLS45LS4yLTEuMyAwLS4yLS4xLS40LS4xLS42LS4xLS42LS4xLTEuMy0uMS0xLjkgMC0uNyAwLTEuMy4xLTIgMC0uMi4xLS40LjEtLjYgMC0uNC4xLS45LjItMS4zIDAtLjMuMS0uNS4yLS43LjEtLjQuMS0uOC4yLTEuMS4xLS4zLjEtLjUuMi0uOC4xLS40LjItLjcuMy0xLjEuMS0uMy4yLS41LjMtLjguMS0uMy4yLS43LjQtMSAuMS0uMy4yLS41LjQtLjguMS0uMy4zLS42LjUtLjkuMS0uMi4zLS41LjQtLjcuMi0uMy4zLS42LjUtLjkuMi0uMi4zLS41LjUtLjcuMi0uMy40LS42LjYtLjguMi0uMi4zLS40LjUtLjcuMi0uMy40LS41LjctLjhsLjYtLjYuNy0uNy42LS42Yy4zLS4yLjUtLjUuOC0uNy4yLS4yLjUtLjQuNy0uNS4zLS4yLjUtLjQuOC0uNi4yLS4yLjUtLjMuNy0uNS4zLS4yLjYtLjQuOS0uNS4zLS4yLjUtLjMuOC0uNC4zLS4yLjYtLjMuOS0uNS4zLS4xLjUtLjMuOC0uNC4zLS4xLjYtLjMuOS0uNGwuOS0uM2MuMSAwIC4zLS4xLjQtLjFWMjcuNEg0Mi40VjQ3YzAgLjYtLjIgMS4xLS43IDEuM3oiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8cGF0aCBmaWxsPSIjMzMzIiBkPSJNNzguOSA1NC42di0zLjJjLS4zLjEtLjUuMi0uOC4zbC0uNi4zYy0uNC4yLS43LjMtMSAuNS0uMS4xLS4zLjEtLjQuMi0uNS4zLS45LjYtMS40LjktLjEuMS0uMi4yLS4zLjItLjMuMi0uNy41LTEgLjctLjIuMS0uMy4zLS41LjQtLjMuMi0uNS40LS44LjdsLS41LjUtLjcuNy0uNS41Yy0uMi4yLS40LjUtLjYuNy0uMS4yLS4zLjQtLjQuNi0uMi4yLS40LjUtLjUuNy0uMS4yLS4zLjQtLjQuNi0uMi4zLS4zLjUtLjUuOGwtLjMuNmMtLjEuMy0uMy41LS40LjgtLjEuMi0uMi40LS4zLjctLjEuMy0uMi42LS4zLjgtLjEuMi0uMi40LS4yLjdsLS4zLjljLS4xLjItLjEuNC0uMi43LS4xLjMtLjEuNi0uMiAxIDAgLjItLjEuNC0uMS42LS4xLjQtLjEuNy0uMSAxLjEgMCAuMiAwIC40LS4xLjUgMCAuNi0uMSAxLjEtLjEgMS43IDAgLjUgMCAxLjEuMSAxLjZ2LjRjMCAuNC4xLjguMiAxLjIgMCAuMSAwIC4zLjEuNC4xLjUuMi45LjMgMS40bDIuMS0xLjRjNi43LTQuNCAxMC43LTExLjggMTAuNy0xOS44eiIgc3R5bGU9ImZpbGw6cmdiKDUxLCA1MSwgNTEpO2FuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjwvcGF0aD4NCjxwYXRoIGZpbGw9IiMzMzMiIGQ9Ik0yNC4yIDgxLjljMy45IDUuOSAxMSA4LjkgMTcuOSA3Ljl2LS42YzAtLjQtLjEtLjctLjEtMS4xIDAtLjQtLjEtLjgtLjItMS4zIDAtLjMtLjEtLjctLjItMS0uMS0uNC0uMS0uOC0uMi0xLjItLjEtLjMtLjEtLjctLjItMWwtLjMtMS4yYy0uMS0uMy0uMi0uNy0uMy0xLS4xLS40LS4yLS44LS40LTEuMmwtLjMtLjljLS4xLS40LS4zLS44LS41LTEuM2wtLjMtLjljLS4yLS41LS40LS45LS42LTEuNC0uMS0uMi0uMi0uNS0uMy0uNy0uMy0uNy0uNi0xLjMtMS0xLjkgMCAwIDAtLjEtLjEtLjEtLjQtLjctLjctMS4zLTEuMS0xLjktLjEtLjItLjMtLjQtLjQtLjYtLjMtLjQtLjUtLjgtLjgtMS4zLS4yLS4yLS40LS41LS41LS43LS4zLS40LS41LS43LS44LTEuMS0uMi0uMy0uNC0uNS0uNi0uNy0uMy0uMy0uNi0uNy0uOS0xLS4yLS4yLS40LS41LS43LS43bC0uOS0uOS0uNy0uNy0uOS0uOWMtLjMtLjItLjUtLjUtLjgtLjctLjMtLjMtLjctLjYtMS0uOC0uMy0uMi0uNS0uNC0uOC0uNi0uMi0uMS0uMy0uMi0uNS0uNC01LjQgNS45LTYuMSAxNS0xLjUgMjEuOXoiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8bWV0YWRhdGEgeG1sbnM6ZD0iaHR0cHM6Ly9sb2FkaW5nLmlvL3N0b2NrLyIgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjxkOm5hbWUgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPnNvY2tzPC9kOm5hbWU+DQoNCg0KPGQ6dGFncyBzdHlsZT0iYW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+c29ja3Msc3RvY2tpbmdzLGJyZWVjaGVzLHdlYXI8L2Q6dGFncz4NCg0KDQo8ZDpsaWNlbnNlIHN0eWxlPSJhbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID5ieTwvZDpsaWNlbnNlPg0KDQoNCjxkOnNsdWcgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjZidDF3bTwvZDpzbHVnPjwvbWV0YWRhdGE+PC9nPjwhLS0gZ2VuZXJhdGVkIGJ5IGh0dHBzOi8vbG9hZGluZy5pby8gLS0+PC9zdmc+";
@@ -205,7 +260,7 @@ function apip_text_field_0_render(  ) {
 
 function apip_color_setting_render(  ) {
   //01
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span> 自定义链接颜色：</span>
   <input type= 'text' name='apip_settings[link_color]' id='link-color'  value='<?php if ( isset( $options['link_color'] ) ) echo $options['link_color']; else echo " #1A5F99"; ?>' /><br />
@@ -225,7 +280,9 @@ function apip_color_setting_render(  ) {
 function apip_advanced_writer_settings_render()
 {
   //02
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
+  global $default_apip_options;
+  $options = wp_parse_args( $options, $default_apip_options );
   ?>
   <span>    禁止自动保存：</span>
   <input type='checkbox' name='apip_settings[auto_save_disabled]' <?php checked( $options['auto_save_disabled'], 1 ); ?> value='1'/><br />
@@ -253,7 +310,7 @@ function apip_advanced_writer_settings_render()
 
 function apip_text_content_render(  ) {
   //03
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <input type='checkbox' name='apip_settings[better_excerpt]' <?php checked( $options['better_excerpt'], 1 ); ?> value='1'/>
   <span>    摘要长度：</span>
@@ -271,7 +328,7 @@ function apip_text_content_render(  ) {
 function apip_anti_gfw_render()
 {
   //04
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   $agm = array();
   $selected_mirror = "";
   if (isset($options['gravatar_mirror'])) {
@@ -302,7 +359,7 @@ function apip_anti_gfw_render()
 function apip_blocked_commenters_render()
 {
   //05
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span>    垃圾关键字列表：</span><br />
     <textarea rows='4' cols='40' name='apip_settings[blocked_commenters]' ><?php echo htmlspecialchars(stripslashes($options['blocked_commenters'])); ?></textarea>
@@ -312,7 +369,7 @@ function apip_blocked_commenters_render()
 function apip_social_share_render()
 {
   //06
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span>    是否允许(css+js)：</span>
   <input type='checkbox' name='apip_settings[social_share_enable]' <?php checked( $options['social_share_enable'], 1 ); ?> value='1'>
@@ -328,7 +385,7 @@ function apip_social_share_render()
 function apip_shortcodes_render()
 {
   //07
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span>    使用自定义TagCloud页（css）<i>CODE:mytagcloud</i>：</span>
   <input type='checkbox' name='apip_settings[apip_tagcloud_enable]' <?php checked( $options['apip_tagcloud_enable'], 1 ); ?> value='1'><br />
@@ -342,7 +399,7 @@ function apip_shortcodes_render()
 function apip_heavy_tools_render()
 {
   //08
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span>    使用code_heighlight(js+css+content_filter)：</span>
   <input type='checkbox' name='apip_settings[apip_codehighlight_enable]' <?php checked( $options['apip_codehighlight_enable'], 1 ); ?> value='1'><br />
@@ -365,7 +422,7 @@ function apip_heavy_tools_render()
 function apip_local_widgets_render()
 {
   //99
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   ?>
   <span>    使用自定义widget：</span>
   <input type='checkbox' name='apip_settings[local_widget_enable]' <?php checked( $options['local_widget_enable'], 1 ); ?> value='1'><br />
@@ -376,7 +433,7 @@ function apip_local_widgets_render()
 
 function apip_uploader_options_field_render()
 {
-  $options = get_option( 'apip_settings' );
+  $options = apip_get_option();
   $nonce = wp_create_nonce('gallery-upload');
   $dirs = scandir(APIP_GALLERY_DIR, 1);
   $dest_dirs =array();

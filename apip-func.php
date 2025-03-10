@@ -1904,3 +1904,14 @@ function apip_is_table_exists($table_name) {
     $query = $wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name));
     return $wpdb->get_var($query) == $table_name;
 }
+
+/**
+ * 作用: 取object ID
+ * 来源: 自创
+ */
+function apip_get_object_id($o) {
+    if (is_object($o)) {
+        return $o->ID;
+    }
+    return 0;
+}
