@@ -1,7 +1,7 @@
-let lazyload = false;
+//var lazyload = [];
 
 jQuery( document ).ready( function( $ ) {
-	if ('undefined'!==lazyload && lazyload) {
+	if ('undefined'!==lazyload && lazyload.length > 0 && lazyload[0]) {
 		$( 'img[data-unveil="true"]' ).unveil( 200 );
 	}
 });
