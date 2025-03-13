@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.38.9
+ * Version:     1.39.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -230,6 +230,16 @@ function apip_init()
     add_action('wp_head', 'apip_set_theme_color', 20);
     //0.22 移除后台的help
     add_action('in_admin_header', 'apip_remove_admin_help');
+
+    //0.24 debug时忽略wordpress.org的update检查.
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        remove_action('admin_init', '_maybe_update_core');
+        remove_action('admin_init', '_maybe_update_plugins');
+        remove_action('admin_init', '_maybe_update_themes');
+        remove_action('init', 'wp_schedule_update_checks');
+        add_filter('translations_api', '__return_empty_array');
+    }
+
     /** 01 */
     //颜色目前没有函数
 
@@ -537,7 +547,7 @@ function apip_admin_init() {
     add_action('wp_ajax_nopriv_apip_upload_image','apip_upload_image');
 
     //0.24 debug时忽略wordpress.org的update检查.
-    if (apip_is_debug_mode()) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
         remove_action( 'upgrader_process_complete', 'wp_update_plugins');
         remove_action( 'upgrader_process_complete', 'wp_update_themes');
         remove_action( 'load-plugins.php', 'wp_plugin_update_rows', 20 );
@@ -547,23 +557,18 @@ function apip_admin_init() {
         wp_unschedule_hook( 'wp_version_check' );
 		wp_unschedule_hook( 'wp_update_plugins' );
 		wp_unschedule_hook( 'wp_update_themes' );
-        remove_action( 'admin_init', '_maybe_update_core' );
-        remove_action( 'wp_version_check', 'wp_version_check' );
 
+        remove_action( 'wp_version_check', 'wp_version_check' );
         remove_action( 'load-plugins.php', 'wp_update_plugins' );
         remove_action( 'load-update.php', 'wp_update_plugins' );
         remove_action( 'load-update-core.php', 'wp_update_plugins' );
-        remove_action( 'admin_init', '_maybe_update_plugins' );
         remove_action( 'wp_update_plugins', 'wp_update_plugins' );
-
         remove_action( 'load-themes.php', 'wp_update_themes' );
         remove_action( 'load-update.php', 'wp_update_themes' );
         remove_action( 'load-update-core.php', 'wp_update_themes' );
-        remove_action( 'admin_init', '_maybe_update_themes' );
         remove_action( 'wp_update_themes', 'wp_update_themes' );
         remove_action( 'update_option_WPLANG', 'wp_clean_update_cache', 10, 0 );
         remove_action( 'wp_maybe_auto_update', 'wp_maybe_auto_update' );
-        remove_action( 'init', 'wp_schedule_update_checks' );
         add_filter('user_has_cap', '_debug_ignore_wp_request', 10, 3);
     }
 }
