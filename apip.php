@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.0
+ * Version:     1.39.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -238,6 +238,20 @@ function apip_init()
         remove_action('admin_init', '_maybe_update_themes');
         remove_action('init', 'wp_schedule_update_checks');
         add_filter('translations_api', '__return_empty_array');
+        // add_filter('install_plugins_table_api_args_favorites', '__return_false');
+        // add_filter('install_plugins_table_api_args_featured', '__return_false');
+        // add_filter('install_plugins_table_api_args_popular', '__return_false');
+        // add_filter('install_plugins_table_api_args_recommended', '__return_false');
+        // add_filter('install_plugins_table_api_args_upload', '__return_false');
+        // add_filter('install_plugins_table_api_args_search', '__return_false');
+        // add_filter('install_plugins_table_api_args_beta', '__return_false');
+        // add_filter('install_themes_table_api_args_popular', '__return_false');
+        // add_filter('install_themes_table_api_args_dashboard', '__return_false');
+        // add_filter('install_themes_table_api_args_featured', '__return_false');
+        // add_filter('install_themes_table_api_args_new', '__return_false');
+        // add_filter('install_themes_table_api_args_search', '__return_false');
+        // add_filter('install_themes_table_api_args_updated', '__return_false');
+        // add_filter('install_themes_table_api_args_upload', '__return_false');
     }
 
     /** 01 */
@@ -1052,7 +1066,7 @@ add_action('load-post.php', 'apip_remove_post_locked');
 //0.24 禁止update相关
 //0.24.1 debug时去除update相关权限，因为会有连接服务器超时警告
 function _debug_ignore_wp_request ($allcaps, $caps, $args){
-    $server_caps = array('install_languages', 'update_themes', 'update_plugins', 'update_core');
+    $server_caps = array('install_languages', 'update_themes', 'update_plugins', 'update_core', 'install_themes', 'install_plugins');
     foreach ($caps as $cap) {
         if ( in_array($cap, $server_caps)) {
             $allcaps[$cap] = false;
@@ -1134,7 +1148,7 @@ function apip_locale( $locale )
  /**
  * 作用: 屏蔽后台中的Open Sans.
  * 来源: lifishake原创
- * URL:  http://pewae.com
+ * URL:  https://pewae.com
  */
 
 function apip_block_open_sans ($styles)
@@ -1150,7 +1164,7 @@ function apip_block_open_sans ($styles)
  * 作用: 在comment widget中屏蔽作者.
  * 原理: 访客的user_id = 0
  * 来源: lifishake原创
- * URL:  http://pewae.com
+ * URL:  https://pewae.com
  */
 
  function before_get_comments($args)
