@@ -20,12 +20,12 @@ class APIP_Widget_Related extends WP_Widget {
        $related_count = $instance['related_count']; ?>
        <p>
             <label for="<?php echo $this->get_field_id( 'title' ); ?>">
-                 <?php _e( 'Title' , 'simply-related-posts'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo attribute_escape( $title ); ?>" />
+                 <?php echo( 'Title'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
             </label>
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'taxonomy' ); ?>">
-                 <?php _e( 'Related by taxonomy' , 'simply-related-posts'); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'taxonomy' ); ?>" name="<?php echo $this->get_field_name( 'taxonomy' ); ?>"><?php
+                 <?php echo( 'Related by taxonomy' ); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'taxonomy' ); ?>" name="<?php echo $this->get_field_name( 'taxonomy' ); ?>"><?php
                       $taxonomies = get_taxonomies( array( 'show_ui' => true ), 'objects' );
                       foreach ( $taxonomies as $slug => $tax ): ?>
                            <option value="<?php echo $slug; ?>" <?php echo ( $slug == $taxonomy ) ? 'selected="selected"' : ''; ?>><?php echo $tax->labels->name; ?></option><?php
@@ -35,7 +35,7 @@ class APIP_Widget_Related extends WP_Widget {
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'post_type' ); ?>">
-                 <?php _e( 'Related post-type' , 'simply-related-posts'); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'post_type' ); ?>" name="<?php echo $this->get_field_name( 'post_type' ); ?>"><?php
+                 <?php echo( 'Related post-type' ); ?>: <select class="widefat" id="<?php echo $this->get_field_id( 'post_type' ); ?>" name="<?php echo $this->get_field_name( 'post_type' ); ?>"><?php
                       $post_types = get_post_types( array( 'show_ui' => true, 'public' => true ), 'objects', 'and' );
                       foreach ( $post_types as $slug => $pt ): ?>
                            <option value="<?php echo $slug; ?>" <?php echo ( $slug == $post_type ) ? 'selected="selected"' : ''; ?>><?php echo $pt->labels->name; ?></option><?php
@@ -45,12 +45,12 @@ class APIP_Widget_Related extends WP_Widget {
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'related_count' ); ?>">
-                 <?php _e( 'How many posts to show' , 'simply-related-posts'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'related_count' ); ?>" name="<?php echo $this->get_field_name( 'related_count' ); ?>" type="text" value="<?php echo attribute_escape( $related_count ); ?>" />
+                 <?php echo( 'How many posts to show'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'related_count' ); ?>" name="<?php echo $this->get_field_name( 'related_count' ); ?>" type="text" value="<?php echo esc_attr( $related_count ); ?>" />
             </label>
        </p>
        <p>
             <label for="<?php echo $this->get_field_id( 'exclude' ); ?>">
-                 <?php _e( 'Term ids to exclude (e.g 5,4,2)' , 'simply-related-posts'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'exclude' ); ?>" name="<?php echo $this->get_field_name( 'exclude' ); ?>" type="text" value="<?php echo attribute_escape( $exclude ); ?>" />
+                 <?php echo( 'Term ids to exclude (e.g 5,4,2)' ); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'exclude' ); ?>" name="<?php echo $this->get_field_name( 'exclude' ); ?>" type="text" value="<?php echo esc_attr( $exclude ); ?>" />
             </label>
        </p><?php
 
@@ -147,12 +147,12 @@ class APIP_Widget_Related extends WP_Widget {
                ?>
                <p>
                     <label for="<?php echo $this->get_field_id( 'title' ); ?>">
-                         <?php _e( 'Title' , 'history-post-on-the-day'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo attribute_escape( $title ); ?>" />
+                         <?php echo( 'Title' ); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
                     </label>
                </p>
                <p>
                     <label for="<?php echo $this->get_field_id( 'numbers' ); ?>">
-                         <?php _e( 'How many posts to show' , 'history-post-on-the-day'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo attribute_escape( $numbers ); ?>" />
+                         <?php echo( 'How many posts to show'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo esc_attr( $numbers ); ?>" />
                     </label>
                </p><?php
 
@@ -229,18 +229,18 @@ class APIP_Widget_Recent extends WP_Widget {
 
           public function form( $instance ) {
 
-               $instance = wp_parse_args( (array) $instance, array( 'title' => __( 'Recent Modify' , 'prokuso'), 'numbers' => '5' ) );
+               $instance = wp_parse_args( (array) $instance, array( 'title' => 'Recent Modify', 'numbers' => '5' ) );
                $title = $instance['title'];
                $numbers = $instance['numbers'];
                ?>
                <p>
                     <label for="<?php echo $this->get_field_id( 'title' ); ?>">
-                         <?php _e( 'Title' , 'prokuso'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo attribute_escape( $title ); ?>" />
+                         <?php 'Title'; ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
                     </label>
                </p>
                <p>
                     <label for="<?php echo $this->get_field_id( 'numbers' ); ?>">
-                         <?php _e( 'How many posts to show' , 'prokuso'); ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo attribute_escape( $numbers ); ?>" />
+                         <?php 'How many posts to show'; ?>: <input class="widefat" id="<?php echo $this->get_field_id( 'numbers' ); ?>" name="<?php echo $this->get_field_name( 'numbers' ); ?>" type="text" value="<?php echo esc_attr( $numbers ); ?>" />
                     </label>
                </p><?php
 
@@ -278,7 +278,7 @@ class APIP_Widget_Recent extends WP_Widget {
                     foreach ( $related_posts as $related_post ) : ?>
                          <li>
                               <a class="history-post" href="<?php echo get_permalink( $related_post->ID ); ?>">
-                                   <?php echo apply_filters( 'prokuso', $related_post->post_title, $related_post, $instance ); ?>
+                                   <?php echo $related_post->post_title; ?>
                               </a>
                          </li><?php
                     endforeach; ?>
@@ -353,7 +353,7 @@ class APIP_Widget_Meta extends WP_Widget {
         $instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
         $title = strip_tags($instance['title']);
 ?>
-            <p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+            <p><label for="<?php echo $this->get_field_id('title'); ?>"><?php 'Title:'; ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
 <?php
     }
 }
@@ -435,7 +435,7 @@ class APIP_Widget_Hook_List extends WP_Widget {
 		$title = sanitize_text_field( $instance['title'] );
         $hooks = sanitize_text_field( $instance['hooks'] );
 ?>
-			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php 'Title:'; ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
             <p><label for="<?php echo $this->get_field_id('hooks'); ?>"><?php echo '要查看的hook,半角逗号分隔:'; ?></label> <input class="widefat" id="<?php echo $this->get_field_id('hooks'); ?>" name="<?php echo $this->get_field_name('hooks'); ?>" type="text" value="<?php echo esc_attr($hooks); ?>" /></p>
 <?php
 	}
@@ -482,7 +482,7 @@ function apip_widget_unregister() {
     $names = array(
          "WP_Widget_Pages",
          "WP_Widget_Archives",
-         "WP_Widget_Links",
+         //"WP_Widget_Links",
          "WP_Widget_Media_Audio",
          "WP_Widget_Media_Image",
          "WP_Widget_Media_Video",
@@ -491,7 +491,7 @@ function apip_widget_unregister() {
          "WP_Widget_Text",
          "WP_Widget_Categories",
          "WP_Widget_Recent_Posts",
-         "WP_Widget_RSS",
+         "WP_Widget_RSS", //自定义版本已经删除，250408
          "WP_Widget_Tag_Cloud",
          "WP_Widget_Custom_HTML",
     );

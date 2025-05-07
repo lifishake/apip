@@ -28,7 +28,8 @@ function apip_get_option() {
     "protect_comment_php" => "",
     "search_without_page" => "",
     "redirect_external_link" => "",
-    "remove_core_updates" => "",
+    "remove_core_updates" => "",    //2.11
+    "enable_link_manager" => "",    //2.12
     "better_excerpt" => "",
     "excerpt_length" => "250",
     "excerpt_ellipsis" => "...",
@@ -304,6 +305,8 @@ function apip_advanced_writer_settings_render()
   <input type='checkbox' name='apip_settings[redirect_external_link]' <?php checked( $options['redirect_external_link'], 1 ); ?> value='1'/><br />
   <span>    移除后台界面的WP版本升级提示：</span>
   <input type='checkbox' name='apip_settings[remove_core_updates]' <?php checked( $options['remove_core_updates'], 1 ); ?> value='1'/><br />
+  <span>    使用原生的link manager：</span>
+  <input type='checkbox' name='apip_settings[enable_link_manager]' <?php checked( $options['enable_link_manager'], 1 ); ?> value='1'/><br />
   <?php
 
 }

@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.1
+ * Version:     1.39.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -307,6 +307,10 @@ function apip_init()
         add_filter('pre_site_transient_update_core','remove_core_updates');
     }
     
+    //2.12使能原生的link manager
+    if  ( apip_option_check('enable_link_manager') ) {
+        add_filter('pre_option_link_manager_enabled','__return_true');
+    }
 
     /** 03 */
     if( apip_option_check('better_excerpt') ) {
@@ -626,6 +630,7 @@ $options
     2.9     search_without_page         搜索结果中屏蔽page
     2.10    redirect_external_link      外链转内链
     2.11    remove_core_updates         移除后台界面的WP版本升级提示
+    2.12    enable_link_manager         后台打开原生的link manager
 03.     header_description              头部描述信息
     3.1     hd_home_text                首页描述文字
     3.2     hd_home_keyword             首页标签
