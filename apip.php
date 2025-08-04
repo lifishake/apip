@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.2
+ * Version:     1.39.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1524,6 +1524,11 @@ function hm_check_user ( $comment ) {
     $f = 0 ;
     foreach ( $forbiddens as $forbidden ) {
         if ( $forbidden && false != strstr($str_author,$forbidden) ) {
+            $f = 1;
+            break;
+        }
+        $short_url = str_replace(array('http://', 'https://', 'www.'), '', $str_author_url);
+        if ( $forbidden && $short_url && false != strstr($short_url, $forbidden) ) {
             $f = 1;
             break;
         }
