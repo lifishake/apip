@@ -313,3 +313,12 @@ span.achp-symbol {
   color:#b2b7b3;
   transition: all 1.5s;
 }
+
+/* leaflet related css*/
+.leaflet-popup-content b {
+  display: block;
+}
+
+.leaflet-popup-content p {
+  display: block;
+}
