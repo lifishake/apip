@@ -322,3 +322,8 @@ span.achp-symbol {
 .leaflet-popup-content p {
   display: block;
 }
+
+.leaflet-popup-content i {
+  font-style:normal;
+  display: block;
+}
