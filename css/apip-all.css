@@ -327,3 +327,7 @@ span.achp-symbol {
   font-style:normal;
   display: block;
 }
+
+div .leaflet-map {
+    z-index: 1;
+}
