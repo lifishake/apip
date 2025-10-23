@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.6
+ * Version:     1.39.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -198,7 +198,7 @@ function apip_init()
     //0.6 去掉后台的OpenSans  -->移至统一的admin_enqueue_scripts
     //0.7 自带的TagCloud格式调整  -->暂时不用
     //0.8 移除后台的“作者”列
-    add_filter( 'manage_posts_columns', 'apip_posts_columns' );
+    add_filter( 'manage_post_posts_columns', 'apip_posts_columns' );
     //0.9 升级后替换高危文件
     add_action( 'upgrader_process_complete', 'apip_remove_default_risk_files', 11, 2 );
     //0.10 作者页跳转到404 -->移至统一的template_redirect钩子
@@ -232,7 +232,7 @@ function apip_init()
     add_action('in_admin_header', 'apip_remove_admin_help');
 
     //0.24 debug时忽略wordpress.org的update检查.
-    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    if ( apip_is_debug_mode() ) {
         remove_action('admin_init', '_maybe_update_core');
         remove_action('admin_init', '_maybe_update_plugins');
         remove_action('admin_init', '_maybe_update_themes');
@@ -515,10 +515,12 @@ function apip_init_actions()
         session_start();
     }
 	*/
-	if (session_status()!=PHP_SESSION_ACTIVE) {
+	/*if (session_status()!=PHP_SESSION_ACTIVE) {
 		session_start();
+	}*/
+    if (apip_is_debug_mode()) {
+        include (plugin_dir_path( __FILE__ )."apip-local-debug.php");
 	}
-    include (plugin_dir_path( __FILE__ )."apip-local-debug.php");
 }
 
 function apip_header_actions()
@@ -565,7 +567,7 @@ function apip_admin_init() {
     add_action('wp_ajax_nopriv_apip_upload_image','apip_upload_image');
 
     //0.24 debug时忽略wordpress.org的update检查.
-    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    if ( apip_is_debug_mode() ) {
         remove_action( 'upgrader_process_complete', 'wp_update_plugins');
         remove_action( 'upgrader_process_complete', 'wp_update_themes');
         remove_action( 'load-plugins.php', 'wp_plugin_update_rows', 20 );
@@ -1952,8 +1954,8 @@ function apip_lazyload_filter( $content )
 function apip_keep_query(){
     global $wp_query;
 
-    if (isset($_SESSION['last_tax'])) {
-        $old_tax = $_SESSION['last_tax'];
+    if (isset($_COOKIE['last_tax'])) {
+        $old_tax = $_COOKIE['last_tax'];
     }
     else {
         $old_tax = '';
@@ -1979,8 +1981,8 @@ function apip_keep_query(){
             $new_tax = "日:" . get_the_date(get_option('date_format'));
         }
         else {
-            $_SESSION['last_tax'] = '';
-            $_SESSION['tax_ids'] = array();
+            setcookie('last_tax', '', 0);
+            setcookie('tax_ids', '', 0);
             return;
         }
         if ($new_tax != $old_tax) {
@@ -1990,28 +1992,29 @@ function apip_keep_query(){
             $myquery = new WP_Query( $vars );
             if ($myquery->post_count == 1 && $myquery->max_num_pages == 1){
                 wp_reset_postdata();
-                $_SESSION['last_tax'] = '';
-                $_SESSION['tax_ids'] = array();
+                setcookie('last_tax', '', 0);
+                setcookie('tax_ids', '', 0);
                 return;
             }
-            $_SESSION['last_tax'] = $new_tax;
-            $_SESSION['tax_ids'] = wp_list_pluck( $myquery->posts, 'ID' );
+            setcookie('last_tax', $new_tax, 0);
+            setcookie('tax_ids', implode(',', wp_list_pluck( $myquery->posts, 'ID' )), 0);
             wp_reset_postdata();
         }
     }
     else if (!is_single()) {
-        $_SESSION['last_tax'] = '';
-        $_SESSION['tax_ids'] = array();
+        setcookie('last_tax', '', 0);
+        setcookie('tax_ids', '', 0);
     }
     else {
         //single
         $ID = get_the_ID();
-        if (empty($old_tax)||!isset($_SESSION['tax_ids'])||count($_SESSION['tax_ids']) == 0) {
+        if ( empty($old_tax) || !isset($_COOKIE['tax_ids']) || empty($_COOKIE['tax_ids'])) {
             return;
         }      
-        if (FALSE===array_search($ID, $_SESSION['tax_ids'])) {
-            $_SESSION['last_tax'] = '';
-            $_SESSION['tax_ids'] = array();
+        $arr_taxes = explode(',', $_COOKIE['tax_ids']);
+        if (FALSE===array_search($ID, $arr_taxes)) {
+            setcookie('last_tax', '', 0);
+            setcookie('tax_ids', '', 0);
             return;
         }
     }
@@ -2063,6 +2066,9 @@ function apip_comment_inserted($comment_id, $comment_object) {
 function apip_is_debug_mode()
 {
     if (isset( $_SERVER['SystemRoot'] ) && strpos($_SERVER['SystemRoot'], "WINDOWS" ) > 0) {
+        return 1;
+    }
+    if (defined( 'WP_DEBUG' ) && WP_DEBUG) {
         return 1;
     }
     return 0;

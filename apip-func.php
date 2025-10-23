@@ -1566,15 +1566,23 @@ function apip_get_links()
 }
 
 function apip_get_prev_post() {
-    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids']) && count($_SESSION['tax_ids'])>1) {
+    if ( isset($_COOKIE['last_tax']) && 
+         !empty($_COOKIE['last_tax']) && 
+         isset($_COOKIE['tax_ids']) && 
+         !empty($_COOKIE['tax_ids'])) {
         $ID = get_the_ID();
-        $pos = array_search($ID, $_SESSION['tax_ids']);
+        $arr_taxes = explode(',', $_COOKIE['tax_ids']);
+        $count = count($arr_taxes);
+        if ($count <= 1) {
+            return NULL;
+        }
+        $pos = array_search($ID, $arr_taxes);
         if ( FALSE === $pos ) {
             return NULL;
         }
-        $count = count($_SESSION['tax_ids']);
+        
         if ( $pos > 0) {
-            return get_post($_SESSION['tax_ids'][$pos -1]);
+            return get_post($arr_taxes[$pos -1]);
         }
         else {
             return NULL;
@@ -1586,15 +1594,23 @@ function apip_get_prev_post() {
 }
 
 function apip_get_next_post() {
-    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids'])&& count($_SESSION['tax_ids'])>1) {       
+    if ( isset($_COOKIE['last_tax']) && 
+         !empty($_COOKIE['last_tax']) && 
+         isset($_COOKIE['tax_ids']) && 
+         !empty($_COOKIE['tax_ids'])) {
         $ID = get_the_ID();
-        $pos = array_search($ID, $_SESSION['tax_ids']);
+        $arr_taxes = explode(',', $_COOKIE['tax_ids']);
+        $count = count($arr_taxes);
+        if ($count <= 1) {
+            return NULL;
+        }
+        $pos = array_search($ID, $arr_taxes);
         if ( FALSE === $pos ) {
             return NULL;
         }
-        $count = count($_SESSION['tax_ids']);
+        
         if ( $pos < $count - 1) {
-            return get_post($_SESSION['tax_ids'][$pos +1]);
+            return get_post($arr_taxes[$pos +1]);
         }
         else {
             return NULL;
@@ -1628,22 +1644,27 @@ function apip_get_post_navagation($args=array()){
     }
 
     $ID = get_the_ID();
-    if (isset($_SESSION['last_tax'])&& isset($_SESSION['tax_ids'])&& count($_SESSION['tax_ids'])>1) {      
-        $pos = array_search($ID, $_SESSION['tax_ids']);
+    if ( isset($_COOKIE['last_tax']) &&
+         !empty($_COOKIE['last_tax']) &&
+         isset($_COOKIE['tax_ids']) && 
+         !empty($_COOKIE['tax_ids'])
+         ) {
+        $arr_taxes = explode(',', $_COOKIE['tax_ids']);
+        $pos = array_search($ID, $arr_taxes);
         if ( FALSE === $pos ) {
             the_post_navigation($args);
             return;
         }
-        $count = count($_SESSION['tax_ids']);
+        $count = count($arr_taxes);
         $next_id = 0;
         $previous_id = 0;
         $previous="";
         $next="";
         if ( $pos < $count - 1) {
-            $next_id = $_SESSION['tax_ids'][$pos +1];
+            $next_id = $arr_taxes[$pos +1];
         }
         if ($pos > 0 ) {
-            $previous_id = $_SESSION['tax_ids'][$pos -1];
+            $previous_id = $arr_taxes[$pos -1];
         }
         if ($previous_id > 0)
         {
@@ -1657,7 +1678,7 @@ function apip_get_post_navagation($args=array()){
             $next = '<a href="'.get_permalink( $next_id ).'" rel="next">'.$next.'</a>';        
             $next = '<div class="nav-next">'.$next.'</div>';
         }
-        if ( "" === $desc = $_SESSION['last_tax'] )
+        if ( "" === $desc = $_COOKIE['last_tax'] )
         {
             $desc = $args['screen_reader_text'];
         }
