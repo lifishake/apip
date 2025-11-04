@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.7
+ * Version:     1.39.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -857,12 +857,17 @@ function apip_remove_scripts()
 function apip_remove_styles()
 {
     global $wp_styles;
-    foreach ($wp_styles->registered as $libs){
+    foreach ($wp_styles->registered as $index => $libs) {
     //替换google字体
+        if(!empty($libs->src)) {
+            if (apip_is_debug_mode() && strpos($libs->src, '//fonts.googleapis.com')) {
+                unset($wp_styles->registered[$index]);
+            } else {
         $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
         }
-    if ( !is_admin() )
-    {
+        }
+    }
+    if ( !is_admin() ) {
         wp_dequeue_style( 'fontawesome' );
 
     }
@@ -1404,18 +1409,12 @@ function apip_excerpt( $text )
  * URL:  http://www.imevlos.com/
  */
 function apip_get_cavatar($source) {
-    if( !apip_option_check('local_gravatar') )
+
+    if( !apip_option_check('local_gravatar') && !apip_is_debug_mode() )
     {
-        //https://gravatar.loli.net/avatar/1555b3ecaabb715d5124f8beda5d1ebf?s=32&d=mm&r=g
-        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.libravatar.org/avatar', $source);
-        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cdn.v2ex.com/gravatar', $source);        
-        //$source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', '//cn.gravatar.com/gravatar', $source);
         global $apip_options;
         $str_mirror = isset( $apip_options['gravatar_mirror'] ) ? $apip_options['gravatar_mirror'] : '//gravatar.loli.net/avatar';
         $source = preg_replace('/\/\/\w+\.gravatar\.com\/avatar/', $str_mirror, $source);
-        //gravatar.eqoe.cn
-
-    //$source = str_replace( $src, $replace, $source);
         return $source ;
     }
     $pos_sch = strpos( $source, 'http' );
@@ -1425,6 +1424,9 @@ function apip_get_cavatar($source) {
     $abs = APIP_GALLERY_DIR . 'gravatar_cache/'.$tmp[1];
     $dest = APIP_GALLERY_URL.'gravatar_cache/'.$tmp[1];
     $default =  APIP_GALLERY_URL.'gravatar_cache/default.png';
+    if (apip_is_debug_mode()) {
+        return '<img alt="" src="'.$default.'" class="avatar avatar-'.$tmp[2].'" width="'.$tmp[2].'" height="'.$tmp[2].'" />';
+    }
 
     if (!is_file($abs)){
         //$src = 'http://www.gravatar.com/avatar/'.$tmp[1].'?s=64&d='.$default.'&r=G';
@@ -1930,10 +1932,16 @@ function apip_lazyload_filter( $content )
     if (is_feed()) {
         return $content;
     }
-    $content = mb_convert_encoding($content, 'HTML-ENTITIES', "UTF-8");
-    $dom = new DOMDocument();
-    @$dom->loadHTML($content);
-
+    if (!preg_match('/<\s*img\s/i', $content)) {
+        return $content;
+    }
+    //$content = esc_html($content);
+    if (preg_match('/&[a-zA-Z0-9#]+;/', $content)) {
+        $content = wp_specialchars_decode($content, ENT_QUOTES);
+    }
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    @$dom->loadHTML('<?xml encoding="UTF-8"><!DOCTYPE html><head><meta charset="UTF-8"></head><body>'. $content.'</body></html>', LIBXML_HTML_NOIMPLIED|LIBXML_HTML_NODEFDTD);
+    //@$dom->createElement();
     foreach ($dom->getElementsByTagName('img') as $node) {
         $oldsrc = $node->getAttribute('src');
         $node->setAttribute("data-src", $oldsrc );
@@ -1941,7 +1949,20 @@ function apip_lazyload_filter( $content )
         $newsrc = APIP_PLUGIN_URL.'img/blank.gif';//'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         $node->setAttribute("src", $newsrc);
     }
+    $body = $dom->getElementsByTagName('body')->item(0);
+    if ($body) {
+        $newHtml = '';
+        foreach($body->childNodes as $node) {
+            $newHtml .= $dom->saveHTML($node);
+        }
+    }
+    else {
+        $newHtml = $content;
+    }
+    /*
     $newHtml = preg_replace('/^<!DOCTYPE.+?>/', '', str_replace( array('<html>', '</html>', '<body>', '</body>'), array('', '', '', ''), $dom->saveHTML()));
+    $newHtml = esc_html( $newHtml );
+    */
     return $newHtml;
 }
 
