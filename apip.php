@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.39.9
+ * Version:     1.40.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -689,7 +689,7 @@ function apip_scripts()
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
     wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20251003' );
-    wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20250310", true);
+    wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20251010", true);
     $css = '';
 
     if ( /*is_single()*/1 ) {
@@ -790,7 +790,7 @@ function apip_scripts()
     //8.2
     if ( apip_option_check('apip_lazyload_enable') ) {
         wp_enqueue_script('apip-js-lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
-        wp_localize_script('apip-js-option','lazyload', array('true'));
+        wp_localize_script('apip-js-option','apipScriptData', array('lazyload'=>true));
     }
 
      //8.8

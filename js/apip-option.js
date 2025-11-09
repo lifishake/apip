@@ -1,7 +1,13 @@
 //var lazyload = [];
 
+/* <![CDATA[ */
+var apipScriptData = apipScriptData || {
+	lazyload: false,
+};
+/* ]]> */
+
 jQuery( document ).ready( function( $ ) {
-	if ('undefined'!==lazyload && lazyload.length > 0 && lazyload[0]) {
+	if (apipScriptData.lazyload) {
 		$( 'img[data-unveil="true"]' ).unveil( 200 );
 	}
 });
