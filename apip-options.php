@@ -11,6 +11,20 @@ add_action( 'admin_init', 'apip_settings_init' );
 /*
 取得的选项与默认值合并。注意如果追加新功能要维护默认值。
 */
+function apip_get_custom_style() {
+  $default_apip_custom_styles = array(
+    "apip_local_font_enable" => false,
+    "apip_local_fonts" => array(),
+    "apip_global_css" => '',
+  );
+  $styles = get_option('apip_custom_styles');
+  $styles = wp_parse_args($styles, $default_apip_custom_styles);
+  return $styles;
+}
+
+/*
+取得的选项与默认值合并。注意如果追加新功能要维护默认值。
+*/
 function apip_get_option() {
   $default_apip_options = array(
     "link_color" => "#1A5F99",
@@ -19,18 +33,18 @@ function apip_get_option() {
     "bg_color" => "#ECE5DF",
     "tagcloud_link_color" => "#EA3382",
     "tagcloud_bg_color" => "#9ECECF",
-    "auto_save_disabled" => "",
-    "show_admin_bar" => "",
-    "forground_chinese" => "",
-    "block_open_sans" => "",
-    "show_author_comment" => "",
-    "redirect_if_single" => "",
-    "protect_comment_php" => "",
-    "search_without_page" => "",
-    "redirect_external_link" => "",
-    "remove_core_updates" => "",    //2.11
-    "enable_link_manager" => "",    //2.12
-    "better_excerpt" => "",
+    "auto_save_disabled" => '0',
+    "show_admin_bar" => '0',
+    "forground_chinese" => '0',
+    "block_open_sans" => '0',
+    "show_author_comment" => '0',
+    "redirect_if_single" => '0',
+    "protect_comment_php" => '0',
+    "search_without_page" => '0',
+    "redirect_external_link" => '0',
+    "remove_core_updates" => '0',    //2.11
+    "enable_link_manager" => '0',    //2.12
+    "better_excerpt" => '0',
     "excerpt_length" => "250",
     "excerpt_ellipsis" => "...",
     "header_description" => "",
@@ -62,15 +76,157 @@ function apip_get_option() {
   return $options;
 }
 
+/*
+优化布尔类型的保存。
+*/
+function sanitize_apip_option_bool($value) {
+  $int_val = absint($value);
+  if (0 !== $int_val && 1 !== $int_val) {
+    return '0';
+  }
+  return strval($int_val);
+}
 
-
-
-function apip_add_admin_menu(  ) {
+/*
+增加菜单选项。
+*/
+function apip_add_admin_menu() {
   $myicon = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB5PSIwIiB4PSIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSLlnJblsaRfMSIgdmVyc2lvbj0iMS4xIiB3aWR0aD0iMTI4cHgiIGhlaWdodD0iMTI4cHgiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiBzdHlsZT0id2lkdGg6MTAwJTtoZWlnaHQ6MTAwJTtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsIDI1NSwgMjU1KTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48ZyBjbGFzcz0ibGRsLXNjYWxlIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo1MCUgNTAlIDBweDt0cmFuc2Zvcm06cm90YXRlKDBkZWcpIHNjYWxlKDAuOCk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PHBhdGggZD0iTTQyLjQgMTBoMzYuNHYxNC4zSDQyLjR6IiBmaWxsPSIjMzMzIiBzdHlsZT0iZmlsbDpyZ2IoNTEsIDUxLCA1MSk7YW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+PC9wYXRoPg0KPHBhdGggZmlsbD0iIzMzMyIgZD0iTTQxLjcgNDguM2wtMTIuNSA4LjNjLS40LjMtLjguNi0xLjMuOS4xLjEuMi4xLjMuMi4zLjIuNS40LjguNi40LjMuNy42IDEuMS45LjMuMi41LjUuOC43LjMuMy43LjYgMSAxIC4zLjIuNS41LjcuOC4zLjMuNi43IDEgMSAuMi4zLjUuNS43LjguMy40LjYuNy45IDEuMS4yLjMuNC41LjcuOGwuOSAxLjJjLjIuMy40LjUuNi44LjMuNC42LjkuOSAxLjMuMi4yLjMuNS41LjcuNC43LjggMS4zIDEuMiAyIDAgLjEuMS4yLjEuMi40LjcuNyAxLjMgMSAyIC4xLjMuMi41LjMuOC4yLjUuNCAxIC42IDEuNC4xLjMuMi42LjQuOS4yLjUuMy45LjUgMS40LjEuMy4yLjcuMyAxIC4xLjQuMy45LjQgMS4zLjEuMy4yLjcuMyAxIC4xLjQuMi45LjMgMS40LjEuMy4yLjcuMiAxIC4xLjUuMi45LjMgMS40LjEuMy4xLjcuMiAxIC4xLjUuMSAxIC4yIDEuNCAwIC4zLjEuNy4xIDF2LjNjMS41LS41IDMtMS4yIDQuMy0yLjFsMTQtOS4zYzAtLjItLjEtLjMtLjEtLjUtLjEtLjItLjEtLjUtLjItLjdsLS4zLTEuMmMwLS4yLS4xLS41LS4xLS43LS4xLS40LS4xLS45LS4yLTEuMyAwLS4yLS4xLS40LS4xLS42LS4xLS42LS4xLTEuMy0uMS0xLjkgMC0uNyAwLTEuMy4xLTIgMC0uMi4xLS40LjEtLjYgMC0uNC4xLS45LjItMS4zIDAtLjMuMS0uNS4yLS43LjEtLjQuMS0uOC4yLTEuMS4xLS4zLjEtLjUuMi0uOC4xLS40LjItLjcuMy0xLjEuMS0uMy4yLS41LjMtLjguMS0uMy4yLS43LjQtMSAuMS0uMy4yLS41LjQtLjguMS0uMy4zLS42LjUtLjkuMS0uMi4zLS41LjQtLjcuMi0uMy4zLS42LjUtLjkuMi0uMi4zLS41LjUtLjcuMi0uMy40LS42LjYtLjguMi0uMi4zLS40LjUtLjcuMi0uMy40LS41LjctLjhsLjYtLjYuNy0uNy42LS42Yy4zLS4yLjUtLjUuOC0uNy4yLS4yLjUtLjQuNy0uNS4zLS4yLjUtLjQuOC0uNi4yLS4yLjUtLjMuNy0uNS4zLS4yLjYtLjQuOS0uNS4zLS4yLjUtLjMuOC0uNC4zLS4yLjYtLjMuOS0uNS4zLS4xLjUtLjMuOC0uNC4zLS4xLjYtLjMuOS0uNGwuOS0uM2MuMSAwIC4zLS4xLjQtLjFWMjcuNEg0Mi40VjQ3YzAgLjYtLjIgMS4xLS43IDEuM3oiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8cGF0aCBmaWxsPSIjMzMzIiBkPSJNNzguOSA1NC42di0zLjJjLS4zLjEtLjUuMi0uOC4zbC0uNi4zYy0uNC4yLS43LjMtMSAuNS0uMS4xLS4zLjEtLjQuMi0uNS4zLS45LjYtMS40LjktLjEuMS0uMi4yLS4zLjItLjMuMi0uNy41LTEgLjctLjIuMS0uMy4zLS41LjQtLjMuMi0uNS40LS44LjdsLS41LjUtLjcuNy0uNS41Yy0uMi4yLS40LjUtLjYuNy0uMS4yLS4zLjQtLjQuNi0uMi4yLS40LjUtLjUuNy0uMS4yLS4zLjQtLjQuNi0uMi4zLS4zLjUtLjUuOGwtLjMuNmMtLjEuMy0uMy41LS40LjgtLjEuMi0uMi40LS4zLjctLjEuMy0uMi42LS4zLjgtLjEuMi0uMi40LS4yLjdsLS4zLjljLS4xLjItLjEuNC0uMi43LS4xLjMtLjEuNi0uMiAxIDAgLjItLjEuNC0uMS42LS4xLjQtLjEuNy0uMSAxLjEgMCAuMiAwIC40LS4xLjUgMCAuNi0uMSAxLjEtLjEgMS43IDAgLjUgMCAxLjEuMSAxLjZ2LjRjMCAuNC4xLjguMiAxLjIgMCAuMSAwIC4zLjEuNC4xLjUuMi45LjMgMS40bDIuMS0xLjRjNi43LTQuNCAxMC43LTExLjggMTAuNy0xOS44eiIgc3R5bGU9ImZpbGw6cmdiKDUxLCA1MSwgNTEpO2FuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjwvcGF0aD4NCjxwYXRoIGZpbGw9IiMzMzMiIGQ9Ik0yNC4yIDgxLjljMy45IDUuOSAxMSA4LjkgMTcuOSA3Ljl2LS42YzAtLjQtLjEtLjctLjEtMS4xIDAtLjQtLjEtLjgtLjItMS4zIDAtLjMtLjEtLjctLjItMS0uMS0uNC0uMS0uOC0uMi0xLjItLjEtLjMtLjEtLjctLjItMWwtLjMtMS4yYy0uMS0uMy0uMi0uNy0uMy0xLS4xLS40LS4yLS44LS40LTEuMmwtLjMtLjljLS4xLS40LS4zLS44LS41LTEuM2wtLjMtLjljLS4yLS41LS40LS45LS42LTEuNC0uMS0uMi0uMi0uNS0uMy0uNy0uMy0uNy0uNi0xLjMtMS0xLjkgMCAwIDAtLjEtLjEtLjEtLjQtLjctLjctMS4zLTEuMS0xLjktLjEtLjItLjMtLjQtLjQtLjYtLjMtLjQtLjUtLjgtLjgtMS4zLS4yLS4yLS40LS41LS41LS43LS4zLS40LS41LS43LS44LTEuMS0uMi0uMy0uNC0uNS0uNi0uNy0uMy0uMy0uNi0uNy0uOS0xLS4yLS4yLS40LS41LS43LS43bC0uOS0uOS0uNy0uNy0uOS0uOWMtLjMtLjItLjUtLjUtLjgtLjctLjMtLjMtLjctLjYtMS0uOC0uMy0uMi0uNS0uNC0uOC0uNi0uMi0uMS0uMy0uMi0uNS0uNC01LjQgNS45LTYuMSAxNS0xLjUgMjEuOXoiIHN0eWxlPSJmaWxsOnJnYig1MSwgNTEsIDUxKTthbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID48L3BhdGg+DQo8bWV0YWRhdGEgeG1sbnM6ZD0iaHR0cHM6Ly9sb2FkaW5nLmlvL3N0b2NrLyIgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjxkOm5hbWUgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPnNvY2tzPC9kOm5hbWU+DQoNCg0KPGQ6dGFncyBzdHlsZT0iYW5pbWF0aW9uLXBsYXktc3RhdGU6cGF1c2VkIiA+c29ja3Msc3RvY2tpbmdzLGJyZWVjaGVzLHdlYXI8L2Q6dGFncz4NCg0KDQo8ZDpsaWNlbnNlIHN0eWxlPSJhbmltYXRpb24tcGxheS1zdGF0ZTpwYXVzZWQiID5ieTwvZDpsaWNlbnNlPg0KDQoNCjxkOnNsdWcgc3R5bGU9ImFuaW1hdGlvbi1wbGF5LXN0YXRlOnBhdXNlZCIgPjZidDF3bTwvZDpzbHVnPjwvbWV0YWRhdGE+PC9nPjwhLS0gZ2VuZXJhdGVkIGJ5IGh0dHBzOi8vbG9hZGluZy5pby8gLS0+PC9zdmc+";
   add_menu_page( 'APIP设置', 'APIP设置', 'manage_options', __FILE__, 'apip_options_page', 'data:image/svg+xml;base64,' . $myicon );
   add_submenu_page(__FILE__, 'APIP上传工具', 'APIP上传工具', 'manage_options', __FILE__.'&tab=tab_uploader', 'apip_options_page');
   add_submenu_page(__FILE__, 'APIP清理工具', 'APIP清理工具', 'manage_options', __FILE__.'&tab=tab_cleaner', 'apip_options_page');
+  add_submenu_page(__FILE__, 'APIP字体管理', 'APIP字体管理', 'manage_options', __FILE__.'&tab=tab_fonts_manager', 'apip_options_page');
 }
+
+function sanitize_apip_options($input) {
+  $old_options = apip_get_option();
+  foreach ($input as $key => $value) {
+      if ('link_color' === $key ||
+      'font_color' === $key ||
+      'border_color' === $key ||
+      'bg_color' === $key ||
+      'tagcloud_link_color' === $key ||
+      'tagcloud_bg_color' === $key ) {
+          $input[$key] = sanitize_hex_color( $value );
+      }
+      elseif ('auto_save_disabled' === $key ||
+      'show_admin_bar' === $key ||
+      'forground_chinese' === $key ||
+      'block_open_sans' === $key ||
+      'show_author_comment' === $key ||
+      'redirect_if_single' === $key ||
+      'protect_comment_php' === $key ||
+      'search_without_page' === $key ||
+      'redirect_external_link' === $key ||
+      'remove_core_updates' === $key ||
+      'enable_link_manager' === $key ||
+      'better_excerpt' === $key ||
+      'replace_emoji' === $key ||
+      'apip_tagcloud_enable' === $key ||
+      'apip_link_enable' === $key ||
+      'apip_archive_enable' === $key ||
+      'apip_codehighlight_enable' === $key ||
+      'apip_lazyload_enable' === $key ||
+      'local_gravatar' === $key ||
+      'local_widget_enable' === $key ||
+      'range_jump_enable' === $key ||
+      'notify_comment_reply' === $key ||
+      'social_share_enable' === $key ||
+      'social_share_twitter' === $key ||
+      'social_share_sina' === $key ||
+      'social_share_facebook' === $key ||
+      'apip_commentquiz_enable' === $key
+        ) {
+        $input[$key] = sanitize_apip_option_bool( $value );
+      }
+      elseif ('excerpt_length' === $key ||
+      'local_definition_count' === $key) {
+        $input[$key] = strval(absint($value));
+      }
+      elseif ('excerpt_ellipsis' === $key ||
+      'header_description' === $key ||
+      'hd_home_text' === $key ||
+      'heweather_key' === $key ) {
+        $input[$key] = sanitize_text_field($value);
+      }
+      elseif ( 'hd_home_keyword' === $key ||
+      'available_gravatar_mirrors' === $key ||
+      'blocked_commenters' === $key ||
+      'available_codehighlight_tags' === $key) {
+        $array_temp = explode(',', $key);
+        $str_temp = implode(', ', $array_temp);
+        $input[$key] = sanitize_text_field($str_temp);
+      }
+
+  }
+  return $input;
+}
+
+function sanitize_apip_custom_styles($input) {
+  $old_styles = apip_get_custom_style();
+  foreach ($input as $key => $value) {
+    if ('apip_global_css' === $key) {
+      //do nothing;
+    }
+    elseif ('apip_local_fonts' === $key) {
+      $fonts = $input[$key];
+      $totalname = '';
+      $totalcontent = '';
+      $alias = array();
+      foreach ($fonts as $font_name=>$font) {
+        if (!isset($font['enabled'])) {
+          $font['enabled'] = '0';
+          $input['apip_local_fonts'][$font_name]['enabled'] = '0';
+        }
+        if ($font['enabled']) {
+          $totalname .= $font_name;
+          $content = @file_get_contents($font['css_file']);
+          $content = apip_remove_block_comments($content);
+          $content = str_replace('./', './'.$font_name.'/', $content);
+          $content = str_replace(["\r\n", "\n"], '', $content);
+          $totalcontent .= $content;
+          if (strpos($font['alias'], ';')) {
+            $vars = explode(';', $font['alias']);
+            foreach ($vars as $alia) {
+                $alias[$alia] =  $font_name;
+            }
+            $font['alias'] = implode('; ', $vars);
+          }
+          else {
+            $alias[$font['alias']] =  $font_name;
+          }
+          $input['apip_local_fonts'][$font_name] = $font;
+        }
+      }
+      if (!empty($alias)) {
+        $totalcontent .= ":root{";
+        foreach ($alias as $var=>$font_name) {
+          $totalcontent .=sprintf('%s:%s;', $var, $font_name);
+        }
+        $totalcontent .= '}';
+      }
+      if (!empty($totalcontent) && !empty($totalname)) {
+        $output_name = md5($totalname);
+        $output_url = APIP_PLUGIN_URL.'local_fonts/'.$output_name.'.css';
+        $output_name = APIP_PLUGIN_DIR.'/local_fonts/'.$output_name.'.css';
+        if (file_exists($output_name)) {
+          @unlink($output_name);
+        }
+        @file_put_contents($output_name, $totalcontent);
+        $input['apip_global_css'] = $output_url;
+        $input['apip_local_font_enable'] = '1';
+      } else {
+        $input['apip_global_css'] = '';
+        $input['apip_local_font_enable'] = '0';
+      }
+    }
+    elseif ('apip_local_font_enable' === $key) {
+      $input[$key] = sanitize_apip_option_bool( $value );
+    }
+  }
+  return $input;
+}
+
 /*
 支持的功能列表
 01. 改进的功能摘要
@@ -78,8 +234,8 @@ function apip_add_admin_menu(  ) {
 */
 function apip_settings_init(  ) {
 
-  register_setting( 'apip_option_tab', 'apip_settings' );
-  register_setting( 'apip_uploader_tab', 'uploader_options' );
+  register_setting( 'apip_option_tab', 'apip_settings', 'sanitize_apip_options' );
+  register_setting( 'apip_fonts_manager_tab', 'apip_custom_styles', array('sanitize_callback'=>'sanitize_apip_custom_styles') );
 
   add_settings_section(
   'apip_pluginPage_section',
@@ -100,6 +256,13 @@ function apip_settings_init(  ) {
   'APIP维护操作',
   'apip_settings_section_callback',
   'apip_cleaner_tab'
+  );
+
+  add_settings_section(
+  'apip_fonts_manager_section',
+  'APIP本地字体管理',
+  '__return_false',
+  'apip_fonts_manager_tab'
   );
 
   add_settings_section(
@@ -200,6 +363,15 @@ function apip_settings_init(  ) {
   'apip_cleaner_tab',
   'apip_cleaner_section'
   );
+
+   add_settings_field(
+  'fonts_manager_options',
+  '字体列表',
+  'apip_fonts_manager_options_field_render',
+  'apip_fonts_manager_tab',
+  'apip_fonts_manager_section'
+  );
+
     //-1
    add_settings_field(
   'test_field_settings',
@@ -497,29 +669,46 @@ function apip_options_page(  ) {
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_option" class="nav-tab <?php echo $active_tab == 'tab_option' ? 'nav-tab-active' : ''; ?>">基本功能</a>
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_uploader" class="nav-tab <?php echo $active_tab == 'tab_uploader' ? 'nav-tab-active' : ''; ?>">上传工具</a>
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_cleaner" class="nav-tab <?php echo $active_tab == 'tab_cleaner' ? 'nav-tab-active' : ''; ?>">清理工具</a>
+                <a href="?page=<?php echo __FILE__;?>&tab=tab_fonts_manager" class="nav-tab <?php echo $active_tab == 'tab_fonts_manager' ? 'nav-tab-active' : ''; ?>">全站字体整合</a>
                 <a href="?page=<?php echo __FILE__;?>&tab=tab_extra" class="nav-tab <?php echo $active_tab == 'tab_extra' ? 'nav-tab-active' : ''; ?>">实验台</a>
             </h2>
-     <form action='options.php' method='post'>
+     
   <?php
   switch($active_tab) {
       case 'tab_option':
       default:
+      ?><form action='options.php' method='post'><?php
         settings_fields( 'apip_option_tab' );
         do_settings_sections( 'apip_option_tab' );
         submit_button();
+        ?></form><?php
         break;
       case 'tab_uploader':
+        ?><form action='options.php' method='post'><?php
           settings_fields( 'apip_uploader_tab' );
           do_settings_sections( 'apip_uploader_tab' );
+          ?></form><?php
           break;
       case 'tab_cleaner':
+        ?><form action='options.php' method='post'><?php
         settings_fields( 'apip_cleaner_tab' );
         do_settings_sections( 'apip_cleaner_tab' );
+        ?></form><?php
+        break;
+      case 'tab_fonts_manager':
+        ?><form action='options.php' method='post'><?php
+        settings_fields( 'apip_fonts_manager_tab' );
+        do_settings_sections( 'apip_fonts_manager_tab' );
+        submit_button('保存字体设定');
+        ?></form><?php
         break;
       case 'tab_extra':
+        ?><form action='options.php' method='post'><?php
         settings_fields( 'apip_extra_tab' );
         do_settings_sections( 'apip_extra_tab' );
+        ?></form><?php
         break;
+        
   }
   /*
   if( $active_tab == 'tab_option' ) {
@@ -535,8 +724,6 @@ function apip_options_page(  ) {
   }
   */
   ?>
-
-  </form>
 </div>
   <?php
 
@@ -725,4 +912,37 @@ function apip_check_rubbish_options_field_render() {
     $arrnew = array_diff_key($arrnew, $default_options);
     apip_maintenance_page($arrnew);
 }
+
+function apip_fonts_manager_options_field_render() {
+  $styles = apip_get_custom_style();
+  $original = $styles['apip_local_fonts'];
+  unset($styles['apip_local_fonts']);
+  $styles['apip_local_fonts'] = apip_list_local_fonts($original);
+  if (empty($styles['apip_local_fonts'])) {
+    esc_html_e('没安装本地字体，请创建./local_fonts/先。');
+    return;
+  }
+  ?>
+  <div class="apip-manager-grid">
+    <table id = "apip-local-font-tab">
+      <thead><tr><th>选择<input type="hidden" name="apip_custom_styles[apip_global_css]" value="<?php esc_html_e($styles['apip_global_css']); ?>"/>      
+      <input type="hidden" name="apip_custom_styles[apip_local_font_enable]" value="<?php esc_html_e($styles['apip_local_font_enable']); ?>"/></th><th>字体名</th><th>变量名(分号分隔)</th><th>预览</th></tr></thead>
+      <tbody>
+      <?php foreach ($styles['apip_local_fonts'] as $fonts) {
+        wp_enqueue_style( 'apip-style-font'.$fonts['font_name'], $fonts['css_url'], array(), '20251114' );
+        printf('<tr><td>%1$s</td><td>%2$s%3$s%4$s</td><td>%5$s</td><td>%6$s</td></tr>', 
+        sprintf('<input type="checkbox" name="apip_custom_styles[apip_local_fonts][%1$s][enabled]" %2$s value="1" />', $fonts['font_name'], checked( $fonts['enabled'], 1, false )),
+        sprintf('<span>%1$s</span><input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][font_name]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['font_name'] )),
+        sprintf('<input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][css_file]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['css_file'] )),
+        sprintf('<input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][css_url]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['css_url'] )),
+        sprintf('<input type="text" name="apip_custom_styles[apip_local_fonts][%1$s][alias]" size="15" value="%2$s"/>', $fonts['font_name'], esc_textarea($fonts['alias'])),
+        sprintf('<span style="font-family:%s;">破袜襪子，白日依山盡尽，To be or not tobe, its\'a question. 愚かなる弟よ。</span>',$fonts['font_name'])
+      );
+      }?>
+    </tbody>
+    </table>
+  </div>
+  <?php
+}
+
 ?>

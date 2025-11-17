@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.40.0
+ * Version:     1.40.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -105,7 +105,7 @@ function apip_option_check( $key, $val = 1 )
         $apip_options = get_option('apip_settings');
     }
     //array_key_exists
-    if ( isset( $apip_options[$key] ) && $apip_options[$key] == $val ) {
+    if ( isset( $apip_options[$key] ) && intval($apip_options[$key]) == intval($val) ) {
         return true;
     }
     return false;
@@ -684,10 +684,18 @@ $options
 function apip_scripts()
 {
     global $apip_options;
+    $apip_styles = get_option('apip_custom_styles');
     $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
+
+    if (isset($apip_styles['apip_local_font_enable']) && 
+        $apip_styles['apip_local_font_enable'] && 
+        isset($apip_styles['apip_global_css']) ) {
+        wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], array(), '251117');
+    }
+
     wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20251003' );
     wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20251010", true);
     $css = '';
@@ -804,9 +812,16 @@ function apip_scripts()
 /* 统一处理后台相关的脚本 */
 function apip_admin_scripts() {
     global $apip_options;
+    $apip_styles = get_option('apip_custom_styles');
+    if (isset($apip_styles['apip_local_font_enable']) && 
+        $apip_styles['apip_local_font_enable'] && 
+        isset($apip_styles['apip_global_css']) ) {
+        wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], array(), '251117');
+    }
+    
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), '20240209' );
-    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20240209' );
+    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20251117' );
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240218', true);
     
@@ -863,8 +878,8 @@ function apip_remove_styles()
             if (apip_is_debug_mode() && strpos($libs->src, '//fonts.googleapis.com')) {
                 unset($wp_styles->registered[$index]);
             } else {
-        $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
-        }
+                $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
+            }
         }
     }
     if ( !is_admin() ) {
@@ -1366,7 +1381,10 @@ function apip_excerpt( $text )
 {
    global $apip_options;
    //erase short codes
-   $text = get_the_content();
+   if (empty($text)) {
+    $text = get_the_content();
+   }
+
    $text = strip_shortcodes($text);
    $text = str_replace(']]>', ']]&gt;', $text);
    $text = strip_tags($text );
@@ -1395,6 +1413,7 @@ function apip_excerpt( $text )
    $text = mb_substr($text,0,$len,'utf-8');
 
    $text = utf8_trim( $text ).$apip_options['excerpt_ellipsis'] ;
+   $text = wpautop($text, true);//wpautop在前面，此时已经被过滤掉了,不加<p>不好看。
    return $text;
 }
 /*                                          03终了                             */
@@ -2031,7 +2050,7 @@ function apip_keep_query(){
         $ID = get_the_ID();
         if ( empty($old_tax) || !isset($_COOKIE['tax_ids']) || empty($_COOKIE['tax_ids'])) {
             return;
-        }      
+        }
         $arr_taxes = explode(',', $_COOKIE['tax_ids']);
         if (FALSE===array_search($ID, $arr_taxes)) {
             setcookie('last_tax', '', 0);
@@ -2049,6 +2068,12 @@ function apip_keep_query(){
 function apip_comment_inserted($comment_id, $comment_object) {
     if ($comment_object->comment_parent > 0) {
         global $apip_options;
+        $comment_parent = get_comment($comment_object->comment_parent);
+        if ($comment_parent->comment_author_email === $comment_object->comment_author_email &&
+            $comment_parent->comment_author_email !== get_bloginfo('admin_email'))
+        {
+            return;
+        }
         /*$color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
         $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
         $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
@@ -2057,7 +2082,6 @@ function apip_comment_inserted($comment_id, $comment_object) {
         $color_link = "#660000";
         $color_font = "#000200";
         $color_bg = "#F7FCF8";
-        $comment_parent = get_comment($comment_object->comment_parent);
         $bg_head = '<div style="border:3px solid '.$color_border.'; border-radius: 5px; margin: 1em 2em; background:'.$color_bg.'; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: '.$color_font.'; ">' ;
         $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed '.$color_border.'; border-radius: 5px;">' ;
         $a_style = 'color:'.$color_link.'; text-decoration: none;';

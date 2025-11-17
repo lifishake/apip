@@ -1936,3 +1936,47 @@ function apip_get_object_id($o) {
     }
     return 0;
 }
+
+/**
+ * 作用: 列出./local_fonts下的所有字体文件夹下的css文件 ./local_fonts/字体名/任意名.css
+ * 来源: 自创
+ */
+function apip_list_local_fonts($original = array()) {
+    $ret = array();
+    $base_dir = APIP_PLUGIN_DIR.'/local_fonts/';
+    $base_dir = wp_normalize_path( $base_dir );
+    $base_url = APIP_PLUGIN_URL.'local_fonts/';
+    $css_folders = glob($base_dir.'*/', GLOB_ONLYDIR);
+    foreach ($css_folders as $folder_name) {
+        $folder_name = basename($folder_name);
+        $sub_dir = $base_dir.$folder_name.'/';
+        $css_files = glob($sub_dir.'*.css');
+        if (!empty($css_files)&& !empty($css_files[0])) {
+            $css_file = wp_normalize_path($css_files[0]);
+            $ret[$folder_name]['css_file'] = $css_file;
+            $ret[$folder_name]['css_url'] = $base_url.$folder_name.'/'.basename($css_file);
+            $ret[$folder_name]['font_name'] = $folder_name;
+            $ret[$folder_name]['enabled'] = false;
+            $ret[$folder_name]['alias'] = '';
+            if (isset($original[$folder_name])) {
+                if (isset($original[$folder_name]['enabled'])) {
+                    $ret[$folder_name]['enabled'] = $original[$folder_name]['enabled'];
+                }
+                if (isset($original[$folder_name]['alias'])) {
+                    $ret[$folder_name]['alias'] = $original[$folder_name]['alias'];
+                }
+            }
+        }
+    }
+    return $ret;
+}
+
+function apip_remove_block_comments($text) {
+    return preg_replace_callback(
+        '#/\*.*?\*/#s',
+        function($matches) {
+            return '';
+        },
+        $text
+    );
+}

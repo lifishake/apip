@@ -1,3 +1,44 @@
 span .original_key {
     color:#C07040;
 }
+
+#apip-local-font-tab {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  background:#fff
+}
+
+#apip-local-font-tab th{
+    background:#f8f9fa;
+    font-weight: 700;
+    text-align: left;
+    columns: #333;
+}
+
+#apip-local-font-tab tbody tr:nth-child(odd) {
+    background-color: #fafafa;
+}
+
+#apip-local-font-tab tbody tr:nth-child(even) {
+    background-color: #fff;
+}
+#apip-local-font-tab tbody tr:hover {
+    background-color: #e2f2fd !important;
+}
+
+#apip-local-font-tab td, #apip-local-font-tab th {
+  border: 1px solid #CCC;
+  text-align: center;
+  padding: 8px;
+  min-width: 60px;
+  word-wrap: break-word;
+  max-width: 500px;
+}
+
+#apip-local-font-tab td:last-child, 
+#apip-local-font-tab th:last-child {
+    width: 100%;
+    white-space: nowrap;
+    font-size: 20px;
+}
