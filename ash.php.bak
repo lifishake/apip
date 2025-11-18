@@ -1806,6 +1806,22 @@ function apip_quicktags()
     </script>
 <?php
 }
+
+ /**
+ * 作用: 移除文件内容中的块注释
+ * 来源: 自产
+ * URL:
+ */
+function apip_remove_block_comments($text) {
+    return preg_replace_callback(
+        '#/\*.*?\*/#s',
+        function($matches) {
+            return '';
+        },
+        $text
+    );
+}
+
  ?>
 
  

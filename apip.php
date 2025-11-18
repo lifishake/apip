@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.40.1
+ * Version:     1.40.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -684,29 +684,23 @@ $options
 function apip_scripts()
 {
     global $apip_options;
-    $apip_styles = get_option('apip_custom_styles');
     $color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
     $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
     $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
     $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";
 
-    if (isset($apip_styles['apip_local_font_enable']) && 
-        $apip_styles['apip_local_font_enable'] && 
-        isset($apip_styles['apip_global_css']) ) {
-        wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], array(), '251117');
-    }
+    apip_enqueue_custom_style_resources();
 
-    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), '20251003' );
-    wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), "20251010", true);
+    wp_enqueue_style( 'apip-style-all', APIP_PLUGIN_URL . 'css/apip-all.css', array(), APIP_FRONTEND_CSS_VER);
+    wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), APIP_FRONTEND_JS_VER, true);
     $css = '';
 
-    if ( /*is_single()*/1 ) {
-        wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css' );
-        wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css' );
-    }
+    wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css', array(), APIP_FRONTEND_CSS_VER );
+    wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css', array(), APIP_FRONTEND_CSS_VER );
+
 
     if (is_singular()) {
-        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), "20201208", true);
+        wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), APIP_FRONTEND_JS_VER, true);
     }
 
     //0.1 Ctrl+Enter 提交
@@ -716,7 +710,7 @@ function apip_scripts()
     //07
     if  ( is_singular() && apip_option_check('social_share_enable') )
     {
-        wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), "20191101", true);
+        wp_enqueue_script('apip-js-social', APIP_PLUGIN_URL . 'js/apip-social.js', array(), APIP_FRONTEND_JS_VER, true);
     }
     //7.1
     if ( is_page('my-tag-cloud') && apip_option_check('apip_tagcloud_enable') )
@@ -812,18 +806,13 @@ function apip_scripts()
 /* 统一处理后台相关的脚本 */
 function apip_admin_scripts() {
     global $apip_options;
-    $apip_styles = get_option('apip_custom_styles');
-    if (isset($apip_styles['apip_local_font_enable']) && 
-        $apip_styles['apip_local_font_enable'] && 
-        isset($apip_styles['apip_global_css']) ) {
-        wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], array(), '251117');
-    }
+    apip_enqueue_custom_style_resources();
     
     wp_enqueue_style( 'wp-color-picker' );
-    wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), '20240209' );
-    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), '20251117' );
-    wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), '20191101', true);
-    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), '20240218', true);
+    wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), APIP_ADMIN_CSS_VER);
+    wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), APIP_ADMIN_CSS_VER);
+    wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), APIP_ADMIN_JS_VER, true);
+    wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker' ), APIP_ADMIN_JS_VER, true);
     
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体

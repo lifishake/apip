@@ -1,5 +1,5 @@
 body {
-  font-family: STHeitiTC-Light,"PingFang TC", "Helvetica Neue", 'Microsoft YaHei', 'Hiragino Sans GB','Microsoft JhengHei';
+  font-family: var(--🖊🏠), STHeitiTC-Light, "PingFang TC", "Helvetica Neue", 'Microsoft YaHei', 'Hiragino Sans GB','Microsoft JhengHei';
 }
 
 textarea{

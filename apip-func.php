@@ -1,5 +1,10 @@
 <?php
 
+define('APIP_FRONTEND_CSS_VER', '20251117');
+define('APIP_FRONTEND_JS_VER', '20251010');
+define('APIP_ADMIN_CSS_VER', '20251117');
+define('APIP_ADMIN_JS_VER', '20240218');
+
 //Class lunar
 /*
  * 作用: 计算农历相关 除夕判断为自行添加
@@ -1971,12 +1976,25 @@ function apip_list_local_fonts($original = array()) {
     return $ret;
 }
 
-function apip_remove_block_comments($text) {
-    return preg_replace_callback(
-        '#/\*.*?\*/#s',
-        function($matches) {
-            return '';
-        },
-        $text
-    );
+/**
+ * 作用: 加载本地已经定义好的字体
+ * 来源: 自创
+ */
+function apip_enqueue_custom_style_resources() {
+    $apip_styles = get_option('apip_custom_styles');
+    $enabled_fonts = array();
+    if (isset($apip_styles['apip_local_font_enable']) && 
+        $apip_styles['apip_local_font_enable'] ) {
+            if (is_array($apip_styles['apip_local_fonts'])) {
+                foreach ($apip_styles['apip_local_fonts'] as $font) {
+                    if (isset($font['enabled']) && $font['enabled'] && isset($font['css_file']) && file_exists($font['css_file']))
+                        $font_load_name = 'apip-custom-font-'. strtolower($font['font_name']);
+                        wp_enqueue_style($font_load_name, $font['css_url'], array(), APIP_FRONTEND_CSS_VER);
+                        $enabled_fonts[] = $font_load_name;
+                    }
+                }//foreach
+        }
+        if (isset($apip_styles['apip_global_css']) ) {
+            wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], $enabled_fonts, APIP_FRONTEND_CSS_VER);
+        }
 }

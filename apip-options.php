@@ -180,17 +180,15 @@ function sanitize_apip_custom_styles($input) {
         }
         if ($font['enabled']) {
           $totalname .= $font_name;
-          $content = @file_get_contents($font['css_file']);
-          $content = apip_remove_block_comments($content);
-          $content = str_replace('./', './'.$font_name.'/', $content);
-          $content = str_replace(["\r\n", "\n"], '', $content);
-          $totalcontent .= $content;
           if (strpos($font['alias'], ';')) {
             $vars = explode(';', $font['alias']);
+            $clear_vars = array();
             foreach ($vars as $alia) {
-                $alias[$alia] =  $font_name;
+              $alia = trim($alia);
+              $alias[$alia] =  $font_name;
+              $clear_vars[] = $alia;
             }
-            $font['alias'] = implode('; ', $vars);
+            $font['alias'] = implode('; ', $clear_vars);
           }
           else {
             $alias[$font['alias']] =  $font_name;
@@ -201,16 +199,16 @@ function sanitize_apip_custom_styles($input) {
       if (!empty($alias)) {
         $totalcontent .= ":root{";
         foreach ($alias as $var=>$font_name) {
-          $totalcontent .=sprintf('%s:%s;', $var, $font_name);
+          $totalcontent .=sprintf("%s:%s;\n", $var, $font_name);
         }
-        $totalcontent .= '}';
+        $totalcontent .= "}\n";
       }
       if (!empty($totalcontent) && !empty($totalname)) {
         $output_name = md5($totalname);
         $output_url = APIP_PLUGIN_URL.'local_fonts/'.$output_name.'.css';
         $output_name = APIP_PLUGIN_DIR.'/local_fonts/'.$output_name.'.css';
         if (file_exists($output_name)) {
-          @unlink($output_name);
+            @unlink($output_name);
         }
         @file_put_contents($output_name, $totalcontent);
         $input['apip_global_css'] = $output_url;
