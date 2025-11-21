@@ -2,7 +2,7 @@
 
 define('APIP_FRONTEND_CSS_VER', '20251117');
 define('APIP_FRONTEND_JS_VER', '20251010');
-define('APIP_ADMIN_CSS_VER', '20251117');
+define('APIP_ADMIN_CSS_VER', '20251118');
 define('APIP_ADMIN_JS_VER', '20240218');
 
 //Class lunar
