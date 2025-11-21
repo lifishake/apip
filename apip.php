@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.40.2
+ * Version:     1.40.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -807,7 +807,6 @@ function apip_scripts()
 function apip_admin_scripts() {
     global $apip_options;
     apip_enqueue_custom_style_resources();
-    
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_style( 'apip-style-option', APIP_PLUGIN_URL . 'css/apip-option.css', array(), APIP_ADMIN_CSS_VER);
     wp_enqueue_style( 'apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), APIP_ADMIN_CSS_VER);
@@ -864,19 +863,17 @@ function apip_remove_styles()
     foreach ($wp_styles->registered as $index => $libs) {
     //替换google字体
         if(!empty($libs->src)) {
-            if (apip_is_debug_mode() && strpos($libs->src, '//fonts.googleapis.com')) {
-                unset($wp_styles->registered[$index]);
-            } else {
-                $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
+            if (strpos($libs->src, '//fonts.googleapis.com')) {
+                if (apip_is_debug_mode()){
+                    unset($wp_styles->registered[$index]);
+                }
+                else{
+                    $libs->src = str_replace('//fonts.googleapis.com', '//fonts.loli.net', $libs->src);
+                }
             }
         }
     }
-    if ( !is_admin() ) {
-        wp_dequeue_style( 'fontawesome' );
-
-    }
-    if ( !is_page('gallery') )
-    {
+    if ( !is_page('gallery') ) {
         wp_dequeue_style( 'jquery-plugins-slider-style' );
     }
 }
@@ -944,8 +941,8 @@ function apip_remove_author_class( $classes, $class, $comment_ID, $comment, $pos
 //0.13
 //来源:https://www.syshut.com/human_time_diff-function-localization-with-en-wp.html
 function apip_replaced_human_time_diff( $since ) {
-    $search = array( 'years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'mins', 'min', 'seconds', 'second', );
-    $replace = array( '年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '秒', '秒', );
+    $search = array( 'years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'minutes', 'minute', 'mins', 'min', 'seconds', 'second', );
+    $replace = array( '年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '分钟', '分钟', '秒', '秒', );
     $since = str_replace( $search, $replace, $since );
     return $since;
 }
