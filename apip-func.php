@@ -2,7 +2,7 @@
 
 define('APIP_FRONTEND_CSS_VER', '20251117');
 define('APIP_FRONTEND_JS_VER', '20251010');
-define('APIP_ADMIN_CSS_VER', '20251118');
+define('APIP_ADMIN_CSS_VER', '20251130');
 define('APIP_ADMIN_JS_VER', '20240218');
 
 //Class lunar
@@ -1997,4 +1997,24 @@ function apip_enqueue_custom_style_resources() {
         if (isset($apip_styles['apip_global_css']) ) {
             wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], $enabled_fonts, APIP_FRONTEND_CSS_VER);
         }
+}
+
+/**
+ * 作用: 从link表中获得邮箱对应的缩写字
+ * 来源: 自创
+ */
+function apip_get_face_character_from_bookmark($comment_email) {
+    global $wpdb;
+    $input_email = trim($comment_email);
+    $input_email = esc_attr(strtolower($input_email));
+    if (empty($input_email)) {
+        return false;
+    }
+    $query  = "SELECT * FROM `$wpdb->links` WHERE `link_notes` like '%$input_email%' ORDER BY 'link_id' DESC LIMIT 1";
+    $results = $wpdb->get_results( $query );
+    if (!is_array($results) || !count($results))
+    {
+        return false;
+    }
+    return $results[0]->link_description;
 }

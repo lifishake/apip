@@ -185,6 +185,9 @@ function sanitize_apip_custom_styles($input) {
             $clear_vars = array();
             foreach ($vars as $alia) {
               $alia = trim($alia);
+              if (empty($alia)) {
+                continue;
+              }
               $alias[$alia] =  $font_name;
               $clear_vars[] = $alia;
             }
@@ -487,9 +490,9 @@ function apip_text_content_render(  ) {
   ?>
   <input type='checkbox' name='apip_settings[better_excerpt]' <?php checked( $options['better_excerpt'], 1 ); ?> value='1'/>
   <span>    摘要长度：</span>
-  <input type='text' name='apip_settings[excerpt_length]' size='5' value='<?php echo $options['excerpt_length']; ?>'/><br />
+  <input type='text' name='apip_settings[excerpt_length]' class='input-short' value='<?php echo $options['excerpt_length']; ?>'/><br />
   <span>    结尾字符：</span>
-  <input type='text' name='apip_settings[excerpt_ellipsis]' size='10' value='<?php echo $options['excerpt_ellipsis']; ?>'/><br />
+  <input type='text' name='apip_settings[excerpt_ellipsis]' class='input-short' value='<?php echo $options['excerpt_ellipsis']; ?>'/><br />
   <input type='checkbox' name='apip_settings[header_description]' <?php checked( $options['header_description'], 1 ); ?> value='1'/>
   <span>    网站描述（留空则使用网站副标题）：</span>
   <input type='text' name='apip_settings[hd_home_text]' value='<?php echo htmlspecialchars(stripslashes($options['hd_home_text'])); ?>' /><br />
@@ -586,7 +589,7 @@ function apip_heavy_tools_render()
   <span>    开启邮件回复(js)：</span>
   <input type='checkbox' name='apip_settings[notify_comment_reply]' <?php checked( $options['notify_comment_reply'], 1 ); ?> value='1'/><br />
   <span>    和风天气 API KEY：</span>
-  <input type='text' name='apip_settings[heweather_key]' size='64' value='<?php echo $options['heweather_key']; ?>'/><br />
+  <input type='text' name='apip_settings[heweather_key]' class='input-long' value='<?php echo $options['heweather_key']; ?>'/><br />
   <span>   使用留言前答题功能： </span>
   <input type='checkbox' name='apip_settings[apip_commentquiz_enable]' <?php checked( $options['apip_commentquiz_enable'], 1 ); ?> value='1'><br />
   <?php
@@ -629,7 +632,7 @@ function apip_uploader_options_field_render()
   }
   ?>
     <input type="file" name="files" id="upload_files" multiple="true" accept=".png, .jpg, .jpeg, .gif">
-    <select id='apip_upload_destination_paths' size='<?php echo sizeof($dest_dirs); ?>' class='apip-selector'>
+    <select id='apip_upload_destination_paths' size='<?php echo sizeof($dest_dirs); ?>' class='input-long' class='apip-selector'>
     <?php 
       foreach($dest_dirs as $dir) {
         printf('<option value = "%1$s">%2$s</option>', $dir, $dir);
@@ -933,7 +936,7 @@ function apip_fonts_manager_options_field_render() {
         sprintf('<span>%1$s</span><input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][font_name]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['font_name'] )),
         sprintf('<input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][css_file]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['css_file'] )),
         sprintf('<input type="hidden" name="apip_custom_styles[apip_local_fonts][%1$s][css_url]" value="%2$s"/>', $fonts['font_name'], esc_html( $fonts['css_url'] )),
-        sprintf('<input type="text" name="apip_custom_styles[apip_local_fonts][%1$s][alias]" size="15" value="%2$s"/>', $fonts['font_name'], esc_textarea($fonts['alias'])),
+        sprintf('<input type="text" name="apip_custom_styles[apip_local_fonts][%1$s][alias]" class="input-long" value="%2$s"/>', $fonts['font_name'], esc_textarea($fonts['alias'])),
         sprintf('<span style="font-family:%s;">破袜襪子，白日依山盡尽，To be or not tobe, its\'a question. 愚かなる弟よ。</span>',$fonts['font_name'])
       );
       }?>
