@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.40.5
+ * Version:     1.40.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -253,6 +253,10 @@ function apip_init()
         // add_filter('install_themes_table_api_args_updated', '__return_false');
         // add_filter('install_themes_table_api_args_upload', '__return_false');
     }
+
+    //0.25 不记录_wp_old_date
+   remove_action('post_updated', 'wp_check_for_changed_dates');
+   remove_action('attachment_updated', 'wp_check_for_changed_dates');
 
     /** 01 */
     //颜色目前没有函数
@@ -619,6 +623,7 @@ $options
     0.22                                移除后台画面的help
     0.23                                禁止edit_lock
     0.24                                debug时忽略wordpress.org的update检查.
+    0.25                                停用记录_wp_old_date功能。
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
