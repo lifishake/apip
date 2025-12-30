@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  http://pewae.com
- * Version:     1.40.6
+ * Version:     1.40.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -796,8 +796,8 @@ function apip_scripts()
 
     //8.2
     if ( apip_option_check('apip_lazyload_enable') ) {
-        wp_enqueue_script('apip-js-lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
-        wp_localize_script('apip-js-option','apipScriptData', array('lazyload'=>true));
+        //wp_enqueue_script('apip-js-lazyload', APIP_PLUGIN_URL . 'js/unveil-ui.min.js', array(), '20200413', true);
+        //wp_localize_script('apip-js-option','apipScriptData', array('lazyload'=>true));
     }
 
      //8.8
@@ -1953,11 +1953,18 @@ function apip_lazyload_filter( $content )
     @$dom->loadHTML('<?xml encoding="UTF-8"><!DOCTYPE html><head><meta charset="UTF-8"></head><body>'. $content.'</body></html>', LIBXML_HTML_NOIMPLIED|LIBXML_HTML_NODEFDTD);
     //@$dom->createElement();
     foreach ($dom->getElementsByTagName('img') as $node) {
-        $oldsrc = $node->getAttribute('src');
-        $node->setAttribute("data-src", $oldsrc );
-        $node->setAttribute("data-unveil", "true" );
-        $newsrc = APIP_PLUGIN_URL.'img/blank.gif';//'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        $node->setAttribute("src", $newsrc);
+        $node->setAttribute('loading', 'lazy');
+        if ($node->hasAttribute('class')) {
+            $old_class = $node->getAttribute('class');
+            if (!in_array('lazy-fade', explode(' ', $old_class))) {
+                $new_class = $old_class . ' lazy-fade';
+            } else {
+                $new_class = $old_class;
+            }
+            $node->setAttribute('class', $new_class);
+        } else {
+            $node->setAttribute('class', 'lazy-fade');
+        }
     }
     $body = $dom->getElementsByTagName('body')->item(0);
     if ($body) {

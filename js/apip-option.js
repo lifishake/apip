@@ -6,11 +6,13 @@ var apipScriptData = apipScriptData || {
 };
 /* ]]> */
 
+/*
 jQuery( document ).ready( function( $ ) {
 	if (apipScriptData.lazyload) {
 		$( 'img[data-unveil="true"]' ).unveil( 200 );
 	}
 });
+*/
 
 var HoldLog = console.log;
 console.log = function() {} ;
@@ -35,5 +37,4 @@ queueMicrotask( () => {
 	setTimeout(Log.bind(console, "%c※%c 主题代码： %chttps://github.com/lifishake/sketchy%c ", "color:#f0ad4e", "","color:4f90d9; background-color:#ffdad8", ""));
 	setTimeout(Log.bind(console, "%c※%c 插件代码： %chttps://github.com/lifishake/apip%c ", "color:#f0ad4e", "","color:4f90d9; background-color:#ffdad8", ""));
 	setTimeout(Log.bind(console, "%c※%c 自取%c勿问%c。", "color:#f0ad4e", "","color:#ff4f87; font-weight:700;", ""));
-}
-);
+});
