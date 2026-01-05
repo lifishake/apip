@@ -6,13 +6,11 @@ var apipScriptData = apipScriptData || {
 };
 /* ]]> */
 
-/*
 jQuery( document ).ready( function( $ ) {
 	if (apipScriptData.lazyload) {
 		$( 'img[data-unveil="true"]' ).unveil( 200 );
 	}
 });
-*/
 
 var HoldLog = console.log;
 console.log = function() {} ;
