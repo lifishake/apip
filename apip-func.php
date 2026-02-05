@@ -1987,10 +1987,11 @@ function apip_enqueue_custom_style_resources() {
         $apip_styles['apip_local_font_enable'] ) {
             if (is_array($apip_styles['apip_local_fonts'])) {
                 foreach ($apip_styles['apip_local_fonts'] as $font) {
-                    if (isset($font['enabled']) && $font['enabled'] && isset($font['css_file']) && file_exists($font['css_file']))
-                        $font_load_name = 'apip-custom-font-'. strtolower($font['font_name']);
-                        wp_enqueue_style($font_load_name, $font['css_url'], array(), APIP_FRONTEND_CSS_VER);
-                        $enabled_fonts[] = $font_load_name;
+                        if (isset($font['enabled']) && $font['enabled'] && isset($font['css_file']) && file_exists($font['css_file'])) {
+                            $font_load_name = 'apip-custom-font-'. strtolower($font['font_name']);
+                            wp_enqueue_style($font_load_name, $font['css_url'], array(), APIP_FRONTEND_CSS_VER);
+                            $enabled_fonts[] = $font_load_name;
+                        }
                     }
                 }//foreach
         }
