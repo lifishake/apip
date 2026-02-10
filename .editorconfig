@@ -1,0 +1,18 @@
+# .editorconfig
+root = true
+
+[]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[.{js,ts,jsx,tsx}]
+indent_style = space
+indent_size = 2
+
+[.{php,php3,php4,php5,phtml}]
+indent_style = space
+indent_size = 4
