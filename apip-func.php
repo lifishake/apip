@@ -1,9 +1,9 @@
 <?php
 
 define('APIP_FRONTEND_CSS_VER', '20251117');
-define('APIP_FRONTEND_JS_VER', '20251231');
+define('APIP_FRONTEND_JS_VER', '20260210');
 define('APIP_ADMIN_CSS_VER', '20251130');
-define('APIP_ADMIN_JS_VER', '20240218');
+define('APIP_ADMIN_JS_VER', '20260210');
 
 //Class lunar
 /*

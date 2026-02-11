@@ -2,12 +2,12 @@
 
 /**
  * Plugin Name: All plugins in pewae
- * Plugin URI:  http://pewae.com
+ * Plugin URI:  https://github.com/lifishake/apip
  * GitHub Plugin URI: https://github.com/lifishake/apip
  * Description: Plugins used by pewae
  * Author:      lifishake
- * Author URI:  http://pewae.com
- * Version:     1.40.9
+ * Author URI:  https://pewae.com
+ * Version:     1.41.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -666,9 +666,13 @@ $options
 /******************************************************************************/
 //0.1+
  /**
- * 作用: 插件自带脚本
- * 来源: 自产
- * URL:
+ * @brief: 集中加载插件所需要的js和css
+ * @fn
+ * @since: 1.0.0
+ * @note:   1.0.0       2015-12-11      original\n
+ *          1.41.0      2026-02-11      统一修改几个js的版本号，改为用宏。\n
+ * @version: 1.41.0
+ * @date: 2026-02-11
  */
 function apip_scripts() {
     global $apip_options;
@@ -758,7 +762,7 @@ function apip_scripts() {
                         display: inherit;
                     }';
 
-        wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), "20191105", true);
+        wp_enqueue_script('apip-js-achp', APIP_PLUGIN_URL . 'js/apip-achp.js', array(), APIP_FRONTEND_JS_VER, true);
     }
     //8.1
     $agm = array();
@@ -780,7 +784,7 @@ function apip_scripts() {
 
      //8.8
      if ( is_single() && comments_open() && apip_option_check('apip_commentquiz_enable')) {
-        wp_enqueue_script( 'apip-js-comment-quiz',APIP_PLUGIN_URL . 'js/apip-commentquiz.js', array(), false, true);
+        wp_enqueue_script( 'apip-js-comment-quiz',APIP_PLUGIN_URL . 'js/apip-commentquiz.js', array(), APIP_FRONTEND_JS_VER, true);
      }
     if ( $css !== '' ) {
         wp_add_inline_style('apip-style-all', $css);
@@ -803,7 +807,7 @@ function apip_admin_scripts() {
 
     //0.5 后台追加的快捷按钮
     //20250220增加快捷键的方法在6.0之后发生了变化
-    wp_enqueue_script('apip-js-quicktags', APIP_PLUGIN_URL . 'js/apip-quicktags.js', array('jquery', 'quicktags' ), '20250221', true);
+    wp_enqueue_script('apip-js-quicktags', APIP_PLUGIN_URL . 'js/apip-quicktags.js', array('jquery', 'quicktags' ), APIP_ADMIN_JS_VER, true);
 }
 
 //0.2
@@ -2223,8 +2227,14 @@ function modify_no_gmt_field() {
 */
 function apip_adjust_modified_date_update( $new, $old ) {
     if(isset($_POST['keep_modified_gmt'])) {
-        $new['post_modified'] = $old['post_modified'];
-        $new['post_modified_gmt'] = $old['post_modified_gmt'];
+        if (isset($old['post_modified'])) {
+            $new['post_modified'] = $old['post_modified'];
+            $new['post_modified_gmt'] = $old['post_modified_gmt'];
+        } else {
+            $new['post_modified'] = $old['post_date'];
+            $new['post_modified_gmt'] = $old['post_date_gmt'];
+        }
+        
     }
     return $new;
 }

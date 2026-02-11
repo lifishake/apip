@@ -1,4 +1,11 @@
-/*global jQuery:false */
+/**
+ * @file apip-achp.js
+ * @brief Archive页面用到的js
+ * @since 1.20.2
+ * @version 1.29.1
+ * @date 2019-11-06
+ * @see apip_scripts()
+ */
 "use strict";
 
 function jqueryArchiveListAnimate(clickedObj, listElements) {
@@ -16,6 +23,7 @@ function jqueryArchiveListAnimate(clickedObj, listElements) {
   jQuery(clickedObj).parent().toggleClass("achp-expanded");
 }
 
+//TODO: 需要简化
 jQuery(function() {
   jQuery(".achp-widget").each(function(){
 

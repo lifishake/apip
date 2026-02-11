@@ -216,6 +216,7 @@ jQuery(document).ready(function($) {
   })//$("#image_upload_btn").click
 })//jQuery(document).ready
 
+//TODO: 规范格式
 jQuery(function ($) {
   $(document).ajaxComplete(function (event, xhr, settings) {
     if (typeof settings.data==='string' && /action=get-post-thumbnail-html/.test(settings.data) && xhr.responseJSON && typeof xhr.responseJSON.data==='string') {
