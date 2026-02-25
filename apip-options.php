@@ -1,8 +1,10 @@
 <?php
 
 /**
- * 简陋,由工具做成,少量修改
- * 工具URL: http://wpsettingsapi.jeroensormani.com/
+ * @brief 简陋,由工具做成,少量修改
+ * @li 工具URL: http://wpsettingsapi.jeroensormani.com/
+ * @version 1.41.1
+ * @date 2026-02-25
 */
 
 add_action( 'admin_menu', 'apip_add_admin_menu' );
@@ -98,6 +100,14 @@ function apip_add_admin_menu() {
     add_submenu_page(__FILE__, 'APIP字体管理', 'APIP字体管理', 'manage_options', __FILE__.'&tab=tab_fonts_manager', 'apip_options_page');
 }
 
+/**
+ * @brief	优化apip的option选项
+ * @param	array	$input	多个apip选项
+ * @public
+ * @since	0.0.1
+ * @version	1.41.1
+ * @date 2026-02-25
+ */
 function sanitize_apip_options($input) {
     $old_options = apip_get_option();
     foreach ( $input as $key => $value ) {
@@ -149,7 +159,7 @@ function sanitize_apip_options($input) {
             'available_gravatar_mirrors' === $key ||
             'blocked_commenters' === $key ||
             'available_codehighlight_tags' === $key) {
-            $array_temp = explode(',', $key);
+            $array_temp = explode(',', $value);
             $str_temp = implode(', ', $array_temp);
             $input[$key] = sanitize_text_field($str_temp);
         }
@@ -227,7 +237,7 @@ function sanitize_apip_custom_styles($input) {
 
 */
 function apip_settings_init() {
-    register_setting( 'apip_option_tab', 'apip_settings', 'sanitize_apip_options' );
+    register_setting( 'apip_option_tab', 'apip_settings', array('sanitize_callback'=>'sanitize_apip_options') );
     register_setting( 'apip_fonts_manager_tab', 'apip_custom_styles', array('sanitize_callback'=>'sanitize_apip_custom_styles') );
 
     add_settings_section(
