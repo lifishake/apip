@@ -1160,6 +1160,7 @@ function apip_get_total_weather( $w, $style) {
         case    403 :   //  暴雪
         case    407 :   //  阵雪
         case    457 :   //  阵雪（夜）
+        case    499 :   //  雪
             $w_icon_str = 'wi-snow';
             $eng_str='snow';
             break;
