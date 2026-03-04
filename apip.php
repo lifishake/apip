@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.2
+ * Version:     1.41.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -19,6 +19,7 @@ define('APIP_GALLERY_DIR', ABSPATH.'wp-content/gallery/');
 register_activation_hook( __FILE__, 'apip_plugin_activation' );
 register_deactivation_hook( __FILE__,'apip_plugin_deactivation' );
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
+
 
 
 /* 打log用 */
@@ -92,6 +93,10 @@ if (is_admin()) {
 }
 //包含自定义的函数
 require ( APIP_PLUGIN_DIR.'/apip-func.php') ;
+
+if (file_exists(APIP_PLUGIN_DIR.'/private.php')) {
+    require_once(APIP_PLUGIN_DIR.'/private.php') ;
+}
 
 function apip_option_check( $key, $val = 1 ) {
     global $apip_options;
@@ -214,8 +219,7 @@ function apip_init() {
     //原来的sanitize_title范围太大，改为生成post slug和term slug的两个filter20211201
     add_filter('wp_unique_term_slug', 'apip_unique_term_slug', 10, 3);
     add_filter('wp_unique_post_slug', 'apip_unique_post_slug', 10, 6);
-    //0.19 autop与shortcode冲突问题
-    add_filter( 'the_content', 'apip_fix_shortcodes');
+
     //0.20 改用户profile不需要邮件确认
     remove_action('personal_options_update', 'send_confirmation_on_profile_email');
     //0.21 设置chrome内核浏览器的tab颜色
@@ -2724,12 +2728,21 @@ function apip_filter_filter() {
  *  WP钩子：template_redirect
  *  整合日：20200416
  *  涉及功能：0.10 作者页跳转到404
+ *           0.19 autop与shortcode冲突问题
  *           2.7  搜索结果只有一条时直接跳入
  *           2.10 外链转内链
  */
 function apip_template_redirect() {
     //0.10 作者页跳转到404
     apip_redirect_author();
+
+    //0.19 autop与shortcode冲突问题
+    if (function_exists('yh_redo_wpautop') && yh_redo_wpautop()) {
+        ;//do nothing
+    } else {
+        add_filter( 'the_content', 'apip_fix_shortcodes');
+    }
+
     //2.7搜索结果只有一条时直接跳入
     if ( apip_option_check('redirect_if_single') ) {
         redirect_single_post();
