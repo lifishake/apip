@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.3
+ * Version:     1.41.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -94,8 +94,8 @@ if (is_admin()) {
 //包含自定义的函数
 require ( APIP_PLUGIN_DIR.'/apip-func.php') ;
 
-if (file_exists(APIP_PLUGIN_DIR.'/private.php')) {
-    require_once(APIP_PLUGIN_DIR.'/private.php') ;
+if (file_exists(APIP_PLUGIN_DIR.'private.php')) {
+    require_once(APIP_PLUGIN_DIR.'private.php') ;
 }
 
 function apip_option_check( $key, $val = 1 ) {
@@ -254,6 +254,9 @@ function apip_init() {
    remove_action('post_updated', 'wp_check_for_changed_dates');
    remove_action('attachment_updated', 'wp_check_for_changed_dates');
 
+   //0.26 屏蔽password reset
+   add_filter('allow_password_reset', '__return_false');
+
     /** 01 */
     //颜色目前没有函数
 
@@ -354,6 +357,7 @@ function apip_init() {
     add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
     add_filter('comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
     add_filter('comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
+    add_filter('apip_placeholder_text', 'apip_replace_triditional_comment_placeholder_text');
 
     /** 06*/
     //social没有添加项,需要外部手动调用
@@ -612,6 +616,7 @@ $options
     0.23                                禁止edit_lock
     0.24                                debug时忽略wordpress.org的update检查.
     0.25                                停用记录_wp_old_date功能。
+    0.26                                屏蔽reset password链接
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1492,6 +1497,20 @@ function hm_check_user ( $comment ) {
     $show_random = 'false';
     $forbiddens = explode(',',$str_include);
     $f = 0 ;
+    //20260407 增加全英文假gmail的spam屏蔽
+    $block = false;
+    $email = isset($comment['comment_author_email'])?strtolower(trim($comment['comment_author_email'])): '';
+    $content = isset($comment['comment_content'])?strtolower(trim($comment['comment_content'])): '';
+    if (false != strstr($email,"gmail.com") ) {
+        if (substr_count($email, '.')>=5) {
+            if (mb_check_encoding($content, 'ASCII') && false === strpos($content, ' ')) {
+                $block = true;
+            }
+        }
+    }
+    if ($block) {
+        wp_die('Blocked.', 'Ya', array('response'=>418));
+    }
     foreach ( $forbiddens as $forbidden ) {
         if ( $forbidden && false != strstr($str_author,$forbidden) ) {
             $f = 1;
@@ -1545,7 +1564,7 @@ function apip_show_advertise_comment_details( $actions, $comment ) {
 }
 
 function apip_replace_triditional_comment_placeholder_text( $default ) {
-    $text = '请保持有趣。因为您的意见对我完全没有任何意义。';
+    $text = '纷纷多言，岂能有益于左右。';
     $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
     return $default;
 }
