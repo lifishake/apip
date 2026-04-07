@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.4
+ * Version:     1.41.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -356,8 +356,9 @@ function apip_init() {
     add_filter('preprocess_comment', 'hm_check_user',1);
     add_action('comment_post', 'apip_remember_advertise_comment_details',10,3);
     add_filter('comment_row_actions', 'apip_show_advertise_comment_details', 10, 2 );
+    //5.2 无意义留言提示
     add_filter('comment_form_defaults', 'apip_replace_triditional_comment_placeholder_text');
-    add_filter('apip_placeholder_text', 'apip_replace_triditional_comment_placeholder_text');
+    add_filter('apip_placeholder_text', 'apip_replace_defined_comment_placeholder_text');
 
     /** 06*/
     //social没有添加项,需要外部手动调用
@@ -643,6 +644,7 @@ $options
     4.2     replace_emoji               禁止wordpress将emoji的unicode转成图片
 05.    留言者控制
    5.1  blocked_commenters              替换广告留言用户名和网址
+   5.2                                  无意义留言提示
 06.     social_share_enable             社会化分享使能
 07.     自定义的shortcode
     7.1     apip_tagcloud_enable        更好看的标签云
@@ -1563,10 +1565,16 @@ function apip_show_advertise_comment_details( $actions, $comment ) {
     return $actions;
 }
 
+//5.2 无意义留言提示
 function apip_replace_triditional_comment_placeholder_text( $default ) {
     $text = '纷纷多言，岂能有益于左右。';
     $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
     return $default;
+}
+
+function apip_replace_defined_comment_placeholder_text($default){
+    $text = '纷纷多言，岂能有益于左右。';
+    return $text;
 }
 
 /*                                          05终了                             */
