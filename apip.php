@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.5
+ * Version:     1.41.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1504,7 +1504,7 @@ function hm_check_user ( $comment ) {
     $email = isset($comment['comment_author_email'])?strtolower(trim($comment['comment_author_email'])): '';
     $content = isset($comment['comment_content'])?strtolower(trim($comment['comment_content'])): '';
     if (false != strstr($email,"gmail.com") ) {
-        if (substr_count($email, '.')>=5) {
+        if (substr_count($email, '.')>=4) {
             if (mb_check_encoding($content, 'ASCII') && false === strpos($content, ' ')) {
                 $block = true;
             }
@@ -2488,6 +2488,10 @@ function apip_sup_detail($atts, $content = null) {
     return $output;
 }
 
+/**
+* 作用: 作成引文的角标列表
+* 来源: 自创
+*/
 function apip_make_sup_anchors($content) {
     global $g_mysups;
     if (!isset($g_mysups) || count($g_mysups) == 0) {
@@ -2500,6 +2504,7 @@ function apip_make_sup_anchors($content) {
         $output .= $list;
     }
     $output .= '</ul></div>';
+    $output = wpautop($output, false);
     return $content.$output;
 }
 
