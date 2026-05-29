@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.8
+ * Version:     1.41.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1289,7 +1289,9 @@ function apip_desc_tag() {
         $keywords = trim($apip_options['hd_home_keyword']) ;
         if ( '' == $keywords ) {
             $tags = get_tags(array('orderby' => 'count', 'order' => 'DESC', 'number' => '10'));
-            $keywords = implode( ',', $tags );
+            foreach ( $tags as $tag ) :
+	            $keywords .= $tag->name.',';
+	        endforeach;
         }
     }
     else if (is_single()) {
@@ -1297,7 +1299,9 @@ function apip_desc_tag() {
         $description = mb_substr(strip_tags(strip_shortcodes($post->post_content)),0,240, 'UTF-8')."...";
         $keywords = "";
         $tags = wp_get_post_tags($post->ID);
-        $keywords = implode( ',', $tags );
+        foreach ( $tags as $tag ) :
+            $keywords .= $tag->name.',';
+        endforeach;
         $title = $post->post_title;
         $ogtype = "article";
     }
