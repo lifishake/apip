@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.7
+ * Version:     1.41.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1274,6 +1274,13 @@ function apip_e2i_redirect() {
  */
 function apip_desc_tag() {
     global $apip_options;
+    $description = '';
+    $keywords = '';
+    $ogtype = 'website';
+    $banrobot = false;
+    $title = get_bloginfo('name');
+    $site_img = APIP_GALLERY_URL."wptm_utils/site-name.png";
+    $url = get_permalink();
     if (is_home()) {
         $description = trim($apip_options['hd_home_text']) ;
         if ( '' == $description ) {
@@ -1282,36 +1289,48 @@ function apip_desc_tag() {
         $keywords = trim($apip_options['hd_home_keyword']) ;
         if ( '' == $keywords ) {
             $tags = get_tags(array('orderby' => 'count', 'order' => 'DESC', 'number' => '10'));
-            foreach ( $tags as $tag ) :
-                $keywords .= $tag->name.',';
-            endforeach;
+            $keywords = implode( ',', $tags );
         }
-
     }
     else if (is_single()) {
         global $post ;
-        $description = substr(strip_tags(strip_shortcodes($post->post_content)),0,240)."...";
+        $description = mb_substr(strip_tags(strip_shortcodes($post->post_content)),0,240, 'UTF-8')."...";
         $keywords = "";
         $tags = wp_get_post_tags($post->ID);
-        foreach ( $tags as $tag ) :
-            $keywords .= $tag->name.',';
-        endforeach;
+        $keywords = implode( ',', $tags );
+        $title = $post->post_title;
+        $ogtype = "article";
     }
     elseif (is_category()) {
         $description = category_description();
         $keywords = single_cat_title('', false);
+        $banrobot = true;
     }
     elseif (is_tag()) {
         $description = tag_description();
         $keywords = single_tag_title('', false);
+        $banrobot = true;
     }
     else {
+        ?>
+        <meta name="robots" content="noindex, nofollow" />
+        <?php
         return ;
     }
+    $description = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+    $keywords =  htmlspecialchars($keywords, ENT_QUOTES, 'UTF-8');
     ?>
-<meta name="description" content="<?=$description?>" />
-<meta name="keywords" content="<?=$keywords?>" />
-<?php
+<meta name="description" content="<?= $description ?>" />
+<meta name="keywords" content="<?= $keywords ?>" />
+<?php if ($banrobot): ?>
+    <meta name="robots" content="noindex, nofollow" />
+<?php else: ?>
+<meta property="og:title" content="<?= $title ?>" />
+<meta property="og:description" content="<?= $description ?>" />
+<meta property="og:type" content="<?= $ogtype ?>" />
+<meta property="og:image" content="<?= $site_img ?>" />
+<meta property="og:url" content="<?= $url ?>" />
+<?php endif; 
 }
 //3.2
 /**
