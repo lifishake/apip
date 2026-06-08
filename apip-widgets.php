@@ -98,7 +98,7 @@ class APIP_Widget_Related extends WP_Widget {
         ) );
 
         if ( count( $related_posts ) == 0 ) {
-            return;
+            return;  
         }
 
         echo $before_widget;

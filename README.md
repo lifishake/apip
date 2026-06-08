@@ -20,6 +20,14 @@
 - ngg插入图片时适应https
 - 文章和tag、cat标题自动转成utf-8编码值
 - 注释功能
+- 改用户profile不需要邮件确认
+- 设置chrome内核浏览器的tab颜色
+- 移除后台的help
+- debug时忽略wordpress.org的update检查.
+- 不记录_wp_old_date
+- 屏蔽password reset
+- 去掉feed中的危险链接
+
 
 ## 有配置项的功能 ##
 

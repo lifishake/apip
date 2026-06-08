@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.41.9
+ * Version:     1.42.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -251,11 +251,22 @@ function apip_init() {
     }
 
     //0.25 不记录_wp_old_date
-   remove_action('post_updated', 'wp_check_for_changed_dates');
-   remove_action('attachment_updated', 'wp_check_for_changed_dates');
+    remove_action('post_updated', 'wp_check_for_changed_dates');
+    remove_action('attachment_updated', 'wp_check_for_changed_dates');
 
-   //0.26 屏蔽password reset
-   add_filter('allow_password_reset', '__return_false');
+    //0.26 屏蔽password reset
+    add_filter('allow_password_reset', '__return_false');
+
+    //0.27 去掉feed中的危险链接
+    remove_action('do_feed_rss2', 'do_feed_rss2', 10);
+    add_action('do_feed_rss2', function($for_comments) {
+        if ( $for_comments )
+            load_template( ABSPATH . WPINC . '/feed-rss2-comments.php' );
+        else
+            load_template(APIP_PLUGIN_DIR. '/ext/apip-rss2.php');
+            //load_template(get_stylesheet_directory() . '/my-rss2.php');
+    }, 10);
+
 
     /** 01 */
     //颜色目前没有函数
@@ -618,6 +629,7 @@ $options
     0.24                                debug时忽略wordpress.org的update检查.
     0.25                                停用记录_wp_old_date功能。
     0.26                                屏蔽reset password链接
+    0.27                                移除feed中的不良链接
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
