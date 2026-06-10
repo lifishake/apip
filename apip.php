@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.0
+ * Version:     1.42.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -460,6 +460,7 @@ function apip_init_actions() {
     remove_action('wp_head',                            'adjacent_posts_rel_link_wp_head',  10          );
     remove_action('wp_head',                            'wp_generator'                                  );
     remove_action('wp_head',                            'rest_output_link_wp_head'                      );
+    remove_action('wp_head',                            'wp_shortlink_wp_head'                          );
     remove_action('xmlrpc_rsd_apis',                    'rest_output_rsd'                               );
     remove_action('template_redirect',                  'rest_output_link_header',          11          );
     remove_action('wp_head',                            'wp_oembed_add_discovery_links'                 );
@@ -691,11 +692,12 @@ $options
  /**
  * @brief: 集中加载插件所需要的js和css
  * @fn
- * @since: 1.0.0
+ * @since:  1.0.0
  * @note:   1.0.0       2015-12-11      original\n
  *          1.41.0      2026-02-11      统一修改几个js的版本号，改为用宏。\n
- * @version: 1.41.0
- * @date: 2026-02-11
+ *          1.42.1      2026-06-10      合并并且精简了weather-icons.min.css。\n
+ * @version: 1.42.1
+ * @date: 2026-06-10
  */
 function apip_scripts() {
     global $apip_options;
@@ -710,9 +712,7 @@ function apip_scripts() {
     wp_enqueue_script('apip-js-option', APIP_PLUGIN_URL . 'js/apip-option.js', array(), APIP_FRONTEND_JS_VER, true);
     $css = '';
 
-    wp_enqueue_style( 'apip_weather_style', APIP_PLUGIN_URL . 'css/weather-icons.min.css', array(), APIP_FRONTEND_CSS_VER );
-    wp_enqueue_style( 'apip_wind_style', APIP_PLUGIN_URL . 'css/weather-icons-wind.min.css', array(), APIP_FRONTEND_CSS_VER );
-
+    wp_enqueue_style( 'apip-weather-style', APIP_PLUGIN_URL . 'css/weather-icons.min.css', array(), APIP_FRONTEND_CSS_VER );
 
     if (is_singular()) {
         wp_enqueue_script('apip-js-singular', APIP_PLUGIN_URL . 'js/apip-singular.js', array(), APIP_FRONTEND_JS_VER, true);
