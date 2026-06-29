@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.1
+ * Version:     1.42.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -674,6 +674,8 @@ $options
     8.9     apip_title_hex_meta_box     手动将标题转换成unicode值的按钮
     8.10    apip_colorthief_meta_box    取特色图片主色调相关内容
     8.11    apip_adjust_modified_date_update 在后台update区域增加不更新gmt的checkbox
+    8.12    mysup                       方便使用的引文
+    8.13                                手动将标题转换成英文的按钮，与8.9共用metabox
 09.     后台维护相关
     9.1                                 后台taglist增加private和draft计数列
     9.2                                 post tag的slug转成utf-8
@@ -2437,15 +2439,15 @@ function apip_optimize_boxes() {
     remove_meta_box('slugdiv', $post_types, 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
     //8.7
     add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
-    //8.9
-    add_meta_box('apipslugdiv', 'Slug to unicode', 'apip_title_hex_meta_box', $post_types, 'normal', 'core');
+    //8.9, 8.13
+    add_meta_box('apipslugdiv', 'Slug to XX', 'apip_title_hex_meta_box', $post_types, 'normal', 'core');
     //8.10
     add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
 function apip_title_hex_meta_box( $post ) {
     $editable_slug = apply_filters( 'editable_slug', $post->post_name, $post );//照抄
     ?>
-    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiphexbtn" >uincode</button>
+    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text" size="30" id="post_name" value="<?php echo esc_attr( $editable_slug ); ?>" />&nbsp;<button class="button"  type="button" name="apiphexbtn" >uincode</button><button class="button"  type="button" name="apipcn2enbtn" >译</button>
     <?php
     /*剩下的看js的了*/
 }

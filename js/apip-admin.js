@@ -93,6 +93,29 @@ jQuery(document).ready(function($) {
     document.getElementById("post_name").value=converted;
   })//$('button[name="apiphexbtn"]').click
 
+  $('button[name="apipcn2enbtn"]').click(function() {
+    var parent = $(this).parent();
+    var chinese_title = document.getElementById("title").value;
+    fetch("https://api.mymemory.translated.net/get",{
+      method:"POST",
+      body: JSON.stringify({
+        q: chinese_title,
+        langpair: "zh|en",
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        var converted = data.responseData.translatedText;
+        document.getElementById("post_name").value=converted;
+    })
+    .catch((error) => {
+
+    });
+  })//$('button[name="apipcn2enbtn"]').click
+
   $('button[name="apipweatherbtn"]').click(function(){
     var parent = $(this).parent();
     var mybar = parent[0].childNodes[1].childNodes[1];

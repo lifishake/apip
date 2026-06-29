@@ -27,6 +27,7 @@
 - 不记录_wp_old_date
 - 屏蔽password reset
 - 去掉feed中的危险链接
+- 增加汉译英按钮
 
 
 ## 有配置项的功能 ##
