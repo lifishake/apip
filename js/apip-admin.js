@@ -79,6 +79,16 @@ function rgb_to_rgb_string(rgb_array) {
   return rgb_string + ')';
 }
 
+async function getDataFromAPI(url){
+    let response = await fetch(url);
+
+    if(response.status == 200){
+        let json = (await response.json());
+        return json;
+    }
+    throw new Error("unknown error");
+}
+
 jQuery(document).ready(function($) {
   $('#link-color').wpColorPicker();
   $('#border-color').wpColorPicker();
@@ -96,24 +106,11 @@ jQuery(document).ready(function($) {
   $('button[name="apipcn2enbtn"]').click(function() {
     var parent = $(this).parent();
     var chinese_title = document.getElementById("title").value;
-    fetch("https://api.mymemory.translated.net/get",{
-      method:"POST",
-      body: JSON.stringify({
-        q: chinese_title,
-        langpair: "zh|en",
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+	let API_UEL = `https://api.mymemory.translated.net/get?q=${chinese_title}&langpair=zh|en`;
+	getDataFromAPI(API_UEL)
+    .then(response => {
+        document.getElementById("post_name").value = response.responseData.translatedText;
     })
-    .then((response) => response.json())
-    .then((data) => {
-        var converted = data.responseData.translatedText;
-        document.getElementById("post_name").value=converted;
-    })
-    .catch((error) => {
-
-    });
   })//$('button[name="apipcn2enbtn"]').click
 
   $('button[name="apipweatherbtn"]').click(function(){
