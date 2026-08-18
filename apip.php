@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.3
+ * Version:     1.42.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -22,14 +22,22 @@ register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
 
 
 
-/* 打log用 */
-function apip_log($any)
+/**
+ * 打log用 
+ * @param string $any   要显示在页面里的调试信息
+ * */
+function apip_log(string $any)
 {
     echo '<pre>' . $any . '</pre>';
 }
 
-/*插件激活*/
-function apip_plugin_activation()
+/**
+ * 插件激活
+ * @public
+ * @return void
+ * 
+ */
+function apip_plugin_activation(): void
 {
     global $wpdb;
     //4.1
@@ -85,23 +93,36 @@ function apip_plugin_activation()
     }
 }
 
-/*插件反激活*/
-function apip_plugin_deactivation()
+/**
+ * 插件反激活
+ * @return void
+ */
+function apip_plugin_deactivation(): void
 {
 }
 
-/*配置画面*/
+/**
+ * 配置画面
+ */
 if (is_admin()) {
     require_once(APIP_PLUGIN_DIR . '/apip-options.php');
 }
-//包含自定义的函数
+/**
+ * 包含自定义的函数
+ */
 require(APIP_PLUGIN_DIR . '/apip-func.php');
 
 if (file_exists(APIP_PLUGIN_DIR . 'private.php')) {
     require_once(APIP_PLUGIN_DIR . 'private.php');
 }
 
-function apip_option_check($key, $val = 1)
+/**
+ * 检查配置项是否存在
+ * @param string $key
+ * @param mixed $val
+ * @return bool
+ */
+function apip_option_check(string $key, mixed $val = 1): bool
 {
     global $apip_options;
     if (empty($apip_options)) {
@@ -114,8 +135,13 @@ function apip_option_check($key, $val = 1)
     return false;
 }
 
-/* Plugin页面追加配置选项 */
-function apip_settings_link($action_links, $plugin_file)
+/**
+ * Plugin页面追加配置选项
+ * @param array $action_links
+ * @param string $plugin_file
+ * @return array
+ */
+function apip_settings_link(array $action_links, string $plugin_file)
 {
     if ($plugin_file == plugin_basename(__FILE__)) {
         $apip_settings_link = '<a href="options-general.php?page=apip/apip-options.php">Settings</a>';
@@ -128,7 +154,12 @@ add_filter('plugin_action_links', 'apip_settings_link', 10, 2);
 //add_action('in_admin_header', 'apip_remove_admin_help');
 /*变量初期化*/
 add_action('plugins_loaded', 'apip_init', 99);
-function apip_init()
+
+/**
+ * plugin加载后进行初始化
+ * @return void
+ */
+function apip_init(): void
 {
     /** 00 */
     global $wpdb;
@@ -450,8 +481,12 @@ function apip_init()
     }
 
 }
-
-function my_current_screen($screen)
+/**
+ * 显示当前的画面情报
+ * @param mixed $screen
+ * @return mixed
+ */
+function my_current_screen(mixed $screen): mixed
 {
     if (defined('DOING_AJAX') && DOING_AJAX)
         return $screen;
@@ -463,6 +498,10 @@ register_activation_hook(__FILE__, 'apip_disable_embeds_remove_rewrite_rules');
 register_deactivation_hook(__FILE__, 'apip_disable_embeds_flush_rewrite_rules');
 
 add_action('init', 'apip_init_actions', 999);
+/**
+ * 初始化动作
+ * @return void
+ */
 function apip_init_actions()
 {
     //0.A    移除没用的过滤项
@@ -545,11 +584,19 @@ function apip_init_actions()
     }
 }
 
-function apip_header_actions()
+/**
+ * 保留接口
+ * @return void
+ */
+function apip_header_actions(): void
 {
 }
 
-function apip_admin_init()
+/**
+ * 后台初始化
+ * @return void
+ */
+function apip_admin_init(): void
 {
     /** 08  */
     //8.8 留言验证问题
@@ -832,8 +879,12 @@ function apip_scripts()
         wp_add_inline_style('apip-style-all', $css);
     }
 }
-/* 统一处理后台相关的脚本 */
-function apip_admin_scripts()
+/**
+ * 统一处理后台相关的脚本
+ * @vrsion 1.20.0
+ * @return void
+ */
+function apip_admin_scripts(): void
 {
     global $apip_options;
     apip_enqueue_custom_style_resources();
@@ -855,11 +906,12 @@ function apip_admin_scripts()
 
 //0.2
 /**
- * 作用: 屏蔽已装载插件的不必要的js
- * 来源: 自产
- * URL:
+ * @brief 屏蔽已装载插件的不必要的js
+ * @author me
+ * @vrsion 1.20.0
+ * @return void
  */
-function apip_remove_scripts()
+function apip_remove_scripts(): void
 {
     global $wp_scripts;
     if (!is_object($wp_scripts) || empty($wp_scripts) || empty($wp_scripts->registered))
@@ -881,11 +933,11 @@ function apip_remove_scripts()
 
 //0.3
 /**
- * 作用: 屏蔽不必要的style
- * 来源: 自产
- * URL:
+ * @brief 屏蔽不必要的style
+ * @vrsion 1.20.0
+ * @return void
  */
-function apip_remove_styles()
+function apip_remove_styles(): void
 {
     global $wp_styles;
     foreach ($wp_styles->registered as $index => $libs) {
@@ -907,11 +959,12 @@ function apip_remove_styles()
 
 //0.4
 /**
- * 作用: 在feed中增加相关内容
- * 来源: 自产
- * URL:
+ * @brief: 在feed中增加相关内容
+ * @vrsion 1.20.0
+ * @param string $content 文章内容
+ * @return string
  */
-function apip_addi_feed($content)
+function apip_addi_feed(string $content): string
 {
     if (!is_feed()) {
         return $content;
@@ -928,14 +981,26 @@ function apip_addi_feed($content)
 }
 
 //0.8 移除后台的作者列
-function apip_posts_columns($columns)
+/**
+ * @brief 移除post后台的作者一列。
+ * @param array $columns
+ * @return array
+ * @vrsion 1.20.0
+ */
+function apip_posts_columns(array $columns): array
 {
     unset($columns['author']);
     return $columns;
 }
 
 //0.9 升级后替换高危文件
-function apip_remove_default_risk_files($upgrader_object, $options)
+/**
+ * @brief 升级后替换xmlrpc.php和wp-comments-post.php
+ * @param WP_Upgrader $upgrader_object
+ * @param array $options
+ * @return void
+ */
+function apip_remove_default_risk_files(WP_Upgrader $upgrader_object, array $options): void
 {
     if ('update' === $options['action'] && 'core' === $options['type']) {
         global $wp_filesystem;
@@ -946,7 +1011,12 @@ function apip_remove_default_risk_files($upgrader_object, $options)
 }
 
 //0.10 author页跳转到404
-function apip_redirect_author()
+/**
+ * @brief 想进入作者页面时直接跳转
+ * @return void
+ * @vrsion 1.20.0
+ */
+function apip_redirect_author(): void
 {
     if (is_author()) {
         global $wp_query;
@@ -957,7 +1027,17 @@ function apip_redirect_author()
 }
 
 //0.11 屏蔽留言中的作者名class
-function apip_remove_author_class($classes, $class, $comment_ID, $comment, $post_id)
+/**
+ * 屏蔽class中的能泄露作者身份的信息
+ * @param array $classes 当前的class表
+ * @param string|array $class 当前的class，未使用
+ * @param int $comment_ID 当前的comment编号
+ * @param WP_Comment $comment 留言类
+ * @param int|null $post_id post ID
+ * @return array
+ * @vrsion 1.20.0
+ */
+function apip_remove_author_class(array $classes, string|array $class, int $comment_ID, WP_Comment $comment, int|null $post_id): array
 {
     $c_rm = array();
     if ($comment->user_id > 0 && $user = get_userdata($comment->user_id)) {
@@ -968,8 +1048,14 @@ function apip_remove_author_class($classes, $class, $comment_ID, $comment, $post
 }
 
 //0.13
-//来源:https://www.syshut.com/human_time_diff-function-localization-with-en-wp.html
-function apip_replaced_human_time_diff($since)
+/**
+ * 将英语字符串替换成汉字
+ * @param string $since
+ * @ref https://www.syshut.com/human_time_diff-function-localization-with-en-wp.html
+ * @return string
+ * @vrsion 1.20.0
+ */
+function apip_replaced_human_time_diff(string $since)
 {
     $search = array('years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'minutes', 'minute', 'mins', 'min', 'seconds', 'second', );
     $replace = array('年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '分钟', '分钟', '秒', '秒', );
@@ -977,15 +1063,25 @@ function apip_replaced_human_time_diff($since)
     return $since;
 }
 //0.15-->2.11
-//来源:https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
-function remove_core_updates()
+/**
+ * 移除升级情报
+ * @return object
+ * @vrsion 1.20.0
+ * @ref https://thomas.vanhoutte.be/miniblog/wordpress-hide-update/
+ */
+function remove_core_updates(): object
 {
     global $wp_version;
     return (object) array('last_checked' => time(), 'version_checked' => $wp_version, );
 }
 
 //0.16 优化AdminBar
-function apip_admin_bar()
+/**
+ * 优化admin bar
+ * @return void
+ * @vrsion 1.20.0
+ */
+function apip_admin_bar(): void
 {
     global $wp_admin_bar;
     $wp_admin_bar->remove_menu('wp-logo'); //移除Logo
@@ -1014,7 +1110,13 @@ function apip_admin_bar()
 }
 
 //0.17 减少苹果旧设备访问的404错误
-function apip_add_apple_touch_icon($meta_tags)
+/**
+ * 减少苹果旧设备访问的404错误
+ * @param array $meta_tags
+ * @return array
+ * @vrsion 1.20.0
+ */
+function apip_add_apple_touch_icon(array $meta_tags)
 {
     $icon_180 = get_site_icon_url(180);
     if ($icon_180) {
@@ -1025,11 +1127,29 @@ function apip_add_apple_touch_icon($meta_tags)
 
 //0.18 处理汉字slug
 //20211201 原来函数处理的是title,是unicode汉字字符串。现在处理的对象变成了slug，是转换后的%xx形式，所以以前的字符串转换函数不适用。
-function apip_unique_term_slug($slug, $term, $original_slug)
+/**
+ * 处理汉字slug
+ * @param string $slug
+ * @param mixed $term
+ * @param mixed $original_slug
+ * @vrsion 1.20.0
+ */
+function apip_unique_term_slug(string $slug, $term, $original_slug): string
 {
     return apip_slug_unicode($slug);
 }
-function apip_unique_post_slug($slug, $post_ID, $post_status, $post_type, $post_parent, $original_slug)
+/**
+ * 将slug转成unicode字符串
+ * @param string $slug
+ * @param mixed $post_ID
+ * @param mixed $post_status
+ * @param string $post_type
+ * @param mixed $post_parent
+ * @param mixed $original_slug
+ * @return string
+ * @vrsion 1.20.0
+ */
+function apip_unique_post_slug(string $slug, $post_ID, $post_status, string $post_type, $post_parent, $original_slug): string
 {
     $public_pts = get_post_types(array('public' => true));
     if (!in_array($post_type, $public_pts)) {
@@ -1038,7 +1158,13 @@ function apip_unique_post_slug($slug, $post_ID, $post_status, $post_type, $post_
     return apip_slug_unicode($slug);
 }
 
-function apip_slug_unicode($strSlug)
+/**
+ * 将字符串转成unicode字符串
+ * @param string $strSlug
+ * @return string
+ * @vrsion 1.20.0
+ */
+function apip_slug_unicode(string $strSlug): string
 {
     $c_count = 0;
     $strRet = "";
@@ -1059,17 +1185,16 @@ function apip_slug_unicode($strSlug)
 }
 
 
-
 //0.19 给短代码擦屁股
 //来源：https://www.wpexplorer.com/clean-up-wordpress-shortcode-formatting/
-function apip_fix_shortcodes($content)
+
+function apip_fix_shortcodes(string $content): string
 {
-    $array = array(
-        '<p>[' => '[',
-        ']</p>' => ']',
-        ']<br />' => ']'
+    $content = preg_replace(
+        '/(?<!\n)(\[bddbr\b[^\]]*\/\])(?!\n\n)/i',
+        "\n$1\n\n",
+        $content
     );
-    $content = strtr($content, $array);
     return $content;
 }
 
@@ -1118,7 +1243,7 @@ add_action('load-post.php', 'apip_remove_post_locked');
 
 //0.24 禁止update相关
 //0.24.1 debug时去除update相关权限，因为会有连接服务器超时警告
-function _debug_ignore_wp_request($allcaps, $caps, $args)
+function _debug_ignore_wp_request(array $allcaps, array $caps, array $args)
 {
     $server_caps = array('install_languages', 'update_themes', 'update_plugins', 'update_core', 'install_themes', 'install_plugins');
     foreach ($caps as $cap) {
@@ -1169,7 +1294,7 @@ function apip_auto_save_setting()
  */
 
 //2.3
-function apip_admin_bar_setting($showvar)
+function apip_admin_bar_setting(bool $showvar)
 {
     global $show_admin_bar;
     if (apip_option_check('show_admin_bar')) {
@@ -1186,7 +1311,7 @@ function apip_admin_bar_setting($showvar)
  * 来源: 自产
  * URL:
  */
-function apip_locale($locale)
+function apip_locale(string $locale)
 {
     if (is_admin()) {
         return $locale;
@@ -1201,7 +1326,7 @@ function apip_locale($locale)
  * URL:  https://pewae.com
  */
 
-function apip_block_open_sans($styles)
+function apip_block_open_sans(WP_Styles $styles)
 {
     $open_sans = $styles->registered['open-sans'];
     if (is_object($open_sans)) {
@@ -1217,7 +1342,7 @@ function apip_block_open_sans($styles)
  * URL:  https://pewae.com
  */
 
-function before_get_comments($args)
+function before_get_comments(array $args)
 {
     $args['user_id'] = 0;
     return $args;
@@ -1259,7 +1384,7 @@ function check_referrer_comment()
  * 来源: Editorial Staff
  * URL: http://www.wpbeginner.com/wp-tutorials/how-to-exclude-pages-from-wordpress-search-results/
  */
-function remove_page_search($query)
+function remove_page_search(WP_Query $query)
 {
     if ($query->is_search && !$query->is_admin) {
         $query->set('post_type', 'post');
@@ -1273,7 +1398,7 @@ function remove_page_search($query)
  * 来源: 灵尘子
  * URL: https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html
  */
-function convert_to_internal_links($content)
+function convert_to_internal_links(string $content)
 {
     preg_match_all('/\shref=(\'|\")(http[^\'\"#]*?)(\'|\")([\s]?)/', $content, $matches);
     if ($matches) {
@@ -1288,7 +1413,7 @@ function convert_to_internal_links($content)
     return $content;
 }
 
-function apip_comment_url($url, $ID)
+function apip_comment_url(string $url, $ID)
 {
     if ("" === $url) {
         return "";
@@ -1405,7 +1530,7 @@ function apip_desc_tag()
  * 来源: 中文工具箱
  * Author URI: http://yan.me/dia
  */
-function utf8_trim($str)
+function utf8_trim(string $str)
 {
 
     $len = strlen($str);
@@ -1426,7 +1551,7 @@ function utf8_trim($str)
  * 来源: 综合WP CN Excerpt和中文工具箱
  * URL:  http://yan.me/dia, http://weibo.com/joychaocc
  */
-function apip_excerpt($text)
+function apip_excerpt(string $text)
 {
     global $apip_options;
     //erase short codes
@@ -1473,7 +1598,7 @@ function apip_excerpt($text)
  * 来源: 邪罗刹
  * URL:  http://www.imevlos.com/
  */
-function apip_get_cavatar($source)
+function apip_get_cavatar(string $source)
 {
 
     if (!apip_option_check('local_gravatar') && !apip_is_debug_mode()) {
@@ -1516,7 +1641,7 @@ function apip_get_cavatar($source)
 }
 
 //4.1 保存到本地时建立计划任务时间
-function apip_add_schdule($schedules)
+function apip_add_schdule(array $schedules)
 {
     $schedules['10Days'] = array(
         'interval' => 864000,   //3600*24*10
@@ -1558,7 +1683,7 @@ function apip_delete_local_gravatars($post)
  * 说明: 这个方法比之前的替换emoji_url的方法介入的早，所以使用这个方法。未来可以扩展到其他需要替换的被强的网址。
  */
 
-function apip_disable_emojis_remove_dns_prefetch($urls, $relation_type)
+function apip_disable_emojis_remove_dns_prefetch(array $urls, string $relation_type)
 {
 
     if ('dns-prefetch' == $relation_type) {
@@ -1587,7 +1712,7 @@ function apip_disable_emojis_remove_dns_prefetch($urls, $relation_type)
  * 来源: 自产
  * URL:
  */
-function hm_check_user($comment)
+function hm_check_user(array $comment)
 {
     global $apip_options;
     $str_author = $comment['comment_author'];
@@ -1597,7 +1722,6 @@ function hm_check_user($comment)
     $str_replacement = "癞皮狗";
     $show_random = 'false';
     $forbiddens = explode(',', $str_include);
-    $f = 0;
     //20260407 增加全英文假gmail的spam屏蔽
     $block = false;
     $email = isset($comment['comment_author_email']) ? strtolower(trim($comment['comment_author_email'])) : '';
@@ -1612,23 +1736,24 @@ function hm_check_user($comment)
     if ($block) {
         wp_die('Blocked.', 'Ya', array('response' => 418));
     }
+    $show_forbidden = "";
     foreach ($forbiddens as $forbidden) {
         if ($forbidden && false != strstr($str_author, $forbidden)) {
-            $f = 1;
+            $show_forbidden = $forbidden;
             break;
         }
         $short_url = str_replace(array('http://', 'https://', 'www.'), '', $str_author_url);
         if ($forbidden && $short_url && false != strstr($short_url, $forbidden)) {
-            $f = 1;
+            $show_forbidden = $forbidden;
             break;
         }
     }
-    if ($f != 0) {
+    if ($show_forbidden !== "") {
         $push_comment = array();
         $comment['comment_o_author'] = $comment['comment_author'];
         $comment['comment_o_email'] = $comment['comment_author_email'];
         $comment['comment_o_url'] = $comment['comment_author_url'];
-        $comment['comment_forbidden'] = $forbidden;
+        $comment['comment_forbidden'] = $show_forbidden;
         $comment['comment_author'] = $str_replacement;
         $comment['comment_author_email'] = $str_author_email;
         if ('true' == $show_random) {
@@ -1641,7 +1766,7 @@ function hm_check_user($comment)
     return $comment;
 }
 
-function apip_remember_advertise_comment_details($comment_ID, $approved, $commentdata)
+function apip_remember_advertise_comment_details(int $comment_ID, $approved, array $commentdata)
 {
     if (!isset($commentdata['comment_o_author']) || !isset($commentdata['comment_forbidden'])) {
         return;
@@ -1654,7 +1779,7 @@ function apip_remember_advertise_comment_details($comment_ID, $approved, $commen
     add_comment_meta($comment_ID, 'apip_hm_original', $comment_meta, true);
 }
 
-function apip_show_advertise_comment_details($actions, $comment)
+function apip_show_advertise_comment_details(array $actions, WP_Comment $comment)
 {
     $comment_meta = get_comment_meta($comment->comment_ID, 'apip_hm_original', true);
     if ($comment_meta) {
@@ -1666,7 +1791,7 @@ function apip_show_advertise_comment_details($actions, $comment)
 }
 
 //5.2 无意义留言提示
-function apip_replace_triditional_comment_placeholder_text($default)
+function apip_replace_triditional_comment_placeholder_text(array $default)
 {
     $text = '纷纷多言，岂能有益于左右。';
     $default['field'] = sprintf('<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required="required" placeholder="%s"></textarea></p>', $text);
@@ -1804,7 +1929,7 @@ function apip_link_page()
  * 来源: http://skatox.com/blog/
  * URL: http://skatox.com/blog/jquery-archive-list-widget
  */
-function apip_build_cat_html($cat, $is_child = 0)
+function apip_build_cat_html(object $cat, int $is_child = 0)
 {
     global $cat_relation;
     $child_html = '';
@@ -1993,7 +2118,7 @@ function apip_footer_actions()
  * 来源: 自产
  * URL:
  */
-function wch_stripslashes($code)
+function wch_stripslashes(string $code)
 {
     $code = str_replace('\\"', '"', $code);
     $code = htmlspecialchars($code, ENT_QUOTES);
@@ -2004,7 +2129,7 @@ function wch_stripslashes($code)
  * 来源: prettyprint
  * URL: https://github.com/mre/prettyprint
  */
-function apip_code_highlight($content)
+function apip_code_highlight(string $content)
 {
     $result = preg_replace_callback('/<pre(.*?)>(.*?)<\/pre>/is', function ($matches) {
         return '<pre class=" prettyprint ">' . wch_stripslashes($matches[2]) . '</pre>';
@@ -2012,7 +2137,7 @@ function apip_code_highlight($content)
     return $result;
 }
 
-function wch_stripaddr($code)
+function wch_stripaddr(string $code)
 {
     $code = str_replace(array("&#038;", "&amp;"), "&", $code);
     return $code;
@@ -2024,7 +2149,7 @@ function wch_stripaddr($code)
  * 来源: 自产
  * URL:
  */
-function apip_lazyload_filter($content)
+function apip_lazyload_filter(string $content)
 {
     if (is_feed()) {
         return $content;
@@ -2134,7 +2259,7 @@ function apip_keep_query()
  * 来源: Comment Email Reply
  * URL:  http://kilozwo.de/wordpress-comment-email-reply-plugin
  */
-function apip_comment_inserted($comment_id, $comment_object)
+function apip_comment_inserted($comment_id, WP_Comment $comment_object)
 {
     if ($comment_object->comment_parent > 0) {
         global $apip_options;
@@ -2157,6 +2282,7 @@ function apip_comment_inserted($comment_id, $comment_object)
         $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed ' . $color_border . '; border-radius: 5px;">';
         $a_style = 'color:' . $color_link . '; text-decoration: none;';
         $random_posts = apip_random_post(get_the_ID(), 1);
+        $random_link = get_bloginfo('url');
         foreach ($random_posts as $random_post):
             $random_link = get_permalink($random_post->ID);
         endforeach;
@@ -2194,7 +2320,7 @@ function apip_is_debug_mode()
  * 作用: 取得的内容太多，影响数据库效率，只保留有效字段。
  * 来源: 自作
  */
-function apip_slim_dou_cache($cache, $type)
+function apip_slim_dou_cache(array $cache, string $type)
 {
     $ret = array();
     $keys_movie = array('msg', 'code', 'request', 'id', 'images', 'rating', 'alt', 'title', 'directors', 'casts', 'genres', 'year', );
@@ -2251,7 +2377,7 @@ function apip_slim_dou_cache($cache, $type)
  *       key_name    string  如果找到的内容有子项目,要返回的子项目的关键字
  *       unknown_str string  遇到未知项转换的内容
  */
-function apip_convert_dou_array_to_string($data, $key, $name_key = "name", $unknown_str = "未知")
+function apip_convert_dou_array_to_string(array $data, string $key, string $name_key = "name", string $unknown_str = "未知")
 {
     $ret = '';
     if (array_key_exists($key, $data) && is_array($data[$key])) {
@@ -2292,7 +2418,7 @@ function apip_convert_dou_array_to_string($data, $key, $name_key = "name", $unkn
  * 资料：https://codex.wordpress.org/Post_Status_Transitions -- WP钩子说明
  */
 
-function apip_save_heweather($post)
+function apip_save_heweather(WP_Post $post)
 {
     $meta_key = 'Apip_Weather';
     global $apip_options;
@@ -2375,7 +2501,7 @@ function modify_no_gmt_field()
  * 来源: 自作
  * 资料：https://wordpress.stackexchange.com/questions/237878/how-to-prevent-wordpress-from-updating-the-modified-time
  */
-function apip_adjust_modified_date_update($new, $old)
+function apip_adjust_modified_date_update(array $new, array $old)
 {
     if (isset($_POST['keep_modified_gmt'])) {
         if (isset($old['post_modified'])) {
@@ -2390,7 +2516,7 @@ function apip_adjust_modified_date_update($new, $old)
     return $new;
 }
 
-function apip_weather_meta_box($post)
+function apip_weather_meta_box(WP_Post $post)
 {
     if (get_post_type($post) != 'post')
         return false;
@@ -2444,7 +2570,7 @@ function apip_weather_manual_update()
 license：GPLv3
 修改内容：css风格，js简化，汉化，插件风格统一。
 */
-function apip_commentquiz_meta_box($post)
+function apip_commentquiz_meta_box(WP_Post $post)
 {
     //插入一个空问题
     $questions = array_pad(get_post_meta($post->ID, 'apipcommentquiz'), 1, array());
@@ -2491,7 +2617,7 @@ function apip_commentquiz_meta_box($post)
     <?php wp_nonce_field('apipcommentquiz', 'apipcommentquiz-nonce');
 }
 add_action('save_post', 'apip_commentquiz_save', 10, 3);
-function apip_commentquiz_save($post_id, $post, $update)
+function apip_commentquiz_save(int $post_id, $post, $update)
 {
     if (
         isset($_POST['apipcommentquiz'], $_POST['apipcommentquiz-nonce']) &&
@@ -2536,13 +2662,15 @@ function apip_optimize_boxes()
     //8.10
     add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
-function apip_title_hex_meta_box($post)
+function apip_title_hex_meta_box(WP_Post $post)
 {
     $editable_slug = apply_filters('editable_slug', $post->post_name, $post);//照抄
     ?>
-    <label class="screen-reader-text" for="post_name"><?php _e('Slug') ?></label><input name="post_name" type="text"
-        size="30" id="post_name" value="<?php echo esc_attr($editable_slug); ?>" />&nbsp;<button class="button"
-        type="button" name="apiphexbtn">uincode</button><button class="button" type="button" name="apipcn2enbtn">译</button>
+    <label class="screen-reader-text" for="post_name">
+        <?php _e('Slug') ?>
+    </label><input name="post_name" type="text" size="30" id="post_name"
+        value="<?php echo esc_attr($editable_slug); ?>" />&nbsp;<button class="button" type="button"
+        name="apiphexbtn">uincode</button><button class="button" type="button" name="apipcn2enbtn">译</button>
     <?php
     /*剩下的看js的了*/
 }
@@ -2609,7 +2737,7 @@ function apip_new_thumbnail_color()
  * 作用: 分拣出引文标志，并且最终表示出来
  * 来源: 自创
  */
-function apip_sup_detail($atts, $content = null)
+function apip_sup_detail(array $atts, $content = null)
 {
     global $g_mysups;
     extract($atts);
@@ -2630,7 +2758,7 @@ function apip_sup_detail($atts, $content = null)
  * 作用: 作成引文的角标列表
  * 来源: 自创
  */
-function apip_make_sup_anchors($content)
+function apip_make_sup_anchors(string $content)
 {
     global $g_mysups;
     if (!isset($g_mysups) || count($g_mysups) == 0) {
@@ -2659,7 +2787,7 @@ function apip_make_sup_anchors($content)
  * URL: https://make.wordpress.org/docs/plugin-developer-handbook/10-plugin-components/custom-list-table-columns/
  * 备注: filter: manage_edit-{$taxonomy}_columns
  */
-function apip_edit_post_tag_column_header($columns)
+function apip_edit_post_tag_column_header(array $columns)
 {
     $columns['none-public-count'] = 'Non-public Count';
     return $columns;
@@ -2670,7 +2798,7 @@ function apip_edit_post_tag_column_header($columns)
  * URL: https://make.wordpress.org/docs/plugin-developer-handbook/10-plugin-components/custom-list-table-columns/
  * 备注: filter: manage_{$taxonomy}_custom_column
  */
-function apip_edit_post_tag_content($value, $column_name, $tax_id)
+function apip_edit_post_tag_content($value, $column_name, int $tax_id)
 {
     $args = array(
         'numberposts' => -1,
@@ -2707,7 +2835,13 @@ function apip_edit_post_tag_content($value, $column_name, $tax_id)
 }
 
 //9.2
-function apip_convert_post_tag_slug_to_utf($actions, $tag)
+/**
+ * 增加转unicode功能
+ * @param array $actions 动作列表
+ * @param object $tag 编辑对象
+ * @return array 新动作列表
+ */
+function apip_convert_post_tag_slug_to_utf(array $actions, object $tag)
 {
     $action = '<a href="/">转unicode</a>';
     $new_slug = apip_mb_str2_hex($tag->name);
@@ -2716,7 +2850,7 @@ function apip_convert_post_tag_slug_to_utf($actions, $tag)
 }
 
 //9.3 postlist页面增加根据post_tag筛选的下拉框
-function apip_add_post_tag_filter_ddl($post_type)
+function apip_add_post_tag_filter_ddl(string $post_type)
 {
     if ('post' !== $post_type) { //只在post列表显示。如果想在page列表里同样支持，可以更改判断条件。
         return;
@@ -2912,17 +3046,18 @@ function apip_filter_filter()
  *           2.7  搜索结果只有一条时直接跳入
  *           2.10 外链转内链
  */
-function apip_template_redirect()
+function apip_template_redirect(): void
 {
     //0.10 作者页跳转到404
     apip_redirect_author();
 
     //0.19 autop与shortcode冲突问题
-    if (function_exists('yh_redo_wpautop') && yh_redo_wpautop()) {
-        ;//do nothing
-    } else {
-        add_filter('the_content', 'apip_fix_shortcodes');
-    }
+
+    //if (function_exists('yh_redo_wpautop') && yh_redo_wpautop()) {
+    //    ;//do nothing
+    //} else {
+    add_filter('the_content', 'apip_fix_shortcodes', 8);
+    //}
 
     //2.7搜索结果只有一条时直接跳入
     if (apip_option_check('redirect_if_single')) {
@@ -2943,8 +3078,11 @@ function apip_template_redirect()
 /******************************************************************************/
 /**
  * 作用: 将UTF8字符串转成16进制带下划线的字符串
+ * @param string $str
+ * @return string
+ * @vrsion 1.20.0
  */
-function apip_mb_str2_hex($str)
+function apip_mb_str2_hex(string $str): string
 {
     $ret = "";
     for ($i = 0; $i < mb_strlen($str, "utf-8"); $i++) {
