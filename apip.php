@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.4
+ * Version:     1.42.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -122,7 +122,7 @@ if (file_exists(APIP_PLUGIN_DIR . 'private.php')) {
  * @param mixed $val
  * @return bool
  */
-function apip_option_check(string $key, mixed $val = 1): bool
+function apip_option_check(string $key, $val = 1): bool
 {
     global $apip_options;
     if (empty($apip_options)) {
@@ -486,7 +486,7 @@ function apip_init(): void
  * @param mixed $screen
  * @return mixed
  */
-function my_current_screen(mixed $screen): mixed
+function my_current_screen($screen): mixed
 {
     if (defined('DOING_AJAX') && DOING_AJAX)
         return $screen;
@@ -1037,7 +1037,7 @@ function apip_redirect_author(): void
  * @return array
  * @vrsion 1.20.0
  */
-function apip_remove_author_class(array $classes, string|array $class, int $comment_ID, WP_Comment $comment, int|null $post_id): array
+function apip_remove_author_class(array $classes, $class, int $comment_ID, WP_Comment $comment, $post_id): array
 {
     $c_rm = array();
     if ($comment->user_id > 0 && $user = get_userdata($comment->user_id)) {

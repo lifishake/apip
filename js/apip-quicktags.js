@@ -69,7 +69,7 @@ function fancybox_callback(element, canvas, ed) {
       if ('NONE' === my_caption) {
         my_caption = fname;
       }
-      t = '<a href="' + i + '" data-fancybox="gallery" data-caption="' + my_caption + '"><img src="' + i + '" alt="' + fname + '" /></a>';
+      t = '<a href="' + i + '" data-fancybox="gallery" data-caption="' + my_caption + '"><img src="' + i + '" alt="' + fname + '" loading = "lazy"/></a>';
       canvas.value = l + t + r;
       cursorPos += t.length - i.length ;
     }
