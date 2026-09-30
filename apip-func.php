@@ -283,7 +283,7 @@ class Lunar
             $bitArray[$i] = substr($bit, $i, 1);
         }
         for ($k = 0, $klen = 16 - count($bitArray); $k < $klen; $k++) {
-            array_unshift($bitArray, values: '0');
+            array_unshift($bitArray, '0');
         }
         $bitArray = array_slice($bitArray, 0, ($leapMonth == 0 ? 12 : 13));
         for ($i = 0; $i < count($bitArray); $i++) {
