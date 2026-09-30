@@ -2524,8 +2524,8 @@ function apip_get_face_character_from_bookmark($comment_email)
 /**
  * @brief       根据选项判断当前post或page是否需要激活fancybox
  * @return      bool
- * @version     1.42.5
  * @since       1.42.5
+ * @version     1.42.8      逗号分隔后增加trim()
  * @date        2026-9-30
  */
 function apip_is_support_fancybox()
@@ -2537,18 +2537,21 @@ function apip_is_support_fancybox()
     $id = get_the_ID();
     if (isset($apip_options['apip_fancybox_ids']) && trim($apip_options['apip_fancybox_ids']) !== "") {
         $ids = explode(",", $apip_options['apip_fancybox_ids']);
+        $ids = array_map("trim", $ids);
         if (in_array($id, $ids)) {
             return true;
         }
     }
     if (isset($apip_options['apip_fancybox_categories']) && trim($apip_options['apip_fancybox_categories']) !== "") {
         $cates = explode(",", $apip_options['apip_fancybox_categories']);
+        $cates = array_map("trim", $cates);
         if (has_category($cates)) {
             return true;
         }
     }
     if (isset($apip_options['apip_fancybox_tags']) && trim($apip_options['apip_fancybox_tags']) !== "") {
         $tags = explode(",", $apip_options['apip_fancybox_tags']);
+        $tags = array_map("trim", $tags);
         if (has_tag($tags)) {
             return true;
         }
