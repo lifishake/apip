@@ -1822,6 +1822,44 @@ function apip_remove_block_comments($text) {
     );
 }
 
+/**
+ * Summary of bddb_array_child_value_to_str
+ * @param mixed $data
+ * @param mixed $key
+ * @param mixed $name_key
+ * @param mixed $unknown_str
+ * @return string
+ */
+function bddb_array_child_value_to_str($data, $key, $name_key = "name", $unknown_str = "")
+{
+    $ret = '';
+    if (array_key_exists($key, $data) && is_array($data[$key])) {
+        $subs = $data[$key];
+        if (count($subs) > 1) {
+            if (is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
+                $items = wp_list_pluck($subs, $name_key);
+                $ret .= implode(', ', $items);
+            } else {
+                $ret .= implode(', ', $subs);
+            }
+        } else if (!empty($subs)) {
+            if (is_array($subs[0]) && array_key_exists($name_key, $subs[0])) {
+                $ret .= $subs[0][$name_key];
+            } else {
+                $ret .= $subs[0];
+            }
+        } else {
+            $ret .= $unknown_str;
+        }
+    } elseif (array_key_exists($key, $data)) {
+        $ret .= $data[$key];
+    } else {
+        $ret .= $unknown_str;
+    }
+    return $ret;
+}
+
  ?>
 
+ 
  

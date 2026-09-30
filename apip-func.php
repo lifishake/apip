@@ -1,96 +1,321 @@
 <?php
 
-define('APIP_FRONTEND_CSS_VER', '20260610');
-define('APIP_FRONTEND_JS_VER', '20260210');
+define('APIP_FRONTEND_CSS_VER', '20260930');
+define('APIP_FRONTEND_JS_VER', '20260930');
 define('APIP_ADMIN_CSS_VER', '20251130');
-define('APIP_ADMIN_JS_VER', '20260818');
+define('APIP_ADMIN_JS_VER', '20260629');
 
 //Class lunar
-/*
- * 作用: 计算农历相关 除夕判断为自行添加
- * 来源: 忘了
- * URL:
-*/
-class Lunar {
-    var $MIN_YEAR=1891;
-    var $MAX_YEAR=2100;
-    var $lunarInfo=array(
-        array(0,2,9,21936),array(6,1,30,9656),array(0,2,17,9584),array(0,2,6,21168),array(5,1,26,43344),array(0,2,13,59728),
-        array(0,2,2,27296),array(3,1,22,44368),array(0,2,10,43856),array(8,1,30,19304),array(0,2,19,19168),array(0,2,8,42352),
-        array(5,1,29,21096),array(0,2,16,53856),array(0,2,4,55632),array(4,1,25,27304),array(0,2,13,22176),array(0,2,2,39632),
-        array(2,1,22,19176),array(0,2,10,19168),array(6,1,30,42200),array(0,2,18,42192),array(0,2,6,53840),array(5,1,26,54568),
-        array(0,2,14,46400),array(0,2,3,54944),array(2,1,23,38608),array(0,2,11,38320),array(7,2,1,18872),array(0,2,20,18800),
-        array(0,2,8,42160),array(5,1,28,45656),array(0,2,16,27216),array(0,2,5,27968),array(4,1,24,44456),array(0,2,13,11104),
-        array(0,2,2,38256),array(2,1,23,18808),array(0,2,10,18800),array(6,1,30,25776),array(0,2,17,54432),array(0,2,6,59984),
-        array(5,1,26,27976),array(0,2,14,23248),array(0,2,4,11104),array(3,1,24,37744),array(0,2,11,37600),array(7,1,31,51560),
-        array(0,2,19,51536),array(0,2,8,54432),array(6,1,27,55888),array(0,2,15,46416),array(0,2,5,22176),array(4,1,25,43736),
-        array(0,2,13,9680),array(0,2,2,37584),array(2,1,22,51544),array(0,2,10,43344),array(7,1,29,46248),array(0,2,17,27808),
-        array(0,2,6,46416),array(5,1,27,21928),array(0,2,14,19872),array(0,2,3,42416),array(3,1,24,21176),array(0,2,12,21168),
-        array(8,1,31,43344),array(0,2,18,59728),array(0,2,8,27296),array(6,1,28,44368),array(0,2,15,43856),array(0,2,5,19296),
-        array(4,1,25,42352),array(0,2,13,42352),array(0,2,2,21088),array(3,1,21,59696),array(0,2,9,55632),array(7,1,30,23208),
-        array(0,2,17,22176),array(0,2,6,38608),array(5,1,27,19176),array(0,2,15,19152),array(0,2,3,42192),array(4,1,23,53864),
-        array(0,2,11,53840),array(8,1,31,54568),array(0,2,18,46400),array(0,2,7,46752),array(6,1,28,38608),array(0,2,16,38320),
-        array(0,2,5,18864),array(4,1,25,42168),array(0,2,13,42160),array(10,2,2,45656),array(0,2,20,27216),array(0,2,9,27968),
-        array(6,1,29,44448),array(0,2,17,43872),array(0,2,6,38256),array(5,1,27,18808),array(0,2,15,18800),array(0,2,4,25776),
-        array(3,1,23,27216),array(0,2,10,59984),array(8,1,31,27432),array(0,2,19,23232),array(0,2,7,43872),array(5,1,28,37736),
-        array(0,2,16,37600),array(0,2,5,51552),array(4,1,24,54440),array(0,2,12,54432),array(0,2,1,55888),array(2,1,22,23208),
-        array(0,2,9,22176),array(7,1,29,43736),array(0,2,18,9680),array(0,2,7,37584),array(5,1,26,51544),array(0,2,14,43344),
-        array(0,2,3,46240),array(4,1,23,46416),array(0,2,10,44368),array(9,1,31,21928),array(0,2,19,19360),array(0,2,8,42416),
-        array(6,1,28,21176),array(0,2,16,21168),array(0,2,5,43312),array(4,1,25,29864),array(0,2,12,27296),array(0,2,1,44368),
-        array(2,1,22,19880),array(0,2,10,19296),array(6,1,29,42352),array(0,2,17,42208),array(0,2,6,53856),array(5,1,26,59696),
-        array(0,2,13,54576),array(0,2,3,23200),array(3,1,23,27472),array(0,2,11,38608),array(11,1,31,19176),array(0,2,19,19152),
-        array(0,2,8,42192),array(6,1,28,53848),array(0,2,15,53840),array(0,2,4,54560),array(5,1,24,55968),array(0,2,12,46496),
-        array(0,2,1,22224),array(2,1,22,19160),array(0,2,10,18864),array(7,1,30,42168),array(0,2,17,42160),array(0,2,6,43600),
-        array(5,1,26,46376),array(0,2,14,27936),array(0,2,2,44448),array(3,1,23,21936),array(0,2,11,37744),array(8,2,1,18808),
-        array(0,2,19,18800),array(0,2,8,25776),array(6,1,28,27216),array(0,2,15,59984),array(0,2,4,27424),array(4,1,24,43872),
-        array(0,2,12,43744),array(0,2,2,37600),array(3,1,21,51568),array(0,2,9,51552),array(7,1,29,54440),array(0,2,17,54432),
-        array(0,2,5,55888),array(5,1,26,23208),array(0,2,14,22176),array(0,2,3,42704),array(4,1,23,21224),array(0,2,11,21200),
-        array(8,1,31,43352),array(0,2,19,43344),array(0,2,7,46240),array(6,1,27,46416),array(0,2,15,44368),array(0,2,5,21920),
-        array(4,1,24,42448),array(0,2,12,42416),array(0,2,2,21168),array(3,1,22,43320),array(0,2,9,26928),array(7,1,29,29336),
-        array(0,2,17,27296),array(0,2,6,44368),array(5,1,26,19880),array(0,2,14,19296),array(0,2,3,42352),array(4,1,24,21104),
-        array(0,2,10,53856),array(8,1,30,59696),array(0,2,18,54560),array(0,2,7,55968),array(6,1,27,27472),array(0,2,15,22224),
-        array(0,2,5,19168),array(4,1,25,42216),array(0,2,12,42192),array(0,2,1,53584),array(2,1,21,55592),array(0,2,9,54560)
+/**
+ * @brief   处理农历日期
+ * @ref     来源    忘了
+ */
+class Lunar
+{
+    public int $MIN_YEAR = 1891;
+    public int $MAX_YEAR = 2100;
+    /**
+     * Summary of lunarInfo
+     * @var array
+     */
+    public $lunarInfo = array(
+        array(0, 2, 9, 21936),
+        array(6, 1, 30, 9656),
+        array(0, 2, 17, 9584),
+        array(0, 2, 6, 21168),
+        array(5, 1, 26, 43344),
+        array(0, 2, 13, 59728),
+        array(0, 2, 2, 27296),
+        array(3, 1, 22, 44368),
+        array(0, 2, 10, 43856),
+        array(8, 1, 30, 19304),
+        array(0, 2, 19, 19168),
+        array(0, 2, 8, 42352),
+        array(5, 1, 29, 21096),
+        array(0, 2, 16, 53856),
+        array(0, 2, 4, 55632),
+        array(4, 1, 25, 27304),
+        array(0, 2, 13, 22176),
+        array(0, 2, 2, 39632),
+        array(2, 1, 22, 19176),
+        array(0, 2, 10, 19168),
+        array(6, 1, 30, 42200),
+        array(0, 2, 18, 42192),
+        array(0, 2, 6, 53840),
+        array(5, 1, 26, 54568),
+        array(0, 2, 14, 46400),
+        array(0, 2, 3, 54944),
+        array(2, 1, 23, 38608),
+        array(0, 2, 11, 38320),
+        array(7, 2, 1, 18872),
+        array(0, 2, 20, 18800),
+        array(0, 2, 8, 42160),
+        array(5, 1, 28, 45656),
+        array(0, 2, 16, 27216),
+        array(0, 2, 5, 27968),
+        array(4, 1, 24, 44456),
+        array(0, 2, 13, 11104),
+        array(0, 2, 2, 38256),
+        array(2, 1, 23, 18808),
+        array(0, 2, 10, 18800),
+        array(6, 1, 30, 25776),
+        array(0, 2, 17, 54432),
+        array(0, 2, 6, 59984),
+        array(5, 1, 26, 27976),
+        array(0, 2, 14, 23248),
+        array(0, 2, 4, 11104),
+        array(3, 1, 24, 37744),
+        array(0, 2, 11, 37600),
+        array(7, 1, 31, 51560),
+        array(0, 2, 19, 51536),
+        array(0, 2, 8, 54432),
+        array(6, 1, 27, 55888),
+        array(0, 2, 15, 46416),
+        array(0, 2, 5, 22176),
+        array(4, 1, 25, 43736),
+        array(0, 2, 13, 9680),
+        array(0, 2, 2, 37584),
+        array(2, 1, 22, 51544),
+        array(0, 2, 10, 43344),
+        array(7, 1, 29, 46248),
+        array(0, 2, 17, 27808),
+        array(0, 2, 6, 46416),
+        array(5, 1, 27, 21928),
+        array(0, 2, 14, 19872),
+        array(0, 2, 3, 42416),
+        array(3, 1, 24, 21176),
+        array(0, 2, 12, 21168),
+        array(8, 1, 31, 43344),
+        array(0, 2, 18, 59728),
+        array(0, 2, 8, 27296),
+        array(6, 1, 28, 44368),
+        array(0, 2, 15, 43856),
+        array(0, 2, 5, 19296),
+        array(4, 1, 25, 42352),
+        array(0, 2, 13, 42352),
+        array(0, 2, 2, 21088),
+        array(3, 1, 21, 59696),
+        array(0, 2, 9, 55632),
+        array(7, 1, 30, 23208),
+        array(0, 2, 17, 22176),
+        array(0, 2, 6, 38608),
+        array(5, 1, 27, 19176),
+        array(0, 2, 15, 19152),
+        array(0, 2, 3, 42192),
+        array(4, 1, 23, 53864),
+        array(0, 2, 11, 53840),
+        array(8, 1, 31, 54568),
+        array(0, 2, 18, 46400),
+        array(0, 2, 7, 46752),
+        array(6, 1, 28, 38608),
+        array(0, 2, 16, 38320),
+        array(0, 2, 5, 18864),
+        array(4, 1, 25, 42168),
+        array(0, 2, 13, 42160),
+        array(10, 2, 2, 45656),
+        array(0, 2, 20, 27216),
+        array(0, 2, 9, 27968),
+        array(6, 1, 29, 44448),
+        array(0, 2, 17, 43872),
+        array(0, 2, 6, 38256),
+        array(5, 1, 27, 18808),
+        array(0, 2, 15, 18800),
+        array(0, 2, 4, 25776),
+        array(3, 1, 23, 27216),
+        array(0, 2, 10, 59984),
+        array(8, 1, 31, 27432),
+        array(0, 2, 19, 23232),
+        array(0, 2, 7, 43872),
+        array(5, 1, 28, 37736),
+        array(0, 2, 16, 37600),
+        array(0, 2, 5, 51552),
+        array(4, 1, 24, 54440),
+        array(0, 2, 12, 54432),
+        array(0, 2, 1, 55888),
+        array(2, 1, 22, 23208),
+        array(0, 2, 9, 22176),
+        array(7, 1, 29, 43736),
+        array(0, 2, 18, 9680),
+        array(0, 2, 7, 37584),
+        array(5, 1, 26, 51544),
+        array(0, 2, 14, 43344),
+        array(0, 2, 3, 46240),
+        array(4, 1, 23, 46416),
+        array(0, 2, 10, 44368),
+        array(9, 1, 31, 21928),
+        array(0, 2, 19, 19360),
+        array(0, 2, 8, 42416),
+        array(6, 1, 28, 21176),
+        array(0, 2, 16, 21168),
+        array(0, 2, 5, 43312),
+        array(4, 1, 25, 29864),
+        array(0, 2, 12, 27296),
+        array(0, 2, 1, 44368),
+        array(2, 1, 22, 19880),
+        array(0, 2, 10, 19296),
+        array(6, 1, 29, 42352),
+        array(0, 2, 17, 42208),
+        array(0, 2, 6, 53856),
+        array(5, 1, 26, 59696),
+        array(0, 2, 13, 54576),
+        array(0, 2, 3, 23200),
+        array(3, 1, 23, 27472),
+        array(0, 2, 11, 38608),
+        array(11, 1, 31, 19176),
+        array(0, 2, 19, 19152),
+        array(0, 2, 8, 42192),
+        array(6, 1, 28, 53848),
+        array(0, 2, 15, 53840),
+        array(0, 2, 4, 54560),
+        array(5, 1, 24, 55968),
+        array(0, 2, 12, 46496),
+        array(0, 2, 1, 22224),
+        array(2, 1, 22, 19160),
+        array(0, 2, 10, 18864),
+        array(7, 1, 30, 42168),
+        array(0, 2, 17, 42160),
+        array(0, 2, 6, 43600),
+        array(5, 1, 26, 46376),
+        array(0, 2, 14, 27936),
+        array(0, 2, 2, 44448),
+        array(3, 1, 23, 21936),
+        array(0, 2, 11, 37744),
+        array(8, 2, 1, 18808),
+        array(0, 2, 19, 18800),
+        array(0, 2, 8, 25776),
+        array(6, 1, 28, 27216),
+        array(0, 2, 15, 59984),
+        array(0, 2, 4, 27424),
+        array(4, 1, 24, 43872),
+        array(0, 2, 12, 43744),
+        array(0, 2, 2, 37600),
+        array(3, 1, 21, 51568),
+        array(0, 2, 9, 51552),
+        array(7, 1, 29, 54440),
+        array(0, 2, 17, 54432),
+        array(0, 2, 5, 55888),
+        array(5, 1, 26, 23208),
+        array(0, 2, 14, 22176),
+        array(0, 2, 3, 42704),
+        array(4, 1, 23, 21224),
+        array(0, 2, 11, 21200),
+        array(8, 1, 31, 43352),
+        array(0, 2, 19, 43344),
+        array(0, 2, 7, 46240),
+        array(6, 1, 27, 46416),
+        array(0, 2, 15, 44368),
+        array(0, 2, 5, 21920),
+        array(4, 1, 24, 42448),
+        array(0, 2, 12, 42416),
+        array(0, 2, 2, 21168),
+        array(3, 1, 22, 43320),
+        array(0, 2, 9, 26928),
+        array(7, 1, 29, 29336),
+        array(0, 2, 17, 27296),
+        array(0, 2, 6, 44368),
+        array(5, 1, 26, 19880),
+        array(0, 2, 14, 19296),
+        array(0, 2, 3, 42352),
+        array(4, 1, 24, 21104),
+        array(0, 2, 10, 53856),
+        array(8, 1, 30, 59696),
+        array(0, 2, 18, 54560),
+        array(0, 2, 7, 55968),
+        array(6, 1, 27, 27472),
+        array(0, 2, 15, 22224),
+        array(0, 2, 5, 19168),
+        array(4, 1, 25, 42216),
+        array(0, 2, 12, 42192),
+        array(0, 2, 1, 53584),
+        array(2, 1, 21, 55592),
+        array(0, 2, 9, 54560)
     );
 
-    function convertSolarToLunar($year,$month,$date) {//debugger;
-        $yearData=$this->lunarInfo[$year-$this->MIN_YEAR];
-        if($year==$this->MIN_YEAR&&$month<=2&&$date<=9) {
-            return array(1891,'正月初一',1,1);
+    /**
+     * @brief 太阳历日期转换成月历
+     * @param int $year
+     * @param int $month
+     * @param int $date
+     * @return array
+     */
+    function convertSolarToLunar($year, $month, $date)
+    { //debugger;
+        $yearData = $this->lunarInfo[$year - $this->MIN_YEAR];
+        if ($year == $this->MIN_YEAR && $month <= 2 && $date <= 9) {
+            return array(1891, '正月初一', 1, 1);
         }
-        return $this->getLunarByBetween($year,$this->getDaysBetweenSolar($year,$month,$date,$yearData[1],$yearData[2]));
+        return $this->getLunarByBetween(
+            $year,
+            $this->getDaysBetweenSolar(
+                $year,
+                $month,
+                $date,
+                $yearData[1],
+                $yearData[2]
+            )
+        );
     }
 
-    function getLunarMonthDays($year,$month) {
-        $monthData=$this->getLunarMonths($year);
-        return $monthData[$month-1];
+    /**
+     * @brief   取大月小月
+     * @param   int $year
+     * @param   int $month
+     * @return  int|string
+     */
+    function getLunarMonthDays($year, $month)
+    {
+        $monthData = $this->getLunarMonths($year);
+        return $monthData[$month - 1];
     }
 
-    function getLunarMonths($year) {
-        $yearData=$this->lunarInfo[$year-$this->MIN_YEAR];
-        $leapMonth=$yearData[0];
-        $bit=decbin($yearData[3]);
-        for ($i=0;$i<strlen($bit);$i ++) {
-            $bitArray[$i]=substr($bit,$i,1);
+    /**
+     * @brief   取一年中有多少个月，每个月多少天
+     * @param   mixed     $year
+     * @return  array
+     */
+    function getLunarMonths($year)
+    {
+        $yearData = $this->lunarInfo[$year - $this->MIN_YEAR];
+        $leapMonth = $yearData[0];
+        $bit = decbin($yearData[3]);
+        $bitArray = [];
+        for ($i = 0; $i < strlen($bit); $i++) {
+            $bitArray[$i] = substr($bit, $i, 1);
         }
-        for($k=0,$klen=16-count($bitArray);$k<$klen;$k++) {
-            array_unshift($bitArray,'0');
+        for ($k = 0, $klen = 16 - count($bitArray); $k < $klen; $k++) {
+            array_unshift($bitArray, values: '0');
         }
-        $bitArray=array_slice($bitArray,0,($leapMonth==0?12:13));
-        for($i=0;$i<count($bitArray);$i++) {
-            $bitArray[$i]=$bitArray[$i] + 29;
+        $bitArray = array_slice($bitArray, 0, ($leapMonth == 0 ? 12 : 13));
+        for ($i = 0; $i < count($bitArray); $i++) {
+            $bitArray[$i] = $bitArray[$i] + 29;
         }
         return $bitArray;
     }
 
-    function getLunarYearDays($year) {
-        $yearData=$this->lunarInfo[$year-$this->MIN_YEAR];
-        $monthArray=$this->getLunarYearMonths($year);
-        $len=count($monthArray);
-        return ($monthArray[$len-1]==0?$monthArray[$len-2]:$monthArray[$len-1]);
+    /**
+     * @brief   取农历年一年有多少天
+     * @param   int     $year
+     */
+    function getLunarYearDays($year)
+    {
+        $yearData = $this->lunarInfo[$year - $this->MIN_YEAR];
+        $monthArray = $this->getLunarYearMonths($year);
+        $len = count($monthArray);
+        return ($monthArray[$len - 1] == 0 ?
+            $monthArray[$len - 2]
+            : $monthArray[$len - 1]);
     }
 
-    function isChuxi($year, $month, $day) {
-        $monthData=$this->getLunarMonths($year);
+    /**
+     * @brief   判断当天是否是除夕
+     * @param   int     $year
+     * @param   int     $month
+     * @param   int     $day
+     * @return string
+     */
+    function isChuxi($year, $month, $day)
+    {
+        $monthData = $this->getLunarMonths($year);
         if ($month != count($monthData)) {
             return "";
         }
@@ -102,96 +327,139 @@ class Lunar {
         return "";
     }
 
-    function getLunarYearMonths($year) {//debugger;
-        $monthData=$this->getLunarMonths($year);
-        $res=array();
-        $temp=0;
-        $yearData=$this->lunarInfo[$year-$this->MIN_YEAR];
-        $len=($yearData[0]==0 ? 12 : 13);
-        for($i=0;$i<$len;$i++) {
-            $temp=0;
-            for($j=0;$j<=$i;$j++) {
-                $temp+=$monthData[$j];
+    /**
+     * @brief   获取一年有多少月日
+     * @param   int     $year
+     * @return  array
+     */
+    function getLunarYearMonths($year)
+    { //debugger;
+        $monthData = $this->getLunarMonths($year);
+        $res = array();
+        $temp = 0;
+        $yearData = $this->lunarInfo[$year - $this->MIN_YEAR];
+        $len = ($yearData[0] == 0 ? 12 : 13);
+        for ($i = 0; $i < $len; $i++) {
+            $temp = 0;
+            for ($j = 0; $j <= $i; $j++) {
+                $temp += $monthData[$j];
             }
-            array_push($res,$temp);
+            array_push($res, $temp);
         }
         return $res;
     }
 
-    function getLeapMonth($year) {
-        $yearData=$this->lunarInfo[$year-$this->MIN_YEAR];
+    /**
+     * @brief   获取是否闰月
+     * @param   int     $year
+     */
+    function getLeapMonth($year)
+    {
+        $yearData = $this->lunarInfo[$year - $this->MIN_YEAR];
         return $yearData[0];
     }
 
-    function getDaysBetweenLunar($year,$month,$date) {
-        $yearMonth=$this->getLunarMonths($year);
-        $res=0;
-        for($i=1;$i<$month;$i++){
-            $res+=$yearMonth[$i-1];
+    /**
+     * @brief   获取两个月圆之间有多少天
+     * @param   int     $year
+     * @param   int     $month
+     * @param   int     $date
+     * @return float|int
+     */
+    function getDaysBetweenLunar($year, $month, $date)
+    {
+        $yearMonth = $this->getLunarMonths($year);
+        $res = 0;
+        for ($i = 1; $i < $month; $i++) {
+            $res += $yearMonth[$i - 1];
         }
-        $res+=$date-1;
+        $res += $date - 1;
         return $res;
     }
 
-    function getDaysBetweenSolar($year,$cmonth,$cdate,$dmonth,$ddate) {
-        $a=mktime(0,0,0,$cmonth,$cdate,$year);
-        $b=mktime(0,0,0,$dmonth,$ddate,$year);
-        return ceil(($a-$b)/24/3600);
+    /**
+     * @brief 获取两个大节气间有多少天
+     * @param   int     $year
+     * @param   int     $cmonth
+     * @param   int     $cdate
+     * @param   int     $dmonth
+     * @param   int     $ddate
+     * @return  int
+     */
+    function getDaysBetweenSolar($year, $cmonth, $cdate, $dmonth, $ddate)
+    {
+        $a = mktime(0, 0, 0, $cmonth, $cdate, $year);
+        $b = mktime(0, 0, 0, $dmonth, $ddate, $year);
+        return ceil(($a - $b) / 24 / 3600);
     }
 
-    function getLunarByBetween($year,$between) {//debugger;
-        $lunarArray=array();
-        $yearMonth=array();
-        $t=0;
-        $e=0;
-        $leapMonth=0;
-        $m='';
-        if($between==0){
-            array_push($lunarArray,$year,'正月初一');
-            $t=1;
-            $e=1;
-        }else {
-            $year=$between>0? $year : ($year-1);
-            $yearMonth=$this->getLunarYearMonths($year);
-            $leapMonth=$this->getLeapMonth($year);
-            $between=$between>0?$between : ($this->getLunarYearDays($year)+$between);
-            for($i = 0; $i < 13; $i++){
-                if($between==$yearMonth[$i]) {
-                    $t=$i+2;
-                    $e=1;
+    /**
+     * Summary of getLunarByBetween
+     * @param mixed $year
+     * @param mixed $between
+     * @return array
+     */
+    function getLunarByBetween($year, $between)
+    { //debugger;
+        $lunarArray = array();
+        $yearMonth = array();
+        $t = 0;
+        $e = 0;
+        $leapMonth = 0;
+        $m = '';
+        if ($between == 0) {
+            array_push($lunarArray, $year, '正月初一');
+            $t = 1;
+            $e = 1;
+        } else {
+            $year = $between > 0 ? $year : ($year - 1);
+            $yearMonth = $this->getLunarYearMonths($year);
+            $leapMonth = $this->getLeapMonth($year);
+            $between = $between > 0 ? $between : ($this->getLunarYearDays($year) + $between);
+            for ($i = 0; $i < 13; $i++) {
+                if ($between == $yearMonth[$i]) {
+                    $t = $i + 2;
+                    $e = 1;
                     break;
-                }else if($between<$yearMonth[$i]) {
-                    $t=$i+1;
-                    $e=$between-(empty($yearMonth[$i-1])?0:$yearMonth[$i-1])+1;
+                } else if ($between < $yearMonth[$i]) {
+                    $t = $i + 1;
+                    $e = $between - (empty($yearMonth[$i - 1]) ? 0 : $yearMonth[$i - 1]) + 1;
                     break;
                 }
             }
-            $m=($leapMonth!=0&&$t==$leapMonth+1)?('闰'.$this->getCapitalNum($t- 1,true)):$this->getCapitalNum(($leapMonth!=0&&$leapMonth+1<$t?($t-1):$t),true);
-            array_push($lunarArray,$year,$m.$this->getCapitalNum($e,false));
+            $m = ($leapMonth != 0 && $t == $leapMonth + 1) ? ('闰' . $this->getCapitalNum($t - 1, true)) : $this->getCapitalNum(($leapMonth != 0 && $leapMonth + 1 < $t ? ($t - 1) : $t), true);
+            array_push($lunarArray, $year, $m . $this->getCapitalNum($e, false));
         }
-        array_push($lunarArray,$t,$e);
-        array_push($lunarArray,$leapMonth);// 闰几月
+        array_push($lunarArray, $t, $e);
+        array_push($lunarArray, $leapMonth); // 闰几月
         return $lunarArray;
     }
 
-    function getCapitalNum($num,$isMonth) {
-        $isMonth=$isMonth||false;
-        $dateHash=array('0'=>'','1'=>'一','2'=>'二','3'=>'三','4'=>'四','5'=>'五','6'=>'六','7'=>'七','8'=>'八','9'=>'九','10'=>'十 ');
-        $monthHash=array('0'=>'','1'=>'正月','2'=>'二月','3'=>'三月','4'=>'四月','5'=>'五月','6'=>'六月','7'=>'七月','8'=>'八月','9'=>'九月','10'=>'十月','11'=>'冬月','12'=>'腊月');
-        $res='';
-        if($isMonth) {
-            $res=$monthHash[$num];
-        }else {
-            if($num<=10) {
-                $res='初'.$dateHash[$num];
-            }else if($num>10&&$num<20) {
-                $res='十'.$dateHash[$num-10];
-            }else if($num==20) {
-                $res="二十";
-            }else if($num>20&&$num<30) {
-                $res="廿".$dateHash[$num-20];
-            }else if($num==30) {
-                $res="三十";
+    /**
+     * Summary of getCapitalNum
+     * @param mixed $num
+     * @param mixed $isMonth
+     * @return string
+     */
+    function getCapitalNum($num, $isMonth)
+    {
+        $isMonth = $isMonth || false;
+        $dateHash = array('0' => '', '1' => '一', '2' => '二', '3' => '三', '4' => '四', '5' => '五', '6' => '六', '7' => '七', '8' => '八', '9' => '九', '10' => '十 ');
+        $monthHash = array('0' => '', '1' => '正月', '2' => '二月', '3' => '三月', '4' => '四月', '5' => '五月', '6' => '六月', '7' => '七月', '8' => '八月', '9' => '九月', '10' => '十月', '11' => '冬月', '12' => '腊月');
+        $res = '';
+        if ($isMonth) {
+            $res = $monthHash[$num];
+        } else {
+            if ($num <= 10) {
+                $res = '初' . $dateHash[$num];
+            } else if ($num > 10 && $num < 20) {
+                $res = '十' . $dateHash[$num - 10];
+            } else if ($num == 20) {
+                $res = "二十";
+            } else if ($num > 20 && $num < 30) {
+                $res = "廿" . $dateHash[$num - 20];
+            } else if ($num == 30) {
+                $res = "三十";
             }
         }
         return $res;
@@ -199,60 +467,61 @@ class Lunar {
 }
 // class Lunar
 
-/*
- * 作用: 取得1900-2100年间公历日期转为干支记日的结果
- * 来源: 百度知道
- * 参数: int    $year       公历年份
- * 参数: int    $month      公历月份（1-12）
- * 参数: int    $month      公历日期
- * URL:
- * 返回值：array()
+/**
+ * @brief   取得1900-2100年间公历日期转为干支记日的结果
+ * @remark  来源    百度知道
+ * @param   int     $year       公历年份
+ * @param   int     $month      公历月份（1-12）
+ * @param   int     $day        公历日期
+ * @return  array
  *                  =>'num', 1-60 该干支在干支表中的序号。干支表：甲子(1)、乙丑(2)、丙寅(3)……癸亥(60)
  *                  =>'gan', 该日天干中文文字
  *                  =>'zhi', 该日地支中文文字
  *                  =>'day', 干支中文名
-*/
-function get_ganzhi($year, $month, $day) {
+ */
+function get_ganzhi($year, $month, $day)
+{
     $ret = array();
-    $term_gan = array("甲","乙","丙","丁","戊","己","庚","辛","壬","癸");
-    $term_zhi = array("子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥");
-    $um = (141-$month*11)%12+3;//(MOD(9-$AC3*11,12)+3)
-    $bc = ($year - floor($um/13)) %100;
-    $r = floor($bc/4)*6 +
-        5*(floor($bc/4)*3 + $bc%4) +
-        30*($month%2+1) +
-        floor(($um*3-7)/5)+$day +
-        44*floor(($year - floor($um/13)) /100) +
-        floor(floor(($year - floor($um/13)) /100)/4)+9;
-    $ret['num'] = $r % 60 +1;
+    $term_gan = array("甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸");
+    $term_zhi = array("子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥");
+    $um = (141 - $month * 11) % 12 + 3; //(MOD(9-$AC3*11,12)+3)
+    $bc = ($year - floor($um / 13)) % 100;
+    $r = floor($bc / 4) * 6 +
+        5 * (floor($bc / 4) * 3 + $bc % 4) +
+        30 * ($month % 2 + 1) +
+        floor(($um * 3 - 7) / 5) + $day +
+        44 * floor(($year - floor($um / 13)) / 100) +
+        floor(floor(($year - floor($um / 13)) / 100) / 4) + 9;
+    $ret['num'] = $r % 60 + 1;
     $ret['gan'] = $term_gan[($r - 1) % 10];
     $ret['zhi'] = $term_zhi[($r - 1) % 12];
-    $ret['day'] = $ret['gan'].$ret['zhi'];
+    $ret['day'] = $ret['gan'] . $ret['zhi'];
     return $ret;
 }
 
-/*
+/**
  * 作用: 判断是否是【某月第几个星期几】方法构成的节日
  * 来源: 自产
- * 参数: int    $month      公历月份（1-12）
- * 参数: int    $month      公历日期
- * 参数: int    $w          星期几（星期天0，星期一1...星期六6）
- * 返回值：string 节日名或者空字符串
-*/
-function is_cristian_festivel($month, $day, $w) {
-    $chistian_festivals=array(
-        "5_1_5"=>"无裤节",
-        "5_2_0"=>"母亲节",
-        "6_3_0"=>"父亲节",
-        "7_3_1"=>"海之日",
-        "11_4_4"=>"感恩节",
-        "11_4_5"=>"黑色星期五",
+ * @param   int     $month      公历月份（1-12）
+ * @param   int     $day        公历日期
+ * @param   int     $w          星期几（星期天0，星期一1...星期六6）
+ * @return  string  节日名或者空字符串
+ */
+function is_cristian_festivel($month, $day, $w)
+{
+    $chistian_festivals = array(
+        "5_1_5" => "无裤节",
+        "5_2_0" => "母亲节",
+        "6_3_0" => "父亲节",
+        "7_3_1" => "海之日",
+        "11_4_4" => "感恩节",
+        "11_4_5" => "黑色星期五",
     );
     $count = 0;
     $d = $day;
-    while($d > 0) {
+    while ($d > 0) {
         $count++;
-        $d -=7;
+        $d -= 7;
     }
     $ret = "";
     $chistian_str = sprintf("%d_%d_%d", $month, $count, $w);
@@ -262,19 +531,20 @@ function is_cristian_festivel($month, $day, $w) {
     return $ret;
 }
 
-/*
- * 作用: 判断是否是仲夏节（6/19至25之间的星期五（瑞典））
- * 来源: 自产
- * 参数: int    $month      公历月份（1-12）
- * 参数: int    $month      公历日期
- * 参数: int    $w          星期几（星期天0，星期一1...星期六6）
- * 返回值：bool
-*/
-function is_mid_summer_festivel($month, $day, $w) {
-    if($month != 6) {
+/**
+ * @brief   判断是否是仲夏节（6/19至25之间的星期五（瑞典））
+ * @ref     来源    自产
+ * @param   int     $month      公历月份（1-12）
+ * @param   int     $day        公历日期
+ * @param   int     $w          星期几（星期天0，星期一1...星期六6）
+ * @return  bool
+ */
+function is_mid_summer_festivel($month, $day, $w)
+{
+    if ($month != 6) {
         return false;
     }
-    if ($day <19 || $day >25) {
+    if ($day < 19 || $day > 25) {
         return false;
     }
     if ($w == 5) {
@@ -283,60 +553,82 @@ function is_mid_summer_festivel($month, $day, $w) {
     return false;
 }
 
-function apip_blanks($cnt) {
-    $ret="";
-    for($i = 0; $i < $cnt; ++$i) {
-        $ret = $ret.">";
+/**
+ * Summary of apip_blanks
+ * @param mixed $cnt
+ * @return string
+ */
+function apip_blanks($cnt)
+{
+    $ret = "";
+    for ($i = 0; $i < $cnt; ++$i) {
+        $ret = $ret . ">";
     }
     return $ret;
 }
-function echo_option_item($item, $ind, $tail, $key){
+/**
+ * Summary of echo_option_item
+ * @param mixed $item
+ * @param mixed $ind
+ * @param mixed $tail
+ * @param mixed $key
+ * @return void
+ */
+function echo_option_item($item, $ind, $tail, $key)
+{
     $item = maybe_unserialize($item);
     if (is_array($item)) {
-        $header = apip_blanks($ind).$key;
+        $header = apip_blanks($ind) . $key;
         if (0 == $ind) {
-            printf('<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
+            printf(
+                '<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
                     <td><button class="button"  type="button" name="apip_maintain_do" id="%1$s" wpnonce="%3$s">Delete</button></td>
                     </tr>',
-                    $key,
-                    admin_url('admin-post.php'),
-                    wp_create_nonce('maintain-do-'.$key)
-                );
-
+                $key,
+                admin_url('admin-post.php'),
+                wp_create_nonce('maintain-do-' . $key)
+            );
         } else {
             printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, count($item), $tail);
         }
         $ind++;
-        $tail .= "/".$key;
+        $tail .= "/" . $key;
         foreach ($item as $nkey => $value) {
             echo_option_item($value, $ind, $tail, $nkey);
         }
-    } elseif(is_object($item)) {
-        $header = apip_blanks($ind).$key;
+    } elseif (is_object($item)) {
+        $header = apip_blanks($ind) . $key;
         printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, "@@@IS AN OBJECT!!!@@@", $tail);
     } else {
-        $header = apip_blanks($ind).$key;
+        $header = apip_blanks($ind) . $key;
         if (0 == $ind) {
-            printf('<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
+            printf(
+                '<tr><th><span style = "color:#FFC020;">%1$s</span></th><td name="opt_lbl"><strong>主项</strong></td>
                     <td>%4$s<button class="button"  type="button" name="apip_maintain_do" id="%1$s" wpnonce="%3$s">Delete</button></td>
                     </tr>',
-                    $key,
-                    admin_url('admin-post.php'),
-                    wp_create_nonce('maintain-do-'.$key),
-                    esc_html($item)
-                );
+                $key,
+                admin_url('admin-post.php'),
+                wp_create_nonce('maintain-do-' . $key),
+                esc_html($item)
+            );
         } else {
             printf('<tr><th>%1$s</th><td>%2$s</td><td>%3$s</td></tr>', $header, esc_html($item), $tail);
         }
-
     }
 }
 
 /*
  * 作用: 在页面开始处显示debug信息
  * 来源: 自产
-*/
-function apip_debug_page($val, $name) {
+ */
+/**
+ * Summary of apip_debug_page
+ * @param mixed $val
+ * @param mixed $name
+ * @return void
+ */
+function apip_debug_page($val, $name)
+{
     echo count($val);
     echo $name;
 }
@@ -344,8 +636,14 @@ function apip_debug_page($val, $name) {
 /*
  * 作用: 显示option维护页面
  * 来源: 自产
-*/
-function apip_maintenance_page($val) {
+ */
+/**
+ * Summary of apip_maintenance_page
+ * @param mixed $val
+ * @return void
+ */
+function apip_maintenance_page($val)
+{
     echo count($val);
     echo "</td><td>操作</td></tr>";
     foreach ($val as $key => $value) {
@@ -365,75 +663,216 @@ function apip_maintenance_page($val) {
         19 寒露     20 霜降     21 立冬     22 小雪     23 大雪     24 冬至
  * 返回值:  int 该节气的公历日
  */
-function get_term_day($year, $no) {
+/**
+ * Summary of get_term_day
+ * @param mixed $year
+ * @param mixed $no
+ * @return int|string
+ */
+function get_term_day($year, $no)
+{
     $solarTerms = [
-        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf97c3598082c95f8c965cc920f',
-        '97bd0b06bdb0722c965ce1cfcc920f', 'b027097bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
-        '97bcf97c359801ec95f8c965cc920f', '97bd0b06bdb0722c965ce1cfcc920f', 'b027097bd097c36b0b6fc9274c91aa',
-        '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f', '97bd0b06bdb0722c965ce1cfcc920f',
-        'b027097bd097c36b0b6fc9274c91aa', '9778397bd19801ec9210c965cc920e', '97b6b97bd19801ec95f8c965cc920f',
-        '97bd09801d98082c95f8e1cfcc920f', '97bd097bd097c36b0b6fc9210c8dc2', '9778397bd197c36c9210c9274c91aa',
-        '97b6b97bd19801ec95f8c965cc920e', '97bd09801d98082c95f8e1cfcc920f', '97bd097bd097c36b0b6fc9210c8dc2',
-        '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec95f8c965cc920e', '97bcf97c3598082c95f8e1cfcc920f',
-        '97bd097bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec9210c965cc920e',
-        '97bcf97c3598082c95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b97bd19801ec9210c965cc920e', '97bcf97c3598082c95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722',
-        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f',
-        '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
-        '97bcf97c359801ec95f8c965cc920f', '97bd097bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b97bd19801ec9210c965cc920e', '97bcf97c359801ec95f8c965cc920f', '97bd097bd07f595b0b6fc920fb0722',
-        '9778397bd097c36b0b6fc9210c8dc2', '9778397bd19801ec9210c9274c920e', '97b6b97bd19801ec95f8c965cc920f',
-        '97bd07f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c920e',
-        '97b6b97bd19801ec95f8c965cc920f', '97bd07f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2',
-        '9778397bd097c36c9210c9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bd07f1487f595b0b0bc920fb0722',
-        '7f0e397bd097c36b0b6fc9210c8dc2', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
-        '97bcf7f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b97bd19801ec9210c965cc920e', '97bcf7f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
-        '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e', '97bcf7f1487f531b0b0bb0b6fb0722',
-        '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b97bd19801ec9210c965cc920e',
-        '97bcf7f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b97bd19801ec9210c9274c920e', '97bcf7f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
-        '9778397bd097c36b0b6fc9210c91aa', '97b6b97bd197c36c9210c9274c920e', '97bcf7f0e47f531b0b0bb0b6fb0722',
-        '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9210c8dc2', '9778397bd097c36c9210c9274c920e',
-        '97b6b7f0e47f531b0723b0b6fb0722', '7f0e37f5307f595b0b0bc920fb0722', '7f0e397bd097c36b0b6fc9210c8dc2',
-        '9778397bd097c36b0b70c9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721', '7f0e37f1487f595b0b0bb0b6fb0722',
-        '7f0e397bd097c35b0b6fc9210c8dc2', '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721',
-        '7f0e27f1487f595b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
-        '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
-        '7f0e397bd097c35b0b6fc920fb0722', '9778397bd097c36b0b6fc9274c91aa', '97b6b7f0e47f531b0723b0b6fb0721',
-        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9274c91aa',
-        '97b6b7f0e47f531b0723b0787b0721', '7f0e27f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
-        '9778397bd097c36b0b6fc9210c91aa', '97b6b7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
-        '7f0e397bd07f595b0b0bc920fb0722', '9778397bd097c36b0b6fc9210c8dc2', '977837f0e37f149b0723b0787b0721',
-        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f5307f595b0b0bc920fb0722', '7f0e397bd097c35b0b6fc9210c8dc2',
-        '977837f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e37f1487f595b0b0bb0b6fb0722',
-        '7f0e397bd097c35b0b6fc9210c8dc2', '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
-        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722', '977837f0e37f14998082b0787b06bd',
-        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd097c35b0b6fc920fb0722',
-        '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
-        '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
-        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14998082b0787b06bd',
-        '7f07e7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0b0bb0b6fb0722', '7f0e397bd07f595b0b0bc920fb0722',
-        '977837f0e37f14998082b0723b06bd', '7f07e7f0e37f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
-        '7f0e397bd07f595b0b0bc920fb0722', '977837f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b0721',
-        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f1487f595b0b0bb0b6fb0722', '7f0e37f0e37f14898082b0723b02d5',
-        '7ec967f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0722', '7f0e37f1487f531b0b0bb0b6fb0722',
-        '7f0e37f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
-        '7f0e37f1487f531b0b0bb0b6fb0722', '7f0e37f0e37f14898082b072297c35', '7ec967f0e37f14998082b0787b06bd',
-        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e37f0e37f14898082b072297c35',
-        '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
-        '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f149b0723b0787b0721',
-        '7f0e27f1487f531b0b0bb0b6fb0722', '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14998082b0723b06bd',
-        '7f07e7f0e47f149b0723b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722', '7f0e37f0e366aa89801eb072297c35',
-        '7ec967f0e37f14998082b0723b06bd', '7f07e7f0e37f14998083b0787b0721', '7f0e27f0e47f531b0723b0b6fb0722',
-        '7f0e37f0e366aa89801eb072297c35', '7ec967f0e37f14898082b0723b02d5', '7f07e7f0e37f14998082b0787b0721',
-        '7f07e7f0e47f531b0723b0b6fb0722', '7f0e36665b66aa89801e9808297c35', '665f67f0e37f14898082b0723b02d5',
-        '7ec967f0e37f14998082b0787b0721', '7f07e7f0e47f531b0723b0b6fb0722', '7f0e36665b66a449801e9808297c35',
-        '665f67f0e37f14898082b0723b02d5', '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721',
-        '7f0e36665b66a449801e9808297c35', '665f67f0e37f14898082b072297c35', '7ec967f0e37f14998082b0787b06bd',
-        '7f07e7f0e47f531b0723b0b6fb0721', '7f0e26665b66a449801e9808297c35', '665f67f0e37f1489801eb072297c35',
-        '7ec967f0e37f14998082b0787b06bd', '7f07e7f0e47f531b0723b0b6fb0721', '7f0e27f1487f531b0b0bb0b6fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c3598082c95f8c965cc920f',
+        '97bd0b06bdb0722c965ce1cfcc920f',
+        'b027097bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f',
+        '97bd0b06bdb0722c965ce1cfcc920f',
+        'b027097bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f',
+        '97bd0b06bdb0722c965ce1cfcc920f',
+        'b027097bd097c36b0b6fc9274c91aa',
+        '9778397bd19801ec9210c965cc920e',
+        '97b6b97bd19801ec95f8c965cc920f',
+        '97bd09801d98082c95f8e1cfcc920f',
+        '97bd097bd097c36b0b6fc9210c8dc2',
+        '9778397bd197c36c9210c9274c91aa',
+        '97b6b97bd19801ec95f8c965cc920e',
+        '97bd09801d98082c95f8e1cfcc920f',
+        '97bd097bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c91aa',
+        '97b6b97bd19801ec95f8c965cc920e',
+        '97bcf97c3598082c95f8e1cfcc920f',
+        '97bd097bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c3598082c95f8c965cc920f',
+        '97bd097bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c3598082c95f8c965cc920f',
+        '97bd097bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f',
+        '97bd097bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f',
+        '97bd097bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf97c359801ec95f8c965cc920f',
+        '97bd097bd07f595b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9210c8dc2',
+        '9778397bd19801ec9210c9274c920e',
+        '97b6b97bd19801ec95f8c965cc920f',
+        '97bd07f5307f595b0b0bc920fb0722',
+        '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c920e',
+        '97b6b97bd19801ec95f8c965cc920f',
+        '97bd07f5307f595b0b0bc920fb0722',
+        '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bd07f1487f595b0b0bc920fb0722',
+        '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c965cc920e',
+        '97bcf7f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b97bd19801ec9210c9274c920e',
+        '97bcf7f0e47f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c91aa',
+        '97b6b97bd197c36c9210c9274c920e',
+        '97bcf7f0e47f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36c9210c9274c920e',
+        '97b6b7f0e47f531b0723b0b6fb0722',
+        '7f0e37f5307f595b0b0bc920fb0722',
+        '7f0e397bd097c36b0b6fc9210c8dc2',
+        '9778397bd097c36b0b70c9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e37f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc9210c8dc2',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9274c91aa',
+        '97b6b7f0e47f531b0723b0787b0721',
+        '7f0e27f0e47f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c91aa',
+        '97b6b7f0e47f149b0723b0787b0721',
+        '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '9778397bd097c36b0b6fc9210c8dc2',
+        '977837f0e37f149b0723b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722',
+        '7f0e37f5307f595b0b0bc920fb0722',
+        '7f0e397bd097c35b0b6fc9210c8dc2',
+        '977837f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e37f1487f595b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc9210c8dc2',
+        '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd097c35b0b6fc920fb0722',
+        '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '977837f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f149b0723b0787b0721',
+        '7f0e27f0e47f531b0b0bb0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '977837f0e37f14998082b0723b06bd',
+        '7f07e7f0e37f149b0723b0787b0721',
+        '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e397bd07f595b0b0bc920fb0722',
+        '977837f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722',
+        '7f0e37f1487f595b0b0bb0b6fb0722',
+        '7f0e37f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722',
+        '7f0e37f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e37f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e37f14898082b072297c35',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e37f14898082b072297c35',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f149b0723b0787b0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35',
+        '7ec967f0e37f14998082b0723b06bd',
+        '7f07e7f0e47f149b0723b0787b0721',
+        '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35',
+        '7ec967f0e37f14998082b0723b06bd',
+        '7f07e7f0e37f14998083b0787b0721',
+        '7f0e27f0e47f531b0723b0b6fb0722',
+        '7f0e37f0e366aa89801eb072297c35',
+        '7ec967f0e37f14898082b0723b02d5',
+        '7f07e7f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722',
+        '7f0e36665b66aa89801e9808297c35',
+        '665f67f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b0721',
+        '7f07e7f0e47f531b0723b0b6fb0722',
+        '7f0e36665b66a449801e9808297c35',
+        '665f67f0e37f14898082b0723b02d5',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e36665b66a449801e9808297c35',
+        '665f67f0e37f14898082b072297c35',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e26665b66a449801e9808297c35',
+        '665f67f0e37f1489801eb072297c35',
+        '7ec967f0e37f14998082b0787b06bd',
+        '7f07e7f0e47f531b0723b0b6fb0721',
+        '7f0e27f1487f531b0b0bb0b6fb0722',
     ];
     if ($year < 1900 || $year > 2100) {
         return -1;
@@ -460,18 +899,25 @@ function get_term_day($year, $no) {
  * 参数: int    $month      公历日期
  * 返回值:  string 节气名或空字符串
  */
-function is_jieqi($year, $month, $day) {
-    $cnt = ($month - 1)*2 + 1;
-    $cnt1 = ($month - 1)*2 + 2;
+/**
+ * Summary of is_jieqi
+ * @param mixed $year
+ * @param mixed $month
+ * @param mixed $day
+ * @return string
+ */
+function is_jieqi($year, $month, $day)
+{
+    $cnt = ($month - 1) * 2 + 1;
+    $cnt1 = ($month - 1) * 2 + 2;
     $idx = -1;
-    $solar_terms=["小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","立夏","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"];
+    $solar_terms = ["小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨", "立夏", "小满", "芒种", "立夏", "小暑", "大暑", "立秋", "处暑", "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"];
     if ($day == get_term_day($year, $cnt)) {
-        $idx = $cnt -1;
+        $idx = $cnt - 1;
+    } else if ($day == get_term_day($year, $cnt1)) {
+        $idx = $cnt1 - 1;
     }
-    else if ($day == get_term_day($year, $cnt1)) {
-        $idx = $cnt1 -1;
-    }
-    if($idx<0||$idx>23) {
+    if ($idx < 0 || $idx > 23) {
         return "";
     }
     return $solar_terms[$idx];
@@ -482,43 +928,44 @@ function is_jieqi($year, $month, $day) {
  * 来源: 自产
  * 参数: int    $post_id        post号。非0时取post号，0使用get_the_ID()
  */
-function apip_festival($post_id=0, $is_arr_ret=false) {
-    $chinese_festivals=array(
-        "正月初一"=>"春节",
-        "正月十三"=>"海神生日",
-        "正月十五"=>"元宵节",
-        "二月初二"=>"龙抬头",
-        "三月初三"=>"歌节",
-        "三月廿三"=>"天后诞",
-        "四月初八"=>"浴佛节",
-        "五月初五"=>"端午节",
-        "六月廿四"=>"火把节",
-        "七月初七"=>"乞巧节",
-        "七月十五"=>"中元节",
-        "八月十五"=>"中秋节",
-        "九月初九"=>"重阳节",
-        "十月初一"=>"寒衣节",
-        "十月十五"=>"下元节",
-        "十月十六"=>"盘王节",
-        "腊月初八"=>"腊八",
-        "腊月十六"=>"尾牙",
-        "腊月廿三"=>"小年",
+function apip_festival($post_id = 0, $is_arr_ret = false)
+{
+    $chinese_festivals = array(
+        "正月初一" => "春节",
+        "正月十三" => "海神生日",
+        "正月十五" => "元宵节",
+        "二月初二" => "龙抬头",
+        "三月初三" => "歌节",
+        "三月廿三" => "天后诞",
+        "四月初八" => "浴佛节",
+        "五月初五" => "端午节",
+        "六月廿四" => "火把节",
+        "七月初七" => "乞巧节",
+        "七月十五" => "中元节",
+        "八月十五" => "中秋节",
+        "九月初九" => "重阳节",
+        "十月初一" => "寒衣节",
+        "十月十五" => "下元节",
+        "十月十六" => "盘王节",
+        "腊月初八" => "腊八",
+        "腊月十六" => "尾牙",
+        "腊月廿三" => "小年",
     );
-    $solar_festivals=array(
-        "01/01"=>"元旦",
-        "02/14"=>"圣瓦伦丁日",
-        "03/14"=>"白色情人节",
-        "04/01"=>"愚人节",
-        "04/30"=>"魔女之夜",
-        "06/24"=>"圣约翰节",
-        "10/31"=>"万圣节前夜",
-        "11/01"=>"万圣节",
-        "11/26"=>"破袜子日",
-        "12/06"=>"圣尼可拉斯节",
-        "12/24"=>"耶诞节前夜",
-        "12/25"=>"耶诞节",
+    $solar_festivals = array(
+        "01/01" => "元旦",
+        "02/14" => "圣瓦伦丁日",
+        "03/14" => "白色情人节",
+        "04/01" => "愚人节",
+        "04/30" => "魔女之夜",
+        "06/24" => "圣约翰节",
+        "10/31" => "万圣节前夜",
+        "11/01" => "万圣节",
+        "11/26" => "破袜子日",
+        "12/06" => "圣尼可拉斯节",
+        "12/24" => "耶诞节前夜",
+        "12/25" => "耶诞节",
     );
-    $static_festivals_muslim=array(
+    $static_festivals_muslim = array(
         "2000/01/08" => "开斋节",
         "2000/12/28" => "开斋节",
         "2001/12/17" => "开斋节",
@@ -669,7 +1116,7 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
         "2070/01/23" => "古尔邦节",
         "2071/01/12" => "古尔邦节",
     );
-    $static_festivals_christian=array(
+    $static_festivals_christian = array(
         "2000/04/23" => "复活节",
         "2001/04/15" => "复活节",
         "2002/03/31" => "复活节",
@@ -883,36 +1330,35 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
         "2071/10/03" => '赎罪日',
         "2072/09/22" => '赎罪日',
     );
-    $disp_solar_terms=array(
-        "清明"=>"清明节",
-        "立春"=>"立春",
-        "春分"=>"春分",
-        "立秋"=>"立秋",
-        "秋分"=>"秋分",
-        "冬至"=>"冬至",
+    $disp_solar_terms = array(
+        "清明" => "清明节",
+        "立春" => "立春",
+        "春分" => "春分",
+        "立秋" => "立秋",
+        "秋分" => "秋分",
+        "冬至" => "冬至",
     );
 
-    if ( 0 == $post_id) {
-        $year = get_post_time('Y',false,get_the_ID());
-        $month = get_post_time('m',false,get_the_ID());
-        $day = get_post_time('j',false,get_the_ID());
-        $weekday = get_post_time('w',false,get_the_ID());
-    }
-    else {
-        $year = get_post_time('Y',false,$post_id);
-        $month = get_post_time('m',false,$post_id);
-        $day = get_post_time('j',false,$post_id);
-        $weekday = get_post_time('w',false,$post_id);
+    if (0 == $post_id) {
+        $year = get_post_time('Y', false, get_the_ID());
+        $month = get_post_time('m', false, get_the_ID());
+        $day = get_post_time('j', false, get_the_ID());
+        $weekday = get_post_time('w', false, get_the_ID());
+    } else {
+        $year = get_post_time('Y', false, $post_id);
+        $month = get_post_time('m', false, $post_id);
+        $day = get_post_time('j', false, $post_id);
+        $weekday = get_post_time('w', false, $post_id);
     }
     $ret = "";
-    $lunar=new Lunar();
-    $lunar_day = $lunar->convertSolarToLunar($year,$month,$day);
+    $lunar = new Lunar();
+    $lunar_day = $lunar->convertSolarToLunar($year, $month, $day);
 
     $arr_ret = array();
 
     //特殊节日
     //除夕 因为重要最先判断
-    $tmp = $lunar->isChuxi($lunar_day[0],$lunar_day[2],$lunar_day[3]);
+    $tmp = $lunar->isChuxi($lunar_day[0], $lunar_day[2], $lunar_day[3]);
     if ($tmp !== "") {
         //$ret .= " / ".$tmp;
         $arr_ret[] = $tmp;
@@ -925,14 +1371,14 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
 
     //公历节日
-    $solar = sprintf("%02d/%02d", $month+0, $day+0);
+    $solar = sprintf("%02d/%02d", $month + 0, $day + 0);
     if (array_key_exists($solar, $solar_festivals)) {
         //$ret .= " / ".$solar_festivals[$solar];
         $arr_ret[] = $solar_festivals[$solar];
     }
 
     //节日节气
-    $tmp = is_jieqi($year,$month,$day);
+    $tmp = is_jieqi($year, $month, $day);
     if ($tmp !== "") {
         if (array_key_exists($tmp, $disp_solar_terms)) {
             //$ret .= " / ".$disp_solar_terms[$tmp];
@@ -941,7 +1387,7 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
 
     //星期有关的节日
-    $tmp = is_cristian_festivel($month+0, $day+0, $weekday+0);
+    $tmp = is_cristian_festivel($month + 0, $day + 0, $weekday + 0);
     if ($tmp !== "") {
         //$ret .= " / ".$tmp;
         $arr_ret[] = $tmp;
@@ -980,31 +1426,29 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
     */
     //入伏 夏至后的第三个庚日，如果夏至本身是庚日，那就往后记20天。
-    if (7 == $month+0 && $day+0 > 10) {
+    if (7 == $month + 0 && $day + 0 > 10) {
         $xiazhi_day = get_term_day($year, 12);
         $xiazhiganzhi = get_ganzhi($year, 6, $xiazhi_day);
         $xiazhigan = ($xiazhiganzhi['num'] - 1) % 10;
         if ($xiazhigan == 7) {
             //夏至为庚日
             $delta = 0;
-        }
-        else if ($xiazhigan<7) {
+        } else if ($xiazhigan < 7) {
             //夏至在庚日前
             $delta = 7 - $xiazhigan;
-        }
-        else {
+        } else {
             //夏至在庚日后
             $delta = 10 - ($xiazhigan - 7);
         }
-        $tgt_day = $xiazhi_day + $delta + 20 - 30;//一定在阳历7月，所以要减去30号。
+        $tgt_day = $xiazhi_day + $delta + 20 - 30; //一定在阳历7月，所以要减去30号。
         if ($tgt_day == $day) {
             //$ret .=" / 入伏";
-            $arr_ret[] ="入伏";
+            $arr_ret[] = "入伏";
         }
     }
 
     //查表节日
-    $tmp = sprintf("%04d/%02d/%02d",$year+0, $month+0, $day+0);
+    $tmp = sprintf("%04d/%02d/%02d", $year + 0, $month + 0, $day + 0);
     //基督教节日
     if (array_key_exists($tmp, $static_festivals_christian)) {
         //$ret .= " / ".$static_festivals_christian[$tmp];
@@ -1018,17 +1462,14 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
     }
     if (empty($arr_ret)) {
         $ret = "";
-    }
-    else {
-        $ret = '<span class="festival">'." / ".implode(" / ", $arr_ret)."</span>";
+    } else {
+        $ret = '<span class="festival">' . " / " . implode(" / ", $arr_ret) . "</span>";
     }
     if ($is_arr_ret) {
         return $arr_ret;
-    }
-    else {
+    } else {
         return $ret;
     }
-
 }
 
 /**
@@ -1038,13 +1479,13 @@ function apip_festival($post_id=0, $is_arr_ret=false) {
  * 来源: 自产
  * URL:
  */
-function apip_get_heweather( $style='', $post_id=0) {
+function apip_get_heweather($style = '', $post_id = 0)
+{
     $ret = '';
-    if ( 0 == $post_id) {
-        $weather_result = get_post_meta(get_the_ID(),'Apip_Weather',true);
-    }
-    else {
-        $weather_result = get_post_meta($post_id,'Apip_Weather', true);
+    if (0 == $post_id) {
+        $weather_result = get_post_meta(get_the_ID(), 'Apip_Weather', true);
+    } else {
+        $weather_result = get_post_meta($post_id, 'Apip_Weather', true);
     }
     if (empty($weather_result)) {
         return "NONE";
@@ -1052,202 +1493,210 @@ function apip_get_heweather( $style='', $post_id=0) {
     return apip_get_total_weather($weather_result, $style);
 }
 
-function apip_get_total_weather( $w, $style) {
+/**
+ * Summary of apip_get_total_weather
+ * @param mixed $w
+ * @param mixed $style
+ * @return string
+ */
+function apip_get_total_weather($w, $style)
+{
     $ret = '';
     if (!is_array($w)) {
         return "ERROR";
     }
-    $cond_code = (int)($w['Ico']);
-    $eng_str='';
-    switch($cond_code) {
-        case    100 :   //  晴
-        case    150 :   //  晴（夜）
-        case    102 :   //  少云
-        case    152 :   //  少云（夜）
-        case    201 :   //  平静
-        case    202 :   //  微风
+    $cond_code = (int) ($w['Ico']);
+    $eng_str = '';
+    switch ($cond_code) {
+        case 100:   //  晴
+        case 150:   //  晴（夜）
+        case 102:   //  少云
+        case 152:   //  少云（夜）
+        case 201:   //  平静
+        case 202:   //  微风
             $w_icon_str = 'wi-day-sunny';
-            $eng_str='sunny';
+            $eng_str = 'sunny';
             break;
-        case    101 :   //  多云
-        case    151 :   //  多云（夜）
-        case    103 :   //  晴间多云
-        case    153 :   //  晴间多云（夜）
+        case 101:   //  多云
+        case 151:   //  多云（夜）
+        case 103:   //  晴间多云
+        case 153:   //  晴间多云（夜）
             $w_icon_str = 'wi-day-cloudy-high';
-            $eng_str='cloudy-high';
+            $eng_str = 'cloudy-high';
             break;
-        case    104 :   //  阴
+        case 104:   //  阴
             $w_icon_str = 'wi-cloudy';
-            $eng_str='cloudy';
+            $eng_str = 'cloudy';
             break;
-        case    200 :   //  有风
+        case 200:   //  有风
             $w_icon_str = 'wi-cloudy';
-            $eng_str='sunny';
+            $eng_str = 'sunny';
             break;
-        case    203 :   //  和风
-        case    204 :   //  清风
+        case 203:   //  和风
+        case 204:   //  清风
             $w_icon_str = 'wi-day-light-wind';
-            $eng_str='sunny';
+            $eng_str = 'sunny';
             break;
-        case    205 :   //  强风/劲风
-        case    206 :   //  疾风
-        case    207 :   //  大风
-        case    208 :   //  烈风
+        case 205:   //  强风/劲风
+        case 206:   //  疾风
+        case 207:   //  大风
+        case 208:   //  烈风
             $w_icon_str = 'wi-day-windy';
-            $eng_str='sunny';
+            $eng_str = 'sunny';
             break;
-        case    209 :   //  风暴
-        case    210 :   //  狂爆风
-        case    211 :   //  飓风
+        case 209:   //  风暴
+        case 210:   //  狂爆风
+        case 211:   //  飓风
             $w_icon_str = 'wi-strong-wind';
-            $eng_str='';
+            $eng_str = '';
             break;
-        case    212 :   //  龙卷风
+        case 212:   //  龙卷风
             $w_icon_str = 'wi-tornado';
-            $eng_str='tornado';
+            $eng_str = 'tornado';
             break;
-        case    213 :   //  热带风暴
+        case 213:   //  热带风暴
             $w_icon_str = 'wi-hurricane';
-            $eng_str='tornado';
+            $eng_str = 'tornado';
             break;
-        case    309 :   //  毛毛雨/细雨
-        case    300 :   //  阵雨
-        case    301 :   //  强阵雨
-        case    350 :   //  阵雨（夜）
-        case    351 :   //  强阵雨（夜）
+        case 309:   //  毛毛雨/细雨
+        case 300:   //  阵雨
+        case 301:   //  强阵雨
+        case 350:   //  阵雨（夜）
+        case 351:   //  强阵雨（夜）
             $w_icon_str = 'wi-showers';
-            $eng_str='showers';
+            $eng_str = 'showers';
             break;
-        case    302 :   //  雷阵雨
-        case    303 :   //  强雷阵雨
+        case 302:   //  雷阵雨
+        case 303:   //  强雷阵雨
             $w_icon_str = 'wi-storm-showers';
-            $eng_str='thundershowers';
+            $eng_str = 'thundershowers';
             break;
-        case    304 :   //  雷阵雨伴有冰雹
+        case 304:   //  雷阵雨伴有冰雹
             $w_icon_str = 'wi-hail';
-            $eng_str='hail';
+            $eng_str = 'hail';
             break;
-        case    305 :   //  小雨
-        case    306 :   //  中雨
-        case    314 :   //  小到中雨
-        case    399 :   //  雨
+        case 305:   //  小雨
+        case 306:   //  中雨
+        case 314:   //  小到中雨
+        case 399:   //  雨
             $w_icon_str = 'wi-rain';
-            $eng_str='rain';
+            $eng_str = 'rain';
             break;
-        case    307 :   //  大雨
-        case    315 :   //  中到大雨
+        case 307:   //  大雨
+        case 315:   //  中到大雨
             $w_icon_str = 'wi-rain-mix';
-            $eng_str='heavy-rain';
+            $eng_str = 'heavy-rain';
             break;
-        case    308 :   //  极端降雨
-        case    310 :   //  暴雨
-        case    311 :   //  大暴雨
-        case    312 :   //  特大暴雨
+        case 308:   //  极端降雨
+        case 310:   //  暴雨
+        case 311:   //  大暴雨
+        case 312:   //  特大暴雨
             $w_icon_str = 'wi-raindrops';
-            $eng_str='heavy-rain';
+            $eng_str = 'heavy-rain';
             break;
-        case    313 :   //  冻雨
-        case    404 :   //  雨夹雪、
-        case    405 :   //  雨雪天气
-        case    406 :   //  阵雨夹雪
-        case    456 :   //  阵雨夹雪（夜）
+        case 313:   //  冻雨
+        case 404:   //  雨夹雪、
+        case 405:   //  雨雪天气
+        case 406:   //  阵雨夹雪
+        case 456:   //  阵雨夹雪（夜）
             $w_icon_str = 'wi-sleet';
-            $eng_str='sleet';
+            $eng_str = 'sleet';
             break;
-        case    400 :   //  小雪
-        case    401 :   //  中雪
-        case    402 :   //  大雪
-        case    403 :   //  暴雪
-        case    407 :   //  阵雪
-        case    457 :   //  阵雪（夜）
-        case    499 :   //  雪
+        case 400:   //  小雪
+        case 401:   //  中雪
+        case 402:   //  大雪
+        case 403:   //  暴雪
+        case 407:   //  阵雪
+        case 457:   //  阵雪（夜）
+        case 499:   //  雪
             $w_icon_str = 'wi-snow';
-            $eng_str='snow';
+            $eng_str = 'snow';
             break;
-        case    500 :   //  薄雾
-        case    501 :   //  雾
+        case 500:   //  薄雾
+        case 501:   //  雾
             $w_icon_str = 'wi-fog';
-            $eng_str='fog';
+            $eng_str = 'fog';
             break;
-        case    502 :   //  霾
+        case 502:   //  霾
             $w_icon_str = 'wi-smog';
-            $eng_str='smog';
+            $eng_str = 'smog';
             break;
-        case    503 :   //  扬沙
-        case    504 :   //  浮尘
+        case 503:   //  扬沙
+        case 504:   //  浮尘
             $w_icon_str = 'wi-dust';
-            $eng_str='dust';
+            $eng_str = 'dust';
             break;
-        case    507 :   //  沙尘暴
-        case    508 :   //  强沙尘暴
+        case 507:   //  沙尘暴
+        case 508:   //  强沙尘暴
             $w_icon_str = 'wi-sandstorm';
-            $eng_str='dust';
+            $eng_str = 'dust';
             break;
-        case    900 :   //  热
+        case 900:   //  热
             $w_icon_str = 'wi-hot';
-            $eng_str='';
+            $eng_str = '';
             break;
-        case    901 :   //  冷
+        case 901:   //  冷
             $w_icon_str = 'wi-snowflake-cold';
-            $eng_str='';
+            $eng_str = '';
             break;
-        case    999 :   //  未知
+        case 999:   //  未知
         default:
             $w_icon_str = 'wi-na';
-            $eng_str='';
+            $eng_str = '';
             break;
     }
     if ('eng' == $style) {
         return $eng_str;
     }
     $wind_str = '';
-    if ((int)$w['WndSpd'] > 38) {
-        $wind_icon_str = "from-".$w['WndDeg']."-deg";
-        $wind_str = $w['WndDir'].$w['WndScl']."级 ";
+    $wind_icon_str = '';
+    if ((int) $w['WndSpd'] > 38) {
+        $wind_icon_str = "from-" . $w['WndDeg'] . "-deg";
+        $wind_str = $w['WndDir'] . $w['WndScl'] . "级 ";
     }
-    $ret = '<i class="wi '.$w_icon_str.' icon"></i>';
-    if ('notext'!=$style) {
+    $ret = '<i class="wi ' . $w_icon_str . ' icon"></i>';
+    if ('notext' != $style) {
         $ret .= $w['Txt'];
     }
-    if ( '' !== $wind_str) {
-        $ret .= '  <i class="wi wi-wind '.$wind_icon_str.'"></i> ';
-        if ('notext'!=$style) {
+    if ('' !== $wind_str) {
+        $ret .= '  <i class="wi wi-wind ' . $wind_icon_str . '"></i> ';
+        if ('notext' != $style) {
             $ret .= $wind_str;
         }
     }
-    if ('notext'!=$style) {
+    if ('notext' != $style) {
         $ret .= '  <i class="wi wi-thermometer"></i> ';
-        $ret .= $w['Tmp'].'&#8451;';
+        $ret .= $w['Tmp'] . '&#8451;';
     }
     if ('plain' == $style) {
-        $ret = $w['Txt'].$wind_str.$w['Tmp'].'&#8451;';
+        $ret = $w['Txt'] . $wind_str . $w['Tmp'] . '&#8451;';
     }
     return $ret;
 }
 
 
 /**
-* 作用: 显示留言测试问题
-* 来源: 插件改编，汉化和格式修改
-* URL: https://github.com/nrkbeta/nrkbetaquiz
-*/
-function apip_commentquiz_form() {
-    if ( !is_single() || !comments_open() || !apip_option_check('apip_commentquiz_enable')) {
+ * 作用: 显示留言测试问题
+ * 来源: 插件改编，汉化和格式修改
+ * URL: https://github.com/nrkbeta/nrkbetaquiz
+ */
+function apip_commentquiz_form()
+{
+    if (!is_single() || !comments_open() || !apip_option_check('apip_commentquiz_enable')) {
         return;
     };
     $quizs = get_post_meta(get_the_ID(), 'apipcommentquiz');
-    if ( empty($quizs) ) {
+    if (empty($quizs)) {
         return;
     }
-    ?>
-  <div class="apipcommentquiz"
-    data-apipcommentquiz="<?php echo esc_attr(rawurlencode(json_encode($quizs))); ?>"
-    data-apipcommentquiz-error="<?php echo esc_attr('回答错误，请重试'); ?>">
-    <h2>答对问题，留言框就会出现</h2>
-    <p>
-      珍爱生命，拒绝尬聊。<br/>只要贵站的订阅通道畅通且言之有物，本人一定会回访。
-    </p>
-  </div>
+?>
+    <div class="apipcommentquiz" data-apipcommentquiz="<?php echo esc_attr(rawurlencode(json_encode($quizs))); ?>"
+        data-apipcommentquiz-error="<?php echo esc_attr('回答错误，请重试'); ?>">
+        <h2>答对问题，留言框就会出现</h2>
+        <p>
+            珍爱生命，拒绝尬聊。<br />只要贵站的订阅通道畅通且言之有物，本人一定会回访。
+        </p>
+    </div>
 <?php }
 
 
@@ -1256,22 +1705,23 @@ function apip_commentquiz_form() {
  * 来源: 自产
  * URL:
  */
-function apip_recent_post() {
+function apip_recent_post()
+{
     global $apip_options;
-    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
-    $ret = '<ul class = "apip-recent-content">' ;
-    $recent_posts = get_posts( array(
-                    'post_type' => 'post',
-                    'post_status' => 'publish',
-                    'orderby' => 'modified',
-                    'order' => 'DESC',
-                    'numberposts' => $limit
-               ) );
-    foreach ( $recent_posts as $recent_post ) :
-    $ret = $ret.'<li> <a class="recent-post" href="'.get_permalink( $recent_post->ID ).'">' ;
-    $ret = $ret.$recent_post->post_title.'</a></li>' ;
+    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5;
+    $ret = '<ul class = "apip-recent-content">';
+    $recent_posts = get_posts(array(
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'orderby' => 'modified',
+        'order' => 'DESC',
+        'numberposts' => $limit
+    ));
+    foreach ($recent_posts as $recent_post):
+        $ret = $ret . '<li> <a class="recent-post" href="' . get_permalink($recent_post->ID) . '">';
+        $ret = $ret . $recent_post->post_title . '</a></li>';
     endforeach;
-    $ret = $ret.'</ul>' ;
+    $ret = $ret . '</ul>';
     return $ret;
 }
 
@@ -1280,14 +1730,15 @@ function apip_recent_post() {
  * 来源: 自产
  * URL:
  */
-function apip_sameday_post() {
+function apip_sameday_post()
+{
     global $wpdb;
     $month = get_post_time('m');
     $day = get_post_time('j');
-    $id = get_the_ID() ;
+    $id = get_the_ID();
     global $apip_options;
-    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5 ;
-    $ret = '<ul class = "apip-history-content">' ;
+    $limit = $apip_options['local_definition_count'] ? $apip_options['local_definition_count'] : 5;
+    $ret = '<ul class = "apip-history-content">';
 
     $samedays = apip_get_sameday_his_posts($limit);
     if (0 === count($samedays)) {
@@ -1295,13 +1746,13 @@ function apip_sameday_post() {
     }
 
 
-    foreach ( $samedays as $history_post ) {
+    foreach ($samedays as $history_post) {
         $post_id = $history_post['object_id'];
-        $ret = $ret.'<li><span class="func-before suffix">['.$history_post['year'].']</span><a class="sameday-post" href="'.get_permalink( $post_id ).'">' ;
-        $ret = $ret.get_the_title($post_id).'</a></li>' ;
+        $ret = $ret . '<li><span class="func-before suffix">[' . $history_post['year'] . ']</span><a class="sameday-post" href="' . get_permalink($post_id) . '">';
+        $ret = $ret . get_the_title($post_id) . '</a></li>';
     }
 
-    $ret .= '</ul>' ;
+    $ret .= '</ul>';
     return $ret;
 }
 
@@ -1311,15 +1762,16 @@ function apip_sameday_post() {
  * 参数: limit: 条数    order:DESC 新文章在先, ASC 旧文章在先, NEARBY 临近文章在先
  * 返回值: array('object_id','year') 文章ID和年份
  */
-function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
+function apip_get_sameday_his_posts($limit = 5, $order = "DESC")
+{
     global $wpdb;
     $month = get_post_time('m');
     $day = get_post_time('j');
     $year = get_post_time('Y');
-    $id = get_the_ID() ;
+    $id = get_the_ID();
     $ret = array();
     $realorder = $order;
-    if ( "NEARBY" === $order ){
+    if ("NEARBY" === $order) {
         $realorder = "DESC";
     }
     global $apip_options;
@@ -1327,7 +1779,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         'post_type' => 'post',
         'posts_per_page' => -1,
         'orderby' => 'post_date',
-        'order'   => $realorder,
+        'order' => $realorder,
         'post_status' => 'publish',
         'ignore_sticky_posts' => 1,
         'post__not_in' => array(
@@ -1336,7 +1788,7 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
         'date_query' => array(
             array(
                 'month' => $month,
-                'day'   => $day,
+                'day' => $day,
             ),
         ),
     );
@@ -1345,13 +1797,12 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
     foreach ($the_query->posts as $p) {
         $temp = array();
         $temp['object_id'] = $p->ID;
-        $temp['year'] = get_post_time('Y',false,$p->ID);
-        if ( empty($ret) ) {
+        $temp['year'] = get_post_time('Y', false, $p->ID);
+        if (empty($ret)) {
             array_push($ret, $temp);
-        }
-        else if ( "NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - get_post_time('Y',false,$p->ID))){
+        } else if ("NEARBY" === $order && abs($ret[0]['year'] - $year) >= abs($year - get_post_time('Y', false, $p->ID))) {
             $ta = array($temp);
-            $ret = array_merge($ta,$ret);
+            $ret = array_merge($ta, $ret);
         } else {
             array_push($ret, $temp);
         }
@@ -1365,30 +1816,43 @@ function apip_get_sameday_his_posts( $limit = 5, $order = "DESC") {
  * 来源: 自产
  * URL:
  */
-function apip_random_post( $exclude, $count = 5 ) {
-    $ret = array() ;
-    if ( 0 == $count )
-    {
-        return $ret ;
+/**
+ * Summary of apip_random_post
+ * @param mixed $exclude
+ * @param mixed $count
+ * @return array
+ */
+function apip_random_post($exclude, $count = 5)
+{
+    $ret = array();
+    if (0 == $count) {
+        return $ret;
     }
-    $random_posts = get_posts( array( 'exclude' => array($exclude,1), 'orderby' => 'rand', 'posts_per_page'=>$count ) ) ;
-    return $random_posts ;
+    $random_posts = get_posts(array('exclude' => array($exclude, 1), 'orderby' => 'rand', 'posts_per_page' => $count));
+    return $random_posts;
 }
 
-function apip_get_post_evaluate($post_id, $standard){
-    $tags = get_the_terms( $post_id, 'post_tag') ;
-    $cats = get_the_terms( $post_id, 'category') ;
+/**
+ * Summary of apip_get_post_evaluate
+ * @param mixed $post_id
+ * @param mixed $standard
+ * @return float
+ */
+function apip_get_post_evaluate($post_id, $standard)
+{
+    $tags = get_the_terms($post_id, 'post_tag');
+    $cats = get_the_terms($post_id, 'category');
     $myVal = array_sum($standard);
     $evaluate = 0.0;
-    if (is_array($tags) && count($tags) >0) {
+    if (is_array($tags) && count($tags) > 0) {
         foreach ($tags as $tag) {
-            if ( array_key_exists($tag->term_taxonomy_id, $standard)) {
+            if (array_key_exists($tag->term_taxonomy_id, $standard)) {
                 $evaluate += $standard[$tag->term_taxonomy_id];
             }
         }
     }
     foreach ($cats as $cat) {
-        if ( array_key_exists($cat->term_taxonomy_id, $standard)) {
+        if (array_key_exists($cat->term_taxonomy_id, $standard)) {
             $evaluate += $standard[$cat->term_taxonomy_id];
         }
     }
@@ -1400,11 +1864,12 @@ function apip_get_post_evaluate($post_id, $standard){
  * 来源: 自产
  * 返回值: array('object_id','evaluate') 文章ID和权重分
  */
-function apip_get_related_posts( $limit = 5,$exclude=NULL) {
-    global $wpdb ;
-    $post_id = get_the_ID() ;
-    $tags = get_the_terms( $post_id, 'post_tag') ;
-    $cats = get_the_terms( $post_id, 'category') ;
+function apip_get_related_posts($limit = 5, $exclude = NULL)
+{
+    global $wpdb;
+    $post_id = get_the_ID();
+    $tags = get_the_terms($post_id, 'post_tag');
+    $cats = get_the_terms($post_id, 'category');
     $ret = array();
     $tag_taxonomy_ids = array();
     $cat_taxonomy_ids = array();
@@ -1416,24 +1881,23 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
         $exclude[] = $post_id;
     }
 
-    if ( is_array($tags) && count($tags) > 0) {
+    if (is_array($tags) && count($tags) > 0) {
         foreach ($tags as $tag) {
             $fVal = 0.0;
             if ($tag->count > 1) {
-                $fVal = 169/$tag->count;
+                $fVal = 169 / $tag->count;
                 $tag_taxonomy_ids[] = $tag->term_taxonomy_id;
-            }
-            else {
+            } else {
                 $fVal = 1.69;
             }
             $standard[$tag->term_taxonomy_id] = $fVal;
         }
     }
 
-    if ( is_array($cats) && count($cats) > 0) {
+    if (is_array($cats) && count($cats) > 0) {
         foreach ($cats as $cat) {
             $fVal = 0.0;
-            $ancestors = get_ancestors( $cat->term_taxonomy_id, "category" );
+            $ancestors = get_ancestors($cat->term_taxonomy_id, "category");
             $gen = count($ancestors);
             if ($gen > 0) {
                 $fVal = pow(1.3, $gen) * $gen;
@@ -1443,7 +1907,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
 
             $cat_taxonomy_ids[] = $cat->term_taxonomy_id;
             $standard[$cat->term_taxonomy_id] = $fVal;
-            if ($gen>0) {
+            if ($gen > 0) {
                 $i = $gen - 1;
                 foreach ($ancestors as $ancestor) {
                     $fVal = pow(1.3, $i) * $i;
@@ -1472,7 +1936,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
                 'taxonomy' => 'category',
                 'field' => 'term_taxonomy_id',
                 'terms' => $cat_taxonomy_ids,
-                'include_children' => false ,
+                'include_children' => false,
             ),
             array(
                 'taxonomy' => 'post_tag',
@@ -1482,7 +1946,7 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
         )
     );
 
-    $the_query = new WP_Query( $args );
+    $the_query = new WP_Query($args);
     foreach ($the_query->posts as $p) {
         $eva = apip_get_post_evaluate($p->ID, $standard);
         $temp = array();
@@ -1492,8 +1956,8 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
     }
     wp_reset_postdata();
 
-    if (count( $ret )< $limit) {
-        $random_posts = apip_random_post( get_the_ID(), $limit - count( $ret ) ) ;
+    if (count($ret) < $limit) {
+        $random_posts = apip_random_post(get_the_ID(), $limit - count($ret));
         foreach ($random_posts as $p) {
             $temp = array();
             $temp['object_id'] = $p->ID;
@@ -1513,19 +1977,22 @@ function apip_get_related_posts( $limit = 5,$exclude=NULL) {
  * 来源: 自产
  * URL:
  */
-function apip_related_post() {
+function apip_related_post()
+{
     global $apip_options;
-    $limit = ($apip_options['local_definition_count'] > 0 )? $apip_options['local_definition_count'] : 5 ;
+    $limit = ($apip_options['local_definition_count'] > 0) ? $apip_options['local_definition_count'] : 5;
     $relats = apip_get_related_posts($limit);
 
-    $ret = '<ul class = "apip-ralated-content">' ;
-    foreach ( $relats as $rel ) :
-    $ret .= sprintf("<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37;]</span></li>",
-            get_permalink( $rel['object_id'] ),
-            get_the_title( $rel['object_id'] ),
-            $rel['evaluate'] );
+    $ret = '<ul class = "apip-ralated-content">';
+    foreach ($relats as $rel):
+        $ret .= sprintf(
+            "<li><a class=\"related-post\" href=\"%s\">%s</a><span class=\"func-after suffix\">[%s&#37;]</span></li>",
+            get_permalink($rel['object_id']),
+            get_the_title($rel['object_id']),
+            $rel['evaluate']
+        );
     endforeach;
-    $ret .= '</ul>' ;
+    $ret .= '</ul>';
     return $ret;
 }
 
@@ -1533,8 +2000,9 @@ function apip_related_post() {
  * 作用: 显示作者最愿意回复的n个留言者的链接
  * 来源: 自产
  * URL:
-*/
-function apip_get_links() {
+ */
+function apip_get_links()
+{
     global $wpdb;
     $limit = 13; //取多少条，可以自己改
     $scope = "6 MONTH"; //可以使用的时间关键字:SECOND,MINUTE,HOUR,DAY,WEEK,MONTH,QUARTER,YEAR...
@@ -1558,11 +2026,14 @@ function apip_get_links() {
     return $result;
 }
 
-function apip_get_prev_post() {
-    if ( isset($_COOKIE['last_tax']) &&
-         !empty($_COOKIE['last_tax']) &&
-         isset($_COOKIE['tax_ids']) &&
-         !empty($_COOKIE['tax_ids'])) {
+function apip_get_prev_post()
+{
+    if (
+        isset($_COOKIE['last_tax']) &&
+        !empty($_COOKIE['last_tax']) &&
+        isset($_COOKIE['tax_ids']) &&
+        !empty($_COOKIE['tax_ids'])
+    ) {
         $ID = get_the_ID();
         $arr_taxes = explode(',', $_COOKIE['tax_ids']);
         $count = count($arr_taxes);
@@ -1570,27 +2041,28 @@ function apip_get_prev_post() {
             return NULL;
         }
         $pos = array_search($ID, $arr_taxes);
-        if ( FALSE === $pos ) {
+        if (FALSE === $pos) {
             return NULL;
         }
 
-        if ( $pos > 0) {
-            return get_post($arr_taxes[$pos -1]);
-        }
-        else {
+        if ($pos > 0) {
+            return get_post($arr_taxes[$pos - 1]);
+        } else {
             return NULL;
         }
-    }
-    else {
+    } else {
         return get_previous_post();
     }
 }
 
-function apip_get_next_post() {
-    if ( isset($_COOKIE['last_tax']) &&
-         !empty($_COOKIE['last_tax']) &&
-         isset($_COOKIE['tax_ids']) &&
-         !empty($_COOKIE['tax_ids'])) {
+function apip_get_next_post()
+{
+    if (
+        isset($_COOKIE['last_tax']) &&
+        !empty($_COOKIE['last_tax']) &&
+        isset($_COOKIE['tax_ids']) &&
+        !empty($_COOKIE['tax_ids'])
+    ) {
         $ID = get_the_ID();
         $arr_taxes = explode(',', $_COOKIE['tax_ids']);
         $count = count($arr_taxes);
@@ -1598,18 +2070,16 @@ function apip_get_next_post() {
             return NULL;
         }
         $pos = array_search($ID, $arr_taxes);
-        if ( FALSE === $pos ) {
+        if (FALSE === $pos) {
             return NULL;
         }
 
-        if ( $pos < $count - 1) {
-            return get_post($arr_taxes[$pos +1]);
-        }
-        else {
+        if ($pos < $count - 1) {
+            return get_post($arr_taxes[$pos + 1]);
+        } else {
             return NULL;
         }
-    }
-    else {
+    } else {
         return get_next_post();
     }
 }
@@ -1618,13 +2088,14 @@ function apip_get_next_post() {
  * 作用: 取得上一篇/下一篇.如果在归档/搜索的情况下,在范围内查找.
  * 来源: 自产
  * URL:
-*/
-function apip_get_post_navagation($args=array()) {
-   $args = wp_parse_args( $args, array(
-        'prev_text'          => '%title',
-        'next_text'          => '%title',
+ */
+function apip_get_post_navagation($args = array())
+{
+    $args = wp_parse_args($args, array(
+        'prev_text' => '%title',
+        'next_text' => '%title',
         'screen_reader_text' => '文章导航',
-    ) );
+    ));
     /*
     'in_same_term'       => false,
     'excluded_terms'     => '',
@@ -1632,76 +2103,81 @@ function apip_get_post_navagation($args=array()) {
     这三个参数被忽略。
      */
 
-    if ( !is_single() ) {
+    if (!is_single()) {
         return;
     }
 
     $ID = get_the_ID();
-    if ( isset($_COOKIE['last_tax']) &&
-         !empty($_COOKIE['last_tax']) &&
-         isset($_COOKIE['tax_ids']) &&
-         !empty($_COOKIE['tax_ids'])
-         ) {
+    if (
+        isset($_COOKIE['last_tax']) &&
+        !empty($_COOKIE['last_tax']) &&
+        isset($_COOKIE['tax_ids']) &&
+        !empty($_COOKIE['tax_ids'])
+    ) {
         $arr_taxes = explode(',', $_COOKIE['tax_ids']);
         $pos = array_search($ID, $arr_taxes);
-        if ( FALSE === $pos ) {
+        if (FALSE === $pos) {
             the_post_navigation($args);
             return;
         }
         $count = count($arr_taxes);
         $next_id = 0;
         $previous_id = 0;
-        $previous="";
-        $next="";
-        if ( $pos < $count - 1) {
-            $next_id = $arr_taxes[$pos +1];
+        $previous = "";
+        $next = "";
+        if ($pos < $count - 1) {
+            $next_id = $arr_taxes[$pos + 1];
         }
-        if ($pos > 0 ) {
-            $previous_id = $arr_taxes[$pos -1];
+        if ($pos > 0) {
+            $previous_id = $arr_taxes[$pos - 1];
         }
         if ($previous_id > 0) {
-            $previous = str_replace( '%title', get_the_title( $previous_id ), $args['prev_text'] );
-            $previous = '<a href="'.get_permalink( $previous_id).'" rel="prev">'.$previous.'</a>';
-            $previous = '<div class="nav-previous">'.$previous.'</div>';
+            $previous = str_replace('%title', get_the_title($previous_id), $args['prev_text']);
+            $previous = '<a href="' . get_permalink($previous_id) . '" rel="prev">' . $previous . '</a>';
+            $previous = '<div class="nav-previous">' . $previous . '</div>';
         }
         if ($next_id > 0) {
-            $next = str_replace( '%title', get_the_title( $next_id ), $args['next_text'] );
-            $next = '<a href="'.get_permalink( $next_id ).'" rel="next">'.$next.'</a>';
-            $next = '<div class="nav-next">'.$next.'</div>';
+            $next = str_replace('%title', get_the_title($next_id), $args['next_text']);
+            $next = '<a href="' . get_permalink($next_id) . '" rel="next">' . $next . '</a>';
+            $next = '<div class="nav-next">' . $next . '</div>';
         }
-        if ( "" === $desc = $_COOKIE['last_tax'] ) {
+        if ("" === $desc = $_COOKIE['last_tax']) {
             $desc = $args['screen_reader_text'];
         }
-        $navigation = _navigation_markup( $previous . $next, 'post-navigation', $desc );
+        $navigation = _navigation_markup($previous . $next, 'post-navigation', $desc);
         echo $navigation;
-    }
-    else {
+    } else {
         the_post_navigation($args);
         return;
     }
 }
 
-/*
- * 作用: 移除某个类的filter方法
- * 来源: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
- * URL: http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
-*/
-function apip_remove_anonymous_object_hook( $tag, $class, $method ) {
-    $filters = $GLOBALS['wp_filter'][ $tag ];
+/**
+ * @brief       移除某个类的filter方法
+ * @param string $tag
+ * @param mixed $class
+ * @param mixed $method
+ * @link http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
+ * @return void
+ */
+function apip_remove_anonymous_object_hook($tag, $class, $method)
+{
+    $filters = $GLOBALS['wp_filter'][$tag];
 
-    if ( empty ( $filters ) ) {
+    if (empty($filters)) {
         return;
     }
-    foreach ( $filters as $priority => $filter ) {
-        foreach ( $filter as $identifier => $function ) {
-            if ( is_array( $function)
-                and is_a( $function['function'][0], $class )
+    foreach ($filters as $priority => $filter) {
+        foreach ($filter as $identifier => $function) {
+            if (
+                is_array($function)
+                and is_a($function['function'][0], $class)
                 and $method === $function['function'][1]
             ) {
                 //action也可以用remove_filter删除。
                 remove_filter(
                     $tag,
-                    array ( $function['function'][0], $method ),
+                    array($function['function'][0], $method),
                     $priority
                 );
             }
@@ -1713,28 +2189,41 @@ function apip_remove_anonymous_object_hook( $tag, $class, $method ) {
  * 作用: 移除wpembed相关的内部插件
  * 来源: Disable Embeds
  * URL: https://pascalbirchler.com
-*/
-function apip_disable_embeds_tiny_mce_plugin( $plugins ) {
-    return array_diff( $plugins, array( 'wpembed' ) );
+ */
+/**
+ * Summary of apip_disable_embeds_tiny_mce_plugin
+ * @param mixed $plugins
+ * @return array
+ */
+function apip_disable_embeds_tiny_mce_plugin($plugins)
+{
+    return array_diff($plugins, array('wpembed'));
 }
 /* 同上 */
-function apip_disable_embeds_rewrites( $rules ) {
-    foreach ( $rules as $rule => $rewrite ) {
-        if ( false !== strpos( $rewrite, 'embed=true' ) ) {
-            unset( $rules[ $rule ] );
+/**
+ * Summary of apip_disable_embeds_rewrites
+ * @param mixed $rules
+ */
+function apip_disable_embeds_rewrites($rules)
+{
+    foreach ($rules as $rule => $rewrite) {
+        if (false !== strpos($rewrite, 'embed=true')) {
+            unset($rules[$rule]);
         }
     }
 
     return $rules;
 }
 /* 同上 */
-function apip_disable_embeds_remove_rewrite_rules() {
-    add_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
+function apip_disable_embeds_remove_rewrite_rules()
+{
+    add_filter('rewrite_rules_array', 'apip_disable_embeds_rewrites');
     flush_rewrite_rules();
 }
 /* 同上 */
-function apip_disable_embeds_flush_rewrite_rules() {
-    remove_filter( 'rewrite_rules_array', 'apip_disable_embeds_rewrites' );
+function apip_disable_embeds_flush_rewrite_rules()
+{
+    remove_filter('rewrite_rules_array', 'apip_disable_embeds_rewrites');
     flush_rewrite_rules();
 }
 
@@ -1743,12 +2232,18 @@ function apip_disable_embeds_flush_rewrite_rules() {
  * 来源: Oblique原版
  */
 if (!function_exists('hex2rgb')) {
-    function hex2rgb($color) {
-        if ($color[0] == '#' ) {
-            $color = substr( $color, 1 );
+    /**
+     * Summary of hex2rgb
+     * @param mixed $color
+     * @return array<float|int>
+     */
+    function hex2rgb($color)
+    {
+        if ($color[0] == '#') {
+            $color = substr($color, 1);
         }
-        $hex = array( $color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5] );
-        $rgb =  array_map('hexdec', $hex);
+        $hex = array($color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5]);
+        $rgb = array_map('hexdec', $hex);
         return $rgb;
     }
 }
@@ -1758,10 +2253,10 @@ if (!function_exists('hex2rgb')) {
  * 来源: http://stackoverflow.com/questions/1773698/rgb-to-hsv-in-php
  * 输出的范围0-360, 0-100, 0-100!!
  */
-if (!function_exists('rgb2hsv'))
-{
-    function rgb2hsv(array $rgb) {
-        list($R,$G,$B) = $rgb;
+if (!function_exists('rgb2hsv')) {
+    function rgb2hsv(array $rgb)
+    {
+        list($R, $G, $B) = $rgb;
         $R = ($R / 255);
         $G = ($G / 255);
         $B = ($B / 255);
@@ -1790,10 +2285,10 @@ if (!function_exists('rgb2hsv'))
     }
 }
 
-if (!function_exists('hsv2rgb'))
-{
-    function hsv2rgb(array $hsv) {
-        list($H,$S,$V) = $hsv;
+if (!function_exists('hsv2rgb')) {
+    function hsv2rgb(array $hsv)
+    {
+        list($H, $S, $V) = $hsv;
         //1
         $H /= 60;
         //2
@@ -1802,66 +2297,80 @@ if (!function_exists('hsv2rgb'))
         $S /= 100;
         $V /= 100;
         //3
-        $M = round( $V * (1 - $S) * 255);
-        $N = round( $V * (1 - $S * $F) * 255 );
-        $K = round( $V * (1 - $S * (1 - $F)) * 255 );
-        $V = round( $V * 255) ;
+        $M = round($V * (1 - $S) * 255);
+        $N = round($V * (1 - $S * $F) * 255);
+        $K = round($V * (1 - $S * (1 - $F)) * 255);
+        $V = round($V * 255);
         //4
+        $R = '';
+        $G = '';
+        $B = '';
         switch ($I) {
             case 0:
-                list($R,$G,$B) = array($V,$K,$M);
+                list($R, $G, $B) = array($V, $K, $M);
                 break;
             case 1:
-                list($R,$G,$B) = array($N,$V,$M);
+                list($R, $G, $B) = array($N, $V, $M);
                 break;
             case 2:
-                list($R,$G,$B) = array($M,$V,$K);
+                list($R, $G, $B) = array($M, $V, $K);
                 break;
             case 3:
-                list($R,$G,$B) = array($M,$N,$V);
+                list($R, $G, $B) = array($M, $N, $V);
                 break;
             case 4:
-                list($R,$G,$B) = array($K,$M,$V);
+                list($R, $G, $B) = array($K, $M, $V);
                 break;
             case 5:
             case 6: //for when $H=1 is given
-                list($R,$G,$B) = array($V,$M,$N);
+                list($R, $G, $B) = array($V, $M, $N);
                 break;
         }
         return array($R, $G, $B);
     }
 }
-function apip_get_link_colors( $color_str) {
+/**
+ * 
+ * @param mixed $color_str
+ * @return string[]
+ */
+function apip_get_link_colors($color_str)
+{
     $rgb = hex2rgb($color_str);
     $hsv = rgb2hsv($rgb);
     $ret = array();
     $hsv_temp = $hsv;
     $h_start = $hsv[1];
-    for($i=7; $i>=0; $i--) {
-        $hsv_temp[0] = ($hsv[0]+$i*25)%360;
+    for ($i = 7; $i >= 0; $i--) {
+        $hsv_temp[0] = ($hsv[0] + $i * 25) % 360;
         $rgb_temp = hsv2rgb($hsv_temp);
-        $ret[] =sprintf("#%1$02X%2$02X%3$02X",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2]) ;
+        $ret[] = sprintf("#%1$02X%2$02X%3$02X", $rgb_temp[0], $rgb_temp[1], $rgb_temp[2]);
     }
     return $ret;
 }
-function apip_get_bg_colors($color_str,$trancy = 0.3) {
+/**
+ * Summary of apip_get_bg_colors
+ * @param mixed $color_str
+ * @param mixed $trancy
+ * @return string[]
+ */
+function apip_get_bg_colors($color_str, $trancy = 0.3)
+{
     $rgb = hex2rgb($color_str);
     $hsv = rgb2hsv($rgb);
     $ret = array();
     $hsv_temp = $hsv;
     $h_start = $hsv[1];
-    for($i=4; $i>=0; $i--) {
-        if ($h_start >50)
-        {
-            $hsv_temp[1] = $hsv[1]-9*$i;
-        }
-        else{
-            $hsv_temp[1] = $hsv[1]+9*$i;
+    for ($i = 4; $i >= 0; $i--) {
+        if ($h_start > 50) {
+            $hsv_temp[1] = $hsv[1] - 9 * $i;
+        } else {
+            $hsv_temp[1] = $hsv[1] + 9 * $i;
         }
         $rgb_temp = hsv2rgb($hsv_temp);
-        $ret[] =sprintf("RGBA(%d,%d,%d,%1.1f)",$rgb_temp[0],$rgb_temp[1],$rgb_temp[2],$trancy) ;
+        $ret[] = sprintf("RGBA(%d,%d,%d,%1.1f)", $rgb_temp[0], $rgb_temp[1], $rgb_temp[2], $trancy);
     }
-    $ret =array_reverse($ret);
+    $ret = array_reverse($ret);
     return $ret;
 }
 
@@ -1870,12 +2379,13 @@ function apip_get_bg_colors($color_str,$trancy = 0.3) {
  * 来源: 自创
  */
 
-function apip_get_real_post_id() {
-    if ( !is_single() ){
+function apip_get_real_post_id()
+{
+    if (!is_single()) {
         return -1;
     }
     global $post;
-    if ( 'publish' !== $post->post_status && 'private' !== $post->post_status) {
+    if ('publish' !== $post->post_status && 'private' !== $post->post_status) {
         return -1;
     }
     $args = array(
@@ -1898,10 +2408,16 @@ function apip_get_real_post_id() {
  * 作用: 查看TAB在数据库中是否存在
  * 来源: 自创
  */
-function apip_is_table_exists($table_name) {
+/**
+ * Summary of apip_is_table_exists
+ * @param mixed $table_name
+ * @return bool
+ */
+function apip_is_table_exists($table_name)
+{
     global $wpdb;
     if (false === mb_strstr($table_name, $wpdb->prefix)) {
-        $table_name = $wpdb->prefix.$table_name;
+        $table_name = $wpdb->prefix . $table_name;
     }
     $query = $wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name));
     return $wpdb->get_var($query) == $table_name;
@@ -1911,7 +2427,12 @@ function apip_is_table_exists($table_name) {
  * 作用: 取object ID
  * 来源: 自创
  */
-function apip_get_object_id($o) {
+/**
+ * Summary of apip_get_object_id
+ * @param mixed $o
+ */
+function apip_get_object_id($o)
+{
     if (is_object($o)) {
         return $o->ID;
     }
@@ -1922,20 +2443,21 @@ function apip_get_object_id($o) {
  * 作用: 列出./local_fonts下的所有字体文件夹下的css文件 ./local_fonts/字体名/任意名.css
  * 来源: 自创
  */
-function apip_list_local_fonts($original = array()) {
+function apip_list_local_fonts($original = array())
+{
     $ret = array();
-    $base_dir = APIP_PLUGIN_DIR.'/local_fonts/';
-    $base_dir = wp_normalize_path( $base_dir );
-    $base_url = APIP_PLUGIN_URL.'local_fonts/';
-    $css_folders = glob($base_dir.'*/', GLOB_ONLYDIR);
+    $base_dir = APIP_PLUGIN_DIR . '/local_fonts/';
+    $base_dir = wp_normalize_path($base_dir);
+    $base_url = APIP_PLUGIN_URL . 'local_fonts/';
+    $css_folders = glob($base_dir . '*/', GLOB_ONLYDIR);
     foreach ($css_folders as $folder_name) {
         $folder_name = basename($folder_name);
-        $sub_dir = $base_dir.$folder_name.'/';
-        $css_files = glob($sub_dir.'*.css');
-        if (!empty($css_files)&& !empty($css_files[0])) {
+        $sub_dir = $base_dir . $folder_name . '/';
+        $css_files = glob($sub_dir . '*.css');
+        if (!empty($css_files) && !empty($css_files[0])) {
             $css_file = wp_normalize_path($css_files[0]);
             $ret[$folder_name]['css_file'] = $css_file;
-            $ret[$folder_name]['css_url'] = $base_url.$folder_name.'/'.basename($css_file);
+            $ret[$folder_name]['css_url'] = $base_url . $folder_name . '/' . basename($css_file);
             $ret[$folder_name]['font_name'] = $folder_name;
             $ret[$folder_name]['enabled'] = false;
             $ret[$folder_name]['alias'] = '';
@@ -1956,41 +2478,97 @@ function apip_list_local_fonts($original = array()) {
  * 作用: 加载本地已经定义好的字体
  * 来源: 自创
  */
-function apip_enqueue_custom_style_resources() {
+function apip_enqueue_custom_style_resources()
+{
     $apip_styles = get_option('apip_custom_styles');
     $enabled_fonts = array();
-    if (isset($apip_styles['apip_local_font_enable']) &&
-        $apip_styles['apip_local_font_enable'] ) {
-            if (is_array($apip_styles['apip_local_fonts'])) {
-                foreach ($apip_styles['apip_local_fonts'] as $font) {
-                        if (isset($font['enabled']) && $font['enabled'] && isset($font['css_file']) && file_exists($font['css_file'])) {
-                            $font_load_name = 'apip-custom-font-'. strtolower($font['font_name']);
-                            wp_enqueue_style($font_load_name, $font['css_url'], array(), APIP_FRONTEND_CSS_VER);
-                            $enabled_fonts[] = $font_load_name;
-                        }
-                    }
-                }//foreach
-        }
-        if (isset($apip_styles['apip_global_css']) ) {
-            wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], $enabled_fonts, APIP_FRONTEND_CSS_VER);
-        }
+    if (
+        isset($apip_styles['apip_local_font_enable']) &&
+        $apip_styles['apip_local_font_enable']
+    ) {
+        if (is_array($apip_styles['apip_local_fonts'])) {
+            foreach ($apip_styles['apip_local_fonts'] as $font) {
+                if (isset($font['enabled']) && $font['enabled'] && isset($font['css_file']) && file_exists($font['css_file'])) {
+                    $font_load_name = 'apip-custom-font-' . strtolower($font['font_name']);
+                    wp_enqueue_style($font_load_name, $font['css_url'], array(), APIP_FRONTEND_CSS_VER);
+                    $enabled_fonts[] = $font_load_name;
+                }
+            }
+        } //foreach
+    }
+    if (isset($apip_styles['apip_global_css'])) {
+        wp_enqueue_style('apip-style-custom', $apip_styles['apip_global_css'], $enabled_fonts, APIP_FRONTEND_CSS_VER);
+    }
 }
 
 /**
- * 作用: 从link表中获得邮箱对应的缩写字
- * 来源: 自创
+ * @brief   从link表中获得邮箱对应的缩写字
+ * @param mixed $comment_email
  */
-function apip_get_face_character_from_bookmark($comment_email) {
+function apip_get_face_character_from_bookmark($comment_email)
+{
     global $wpdb;
     $input_email = trim($comment_email);
     $input_email = esc_attr(strtolower($input_email));
     if (empty($input_email)) {
         return false;
     }
-    $query  = "SELECT * FROM `$wpdb->links` WHERE `link_notes` like '%$input_email%' ORDER BY 'link_id' DESC LIMIT 1";
-    $results = $wpdb->get_results( $query );
+    $query = "SELECT * FROM `$wpdb->links` WHERE `link_notes` like '%$input_email%' ORDER BY 'link_id' DESC LIMIT 1";
+    $results = $wpdb->get_results($query);
     if (!is_array($results) || !count($results)) {
         return false;
     }
     return $results[0]->link_description;
+}
+
+/**
+ * @brief       根据选项判断当前post或page是否需要激活fancybox
+ * @return      bool
+ * @version     1.42.5
+ * @since       1.42.5
+ * @date        2026-9-30
+ */
+function apip_is_support_fancybox()
+{
+    if (!is_singular()) {
+        return false;
+    }
+    global $apip_options;
+    $id = get_the_ID();
+    if (isset($apip_options['apip_fancybox_ids']) && trim($apip_options['apip_fancybox_ids']) !== "") {
+        $ids = explode(",", $apip_options['apip_fancybox_ids']);
+        if (in_array($id, $ids)) {
+            return true;
+        }
+    }
+    if (isset($apip_options['apip_fancybox_categories']) && trim($apip_options['apip_fancybox_categories']) !== "") {
+        $cates = explode(",", $apip_options['apip_fancybox_categories']);
+        if (has_category($cates)) {
+            return true;
+        }
+    }
+    if (isset($apip_options['apip_fancybox_tags']) && trim($apip_options['apip_fancybox_tags']) !== "") {
+        $tags = explode(",", $apip_options['apip_fancybox_tags']);
+        if (has_tag($tags)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+/**
+ * @brief       加载fancybox需要的js和css
+ * @return      void
+ * @version     1.42.5
+ * @since       1.42.5
+ * @date        2026-9-30
+ */
+function apip_enable_fancybox_if_possible()
+{
+    if (!apip_is_support_fancybox()) {
+        return;
+    }
+    wp_enqueue_script('apip-fancybox-js', APIP_PLUGIN_URL . 'fancybox/fancybox.umd.js', array(), '6.1.7', true);
+    wp_enqueue_script('apip-fancybox-init', APIP_PLUGIN_URL . 'fancybox/fancybox-init.js', array('apip-fancybox-js'), APIP_FRONTEND_JS_VER, true);
+    wp_enqueue_style('apip-fancybox-css', APIP_PLUGIN_URL . 'fancybox/fancybox.css', array(), APIP_FRONTEND_CSS_VER);
 }

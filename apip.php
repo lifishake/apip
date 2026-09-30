@@ -97,9 +97,7 @@ function apip_plugin_activation(): void
  * 插件反激活
  * @return void
  */
-function apip_plugin_deactivation(): void
-{
-}
+function apip_plugin_deactivation(): void {}
 
 /**
  * 配置画面
@@ -479,14 +477,13 @@ function apip_init(): void
     if (apip_option_check('local_widget_enable')) {
         require APIP_PLUGIN_DIR . '/apip-widgets.php';
     }
-
 }
 /**
  * 显示当前的画面情报
  * @param mixed $screen
  * @return mixed
  */
-function my_current_screen($screen): mixed
+function my_current_screen(mixed $screen): mixed
 {
     if (defined('DOING_AJAX') && DOING_AJAX)
         return $screen;
@@ -539,11 +536,11 @@ function apip_init_actions()
     remove_filter('wp_privacy_personal_data_exporters', 'wp_register_user_personal_data_exporter', 1);
     remove_filter('wp_privacy_personal_data_erasers', 'wp_register_comment_personal_data_eraser');
 
-    add_filter('use_default_gallery_style', '__return_false');//不使用默认gallery
-    add_filter('xmlrpc_enabled', '__return_false');//不使用xmlrpc
-    add_filter('feed_links_show_comments_feed', '__return_false');//不输出comments的rss,4.4以上
-    add_filter('rest_enabled', '__return_false');//禁用REST API,4.4以上
-    add_filter('rest_jsonp_enabled', '__return_false');//禁用REST API,4.4以上
+    add_filter('use_default_gallery_style', '__return_false'); //不使用默认gallery
+    add_filter('xmlrpc_enabled', '__return_false'); //不使用xmlrpc
+    add_filter('feed_links_show_comments_feed', '__return_false'); //不输出comments的rss,4.4以上
+    add_filter('rest_enabled', '__return_false'); //禁用REST API,4.4以上
+    add_filter('rest_jsonp_enabled', '__return_false'); //禁用REST API,4.4以上
 
     ////0A.2
     ////禁用4.4以后的embed功能
@@ -588,9 +585,7 @@ function apip_init_actions()
  * 保留接口
  * @return void
  */
-function apip_header_actions(): void
-{
-}
+function apip_header_actions(): void {}
 
 /**
  * 后台初始化
@@ -825,7 +820,6 @@ function apip_scripts()
                     a.lk7 {
                         color: ' . $link_colors[7] . ';
                     }';
-
     }
     //7.2
     if (is_page('my_links') && apip_option_check('apip_link_enable')) {
@@ -1033,11 +1027,11 @@ function apip_redirect_author(): void
  * @param string|array $class 当前的class，未使用
  * @param int $comment_ID 当前的comment编号
  * @param WP_Comment $comment 留言类
- * @param int|null $post_id post ID
+ * @param mixed $post_id post ID
  * @return array
  * @vrsion 1.20.0
  */
-function apip_remove_author_class(array $classes, $class, int $comment_ID, WP_Comment $comment, $post_id): array
+function apip_remove_author_class($classes, $class, $comment_ID, WP_Comment $comment, $post_id)
 {
     $c_rm = array();
     if ($comment->user_id > 0 && $user = get_userdata($comment->user_id)) {
@@ -1057,8 +1051,8 @@ function apip_remove_author_class(array $classes, $class, int $comment_ID, WP_Co
  */
 function apip_replaced_human_time_diff(string $since)
 {
-    $search = array('years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'minutes', 'minute', 'mins', 'min', 'seconds', 'second', );
-    $replace = array('年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '分钟', '分钟', '秒', '秒', );
+    $search = array('years', 'year', 'months', 'month', 'weeks', 'week', 'days', 'day', 'hours', 'hour', 'minutes', 'minute', 'mins', 'min', 'seconds', 'second',);
+    $replace = array('年', '年', '个月', '个月', '周', '周', '天', '天', '小时', '小时', '分钟', '分钟', '分钟', '分钟', '秒', '秒',);
     $since = str_replace($search, $replace, $since);
     return $since;
 }
@@ -1072,7 +1066,7 @@ function apip_replaced_human_time_diff(string $since)
 function remove_core_updates(): object
 {
     global $wp_version;
-    return (object) array('last_checked' => time(), 'version_checked' => $wp_version, );
+    return (object) array('last_checked' => time(), 'version_checked' => $wp_version,);
 }
 
 //0.16 优化AdminBar
@@ -1504,10 +1498,10 @@ function apip_desc_tag()
         $keywords = single_tag_title('', false);
         $banrobot = true;
     } else {
-        ?>
-            <meta name="robots" content="noindex, nofollow" />
-            <?php
-            return;
+?>
+        <meta name="robots" content="noindex, nofollow" />
+    <?php
+        return;
     }
     $description = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
     $keywords = htmlspecialchars($keywords, ENT_QUOTES, 'UTF-8');
@@ -1584,7 +1578,7 @@ function apip_excerpt(string $text)
     $text = mb_substr($text, 0, $len, 'utf-8');
 
     $text = utf8_trim($text) . $apip_options['excerpt_ellipsis'];
-    $text = wpautop($text, true);//wpautop在前面，此时已经被过滤掉了,不加<p>不好看。
+    $text = wpautop($text, true); //wpautop在前面，此时已经被过滤掉了,不加<p>不好看。
     return $text;
 }
 /*                                          03终了                             */
@@ -1694,7 +1688,6 @@ function apip_disable_emojis_remove_dns_prefetch(array $urls, string $relation_t
                 unset($urls[$key]);
             }
         }
-
     }
 
     return $urls;
@@ -1964,7 +1957,7 @@ function apip_build_cat_html(object $cat, int $is_child = 0)
                 htmlspecialchars($post->post_title),
                 $post->post_title
             );
-            $post_html .= '</li>';//achp-child
+            $post_html .= '</li>'; //achp-child
         }
         $post_html .= '</ul>';
     }
@@ -2022,10 +2015,10 @@ function apip_archive_page()
                 htmlspecialchars($post->post_title),
                 $post->post_title
             );
-            $month_str .= '</li>';//achp-child
+            $month_str .= '</li>'; //achp-child
         }
         $month_str .= "</ul>";
-        $month_str .= "</li>";//achp_months
+        $month_str .= "</li>"; //achp_months
         //-------------
         if (((!empty($last_year) && $result->year !== $last_year) || $i == $result_count - 1) && $year_count > 0) {
             $yearLink = get_year_link($last_year);
@@ -2058,8 +2051,8 @@ function apip_archive_page()
         }
         $last_year = $result->year;
         $i++;
-    }//for each year result
-    $ret .= "</ul>";//achp-widget
+    } //for each year result
+    $ret .= "</ul>"; //achp-widget
 
     /* 类别归档 */
     $all_cats = get_categories(
@@ -2084,7 +2077,7 @@ function apip_archive_page()
         if ($cat->parent === 0)
             $ret .= apip_build_cat_html($cat, 0);
     }
-    $ret .= '</ul>';//ul achp-widget
+    $ret .= '</ul>'; //ul achp-widget
     echo $ret;
 }
 /*                                          07终了                             */
@@ -2165,11 +2158,13 @@ function apip_lazyload_filter(string $content)
     @$dom->loadHTML('<?xml encoding="UTF-8"><!DOCTYPE html><head><meta charset="UTF-8"></head><body>' . $content . '</body></html>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
     //@$dom->createElement();
     foreach ($dom->getElementsByTagName('img') as $node) {
-        $oldsrc = $node->getAttribute('src');
-        $node->setAttribute("data-src", $oldsrc);
-        $node->setAttribute("data-unveil", "true");
-        $newsrc = APIP_PLUGIN_URL . 'img/blank.gif';//'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        $node->setAttribute("src", $newsrc);
+        if ($node instanceof DOMElement) {
+            $oldsrc = $node->getAttribute('src');
+            $node->setAttribute("data-src", $oldsrc);
+            $node->setAttribute("data-unveil", "true");
+            $newsrc = APIP_PLUGIN_URL . 'img/blank.gif'; //'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            $node->setAttribute("src", $newsrc);
+        }
     }
     $body = $dom->getElementsByTagName('body')->item(0);
     if ($body) {
@@ -2323,7 +2318,7 @@ function apip_is_debug_mode()
 function apip_slim_dou_cache(array $cache, string $type)
 {
     $ret = array();
-    $keys_movie = array('msg', 'code', 'request', 'id', 'images', 'rating', 'alt', 'title', 'directors', 'casts', 'genres', 'year', );
+    $keys_movie = array('msg', 'code', 'request', 'id', 'images', 'rating', 'alt', 'title', 'directors', 'casts', 'genres', 'year',);
     $keys_imdb = array('Poster', 'imdbRating', 'Title', 'Director', 'Actors', 'Genre', 'Country', 'Year');
     $keys_book = array('msg', 'code', 'request', 'image', 'id', 'rating', 'alt', 'title', 'author', 'translator', 'pubdate', 'publisher', 'price');
     $keys_book_series = array('msg', 'code', 'request', 'count', 'total', 'books');
@@ -2361,7 +2356,6 @@ function apip_slim_dou_cache(array $cache, string $type)
                 } else {
                     $ret[$keys_use[$i]] = $cache[$keys_use[$i]];
                 }
-
             } else {
                 $ret[$keys_use[$i]] = 0;
             }
@@ -2494,7 +2488,7 @@ function modify_no_gmt_field()
     <div class="misc-pub-section">
         <label><input type="checkbox" <?php echo ' unchecked '; ?> value="1" name="keep_modified_gmt" />不更新修改时间</label>
     </div>
-    <?php
+<?php
 }
 /**
  * 作用: 不更新修改时间的钩子函数
@@ -2511,7 +2505,6 @@ function apip_adjust_modified_date_update(array $new, array $old)
             $new['post_modified'] = $old['post_date'];
             $new['post_modified_gmt'] = $old['post_date_gmt'];
         }
-
     }
     return $new;
 }
@@ -2529,13 +2522,13 @@ function apip_weather_meta_box(WP_Post $post)
     } else {
         $str = apip_get_heweather('plain');
     }
-    ?>
+?>
     <div class="misc-pub-section">
         <label>保存的和天气：<input type="text" name="heweather" value=" <?php echo $str; ?> "></label><button class="button"
             type="button" name="apipweatherbtn" id="<?php echo $post->ID; ?>"
             wpnonce="<?php echo wp_create_nonce('apip-heweather-' . $post->ID); ?>">更新天气</button>
     </div>
-    <?php
+<?php
     /*剩下的看js的了*/
 }
 
@@ -2596,9 +2589,9 @@ function apip_commentquiz_meta_box(WP_Post $post)
     }
     echo '<button class="button" type="button" data-apipcommentquiz>' . $addmore . '</button>';
 
-    ?>
+?>
     <script>
-        document.addEventListener('click', function (event) {
+        document.addEventListener('click', function(event) {
             if (event.target.hasAttribute('data-apipcommentquiz')) {
                 var button = event.target;
                 var index = [].indexOf.call(button.parentNode.children, button);
@@ -2606,15 +2599,15 @@ function apip_commentquiz_meta_box(WP_Post $post)
                 var title = clone.querySelector('strong');
 
                 title.textContent = title.textContent.replace(/\d+/, index + 1);
-                [].forEach.call(clone.querySelectorAll('input'), function (input) {
-                    input.name = input.name.replace(/\d+/, index);  //Update index
-                    if (input.type === 'text') input.value = '';      //Reset value
+                [].forEach.call(clone.querySelectorAll('input'), function(input) {
+                    input.name = input.name.replace(/\d+/, index); //Update index
+                    if (input.type === 'text') input.value = ''; //Reset value
                 });
-                button.parentNode.insertBefore(clone, button);    //Insert in DOM
+                button.parentNode.insertBefore(clone, button); //Insert in DOM
             }
         });
     </script>
-    <?php wp_nonce_field('apipcommentquiz', 'apipcommentquiz-nonce');
+<?php wp_nonce_field('apipcommentquiz', 'apipcommentquiz-nonce');
 }
 add_action('save_post', 'apip_commentquiz_save', 10, 3);
 function apip_commentquiz_save(int $post_id, $post, $update)
@@ -2650,11 +2643,11 @@ function apip_optimize_boxes()
 {
     //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
     $post_types = get_post_types(array('public' => true));
-    remove_meta_box('authordiv', $post_types, 'normal');//移除[author]，顺道。
-    remove_meta_box('trackbacksdiv', $post_types, 'normal');//移除[trackback]，顺道。
-    remove_meta_box('postexcerpt', $post_types, 'normal');//移除[excerpt]，顺道。
-    remove_meta_box('postcustom', $post_types, 'normal');//移除[custom fields]，顺道。
-    remove_meta_box('slugdiv', $post_types, 'normal');//移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
+    remove_meta_box('authordiv', $post_types, 'normal'); //移除[author]，顺道。
+    remove_meta_box('trackbacksdiv', $post_types, 'normal'); //移除[trackback]，顺道。
+    remove_meta_box('postexcerpt', $post_types, 'normal'); //移除[excerpt]，顺道。
+    remove_meta_box('postcustom', $post_types, 'normal'); //移除[custom fields]，顺道。
+    remove_meta_box('slugdiv', $post_types, 'normal'); //移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
     //8.7
     add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
     //8.9, 8.13
@@ -2664,14 +2657,14 @@ function apip_optimize_boxes()
 }
 function apip_title_hex_meta_box(WP_Post $post)
 {
-    $editable_slug = apply_filters('editable_slug', $post->post_name, $post);//照抄
-    ?>
+    $editable_slug = apply_filters('editable_slug', $post->post_name, $post); //照抄
+?>
     <label class="screen-reader-text" for="post_name">
         <?php _e('Slug') ?>
     </label><input name="post_name" type="text" size="30" id="post_name"
         value="<?php echo esc_attr($editable_slug); ?>" />&nbsp;<button class="button" type="button"
         name="apiphexbtn">uincode</button><button class="button" type="button" name="apipcn2enbtn">译</button>
-    <?php
+<?php
     /*剩下的看js的了*/
 }
 
@@ -2687,12 +2680,12 @@ function apip_colorthief_meta_box($post)
         $pic_id = get_post_thumbnail_id();
         $color_main = get_post_meta($pic_id, "apip_main_color", true);
     }
-    ?>
+?>
     <input type='text' name='apip-color-thief-picker' id='thief-color-picker'
         value="<?php echo esc_attr($color_main); ?>" />
     <button class="button" type="button" name="apipcolorthirfbtn" picid="<?php echo $pic_id; ?>"
         wpnonce="<?php echo wp_create_nonce('apip-color-thief-' . $pic_id); ?>">更新颜色</button>
-    <?php
+<?php
     /*剩下的看js的了*/
 }
 
@@ -2855,8 +2848,8 @@ function apip_add_post_tag_filter_ddl(string $post_type)
     if ('post' !== $post_type) { //只在post列表显示。如果想在page列表里同样支持，可以更改判断条件。
         return;
     }
-    $key = 'tag';//要针对post_tag进行过滤。
-    $selection = '';//特别重要，记录当前选中项，设错了没法过滤。
+    $key = 'tag'; //要针对post_tag进行过滤。
+    $selection = ''; //特别重要，记录当前选中项，设错了没法过滤。
     if (isset($_GET[$key]) && !empty($_GET[$key])) {
         $selection = $_GET[$key];
     }

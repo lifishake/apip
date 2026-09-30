@@ -1,9 +1,10 @@
-# apip #
+# apip
+
 把力所能修改的wordpress插件合并到同一个插件里，减少重复引用，摒弃无用功能。大部分参考的源码都是开源协议，所以我也应该开源。反正我开了，至于你能不能找到这里，是你的事。
 
-# 功能 #
+# 功能
 
-## 没有配置项的功能 ##
+## 没有配置项的功能
 
 - Ctrl+Enter提交
 - 屏蔽不必要的js
@@ -24,13 +25,12 @@
 - 设置chrome内核浏览器的tab颜色
 - 移除后台的help
 - debug时忽略wordpress.org的update检查.
-- 不记录_wp_old_date
+- 不记录\_wp_old_date
 - 屏蔽password reset
 - 去掉feed中的危险链接
 - 增加汉译英按钮
 
-
-## 有配置项的功能 ##
+## 有配置项的功能
 
 - 更好的中文摘要
 - 阻止自动版本
@@ -65,8 +65,10 @@
 - 外链转内链
 - 屏蔽后台Update提示
 - 管理本地字体
+- 支持fancybox的category、tag或者单id，通过函数apip_is_support_fancybox()进行判断
 
-## 后台管理功能 ##
+## 后台管理功能
+
 - taglist中增加private和draft的计数列
 
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
