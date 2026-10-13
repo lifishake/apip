@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.9
+ * Version:     1.43.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -538,6 +538,9 @@ function apip_init_actions()
     remove_filter('wp_privacy_personal_data_exporters', 'wp_register_media_personal_data_exporter');
     remove_filter('wp_privacy_personal_data_exporters', 'wp_register_user_personal_data_exporter', 1);
     remove_filter('wp_privacy_personal_data_erasers', 'wp_register_comment_personal_data_eraser');
+
+    wp_clear_scheduled_hook('recovery_mode_clean_expired_keys');
+    wp_clear_scheduled_hook('wp_privacy_delete_old_export_files');
 
     add_filter('use_default_gallery_style', '__return_false'); //不使用默认gallery
     add_filter('xmlrpc_enabled', '__return_false'); //不使用xmlrpc
