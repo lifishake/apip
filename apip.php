@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.42.8
+ * Version:     1.42.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -306,6 +306,9 @@ function apip_init(): void
     add_filter('http_headers_useragent', function () {
         return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
     });
+
+    //0.29 移除do_pings
+    remove_action('do_pings', 'do_all_pings', 10);
 
     /** 01 */
     //颜色目前没有函数
@@ -689,6 +692,7 @@ $options
     0.26                                屏蔽reset password链接
     0.27                                移除feed中的不良链接
     0.28                                增加wp_remote_get时的伪装头
+    0.29                                移除do_pings
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
