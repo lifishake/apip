@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.0
+ * Version:     1.43.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -307,8 +307,9 @@ function apip_init(): void
         return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
     });
 
-    //0.29 移除do_pings
-    remove_action('do_pings', 'do_all_pings', 10);
+    //0.29
+    add_action('edit_link', 'apip_update_link_time');
+    add_action('add_link', 'apip_update_link_time');
 
     /** 01 */
     //颜色目前没有函数
@@ -529,6 +530,7 @@ function apip_init_actions()
     remove_action('rest_api_init', 'create_initial_rest_routes', 99);
     remove_action('init', 'rest_api_init');
     remove_action('parse_request', 'rest_api_loaded');
+    remove_action('do_pings', 'do_all_pings', 10);
     remove_filter('the_content', 'capital_P_dangit', 11);
     remove_filter('the_title', 'capital_P_dangit', 11);
     remove_filter('wp_title', 'capital_P_dangit', 11);
@@ -695,7 +697,7 @@ $options
     0.26                                屏蔽reset password链接
     0.27                                移除feed中的不良链接
     0.28                                增加wp_remote_get时的伪装头
-    0.29                                移除do_pings
+    0.29                                编辑link时更新时间的补丁
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1255,6 +1257,27 @@ function _debug_ignore_wp_request(array $allcaps, array $caps, array $args)
     return $allcaps;
 }
 
+//0.29 link manager编辑或插入时的update_time时间补丁
+/**
+ * @brief   link manager编辑或插入时的update_time时间补丁
+ * @param   int $link_id
+ * @return  int
+ * @since   1.43.1
+ * @version 1.43.1  初版
+ * @date    2026-10-14
+ */
+function apip_update_link_time($link_id)
+{
+    global $wpdb;
+    $now = current_time('mysql', true);
+    $wpdb->update(
+        $wpdb->links,
+        ['link_updated' => $now],
+        ['link_id' => $link_id]
+    );
+    return 0;
+}
+
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -1414,7 +1437,13 @@ function convert_to_internal_links(string $content)
     return $content;
 }
 
-function apip_comment_url(string $url, $ID)
+/**
+ * Summary of apip_comment_url
+ * @param string $url
+ * @param string $comment_ID
+ * @return string
+ */
+function apip_comment_url(string $url, string $comment_ID)
 {
     if ("" === $url) {
         return "";
