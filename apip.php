@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.1
+ * Version:     1.43.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -364,6 +364,14 @@ function apip_init(): void
     //2.12使能原生的link manager
     if (apip_option_check('enable_link_manager')) {
         add_filter('pre_option_link_manager_enabled', '__return_true');
+        //不强行把下面三个转换成网址格式
+        remove_filter('pre_link_url', 'esc_url_raw');
+        remove_filter('pre_link_image', 'esc_url_raw');
+        remove_filter('pre_link_rss', 'esc_url_raw');
+        add_filter('manage_link-manager_columns', 'apip_linkmanager_column_header');
+        add_filter('manage_link-manager_sortable_columns', 'apip_linkmanager_column_sortable');
+        add_action('manage_link_custom_column', 'apip_link_custom_columns', 10, 2);
+        add_action('add_meta_boxes_link', 'apip_remake_edit_link_form');
     }
 
     /** 03 */
@@ -1460,6 +1468,10 @@ function apip_comment_url(string $url, string $comment_ID)
     }
 }
 
+/**
+ * Summary of apip_e2i_redirect
+ * @return void
+ */
 function apip_e2i_redirect()
 {
     $baseurl = 'gaan';
@@ -1471,7 +1483,7 @@ function apip_e2i_redirect()
     $request = $prefix . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     $hop_base = trailingslashit(trailingslashit(home_url()) . $baseurl); //删除末尾的 斜杠/ 符号
     if (substr($request, 0, strlen($hop_base)) != $hop_base)
-        return false; //内链
+        return; //内链
     $hop_key = str_ireplace($hop_base, '', $request);
     if (substr($hop_key, -1) == '/')
         $hop_key = substr($hop_key, 0, -1);
@@ -1481,6 +1493,162 @@ function apip_e2i_redirect()
         exit;
     }
 }
+
+/**
+ * @brief 给link manager的浏览页增加列
+ * @param array $columns
+ * @return array
+ * @date 2026-10-19
+ * @version 1.43.3 初版
+ */
+function apip_linkmanager_column_header($columns)
+{
+    return array(
+        'cb'         => '<input type="checkbox" />',
+        'name'       => '友链名',
+        'mail'      => '邮箱',
+        'url'        => 'URL',
+        'short'     => '缩写',
+        'categories' => '分类',
+        'rel'        => '亲密度',
+        'visible'    => '固定',
+        'rating'     => '评分',
+        'updated'   => '更新时间',
+    );
+}
+
+/**
+ * @brief 给link manager 新增加的列增加排序功能
+ * @param array $columns
+ * @return array
+ * @date 2026-10-19
+ * @version 1.43.3 初版
+ */
+function apip_linkmanager_column_sortable($columns)
+{
+    return array(
+        'name'    => 'name',
+        'mail'    => 'mail',
+        'url'     => 'url',
+        'visible' => 'visible',
+        'rating'  => 'rating',
+        'updated' => 'updated',
+    );
+}
+
+/**
+ * @brief 显示增加的列
+ * @param string $column_header_name
+ * @param mixed $link_id
+ * @return void
+ * @date 2026-10-19
+ * @version 1.43.3 初版
+ */
+function apip_link_custom_columns($column_header_name, $link_id)
+{
+    $column_name = '';
+    if ('mail' === $column_header_name) {
+        $column_name = 'link_notes';
+    } else if ('updated' === $column_header_name) {
+        $column_name = 'link_updated';
+    } else if ('short' === $column_header_name) {
+        $column_name = 'link_description';
+    }
+    if ('' !== $column_name) {
+        echo get_bookmark_field($column_name, $link_id, 'raw');
+    }
+}
+
+//2.12
+/**
+ * @brief 重画link 编辑画面的box
+ * @param stdClass $link
+ * @return void
+ * @date 2026-10-16
+ * @version 1.43.2 初版
+ */
+function apip_remake_edit_link_form($link)
+{
+    //下面是原顺序
+    //add_meta_box('linksubmitdiv', __('Save'), 'link_submit_meta_box', null, 'side', 'core');
+    //add_meta_box('linkcategorydiv', __('Categories'), 'link_categories_meta_box', null, 'normal', 'core');
+    //add_meta_box('linktargetdiv', __('Target'), 'link_target_meta_box', null, 'normal', 'core');
+    //add_meta_box('linkxfndiv', __('Link Relationship (XFN)'), 'link_xfn_meta_box', null, 'normal', 'core');
+    //add_meta_box('linkadvanceddiv', __('Advanced'), 'link_advanced_meta_box', null, 'normal', 'core');
+    remove_meta_box('linktargetdiv', null, 'normal');
+    remove_meta_box('linkxfndiv', null, 'normal');
+    remove_meta_box('linkadvanceddiv', null, 'normal');
+    add_meta_box('linkreldiv', '关系', 'apip_link_relations_meta_box', null, 'normal', 'core');
+    add_meta_box('linkmorediv', '更多', 'apip_link_more_meta_box', null, 'normal', 'core');
+}
+
+/**
+ * @brief 重画link manager上的关系box
+ * @param stdClass $link
+ * @return void
+ * @date 2026-10-16
+ * @version 1.43.2 初版
+ */
+function apip_link_relations_meta_box($link)
+{
+    $valid_selections = ["", "neighbor", "friend", "bystanders"];
+?>
+    <table class="links-table">
+        <tr>
+            <th scope="row"><label for="link_rel">关系:</label></th>
+            <td><select name="link_rel" id="link_rel" size="1">
+                    <?php
+                    foreach ($valid_selections as $selection) {
+                        if (isset($link->link_rel) && esc_attr($link->link_rel) === $selection) {
+                            $selected_str = ' selected="selected"';
+                        } else {
+                            $selected_str = '';
+                        }
+                        printf('<option value="%1$s" %2$s >%1$s</>', $selection, $selected_str);
+                    }
+                    ?>
+                </select>&nbsp;
+            </td>
+            <td>
+                <input id="link_target_blank" type="hidden" name="link_target" value="_blank" />
+            </td>
+        </tr>
+    </table>
+<?php
+}
+
+/**
+ * @brief 重画link manager上的更多box
+ * @param stdClass $link
+ * @return void
+ * @date 2026-10-19
+ * @version 1.43.3 初版
+ * 
+ */
+function apip_link_more_meta_box($link)
+{
+?>
+    <table class="links-table" cellpadding="0">
+        <tr>
+            <th scope="row"><label for="link_image">未使用（Image Address）</label></th>
+            <td><input type="text" name="link_image" class="code" id="link_image" maxlength="255" value="<?php echo (isset($link->link_image) ? esc_attr($link->link_image) : ''); ?>" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="rss_uri">未使用（RSS Address'）</label></th>
+            <td><input name="link_rss" class="code" type="text" id="rss_uri" maxlength="255" value="<?php echo (isset($link->link_rss) ? esc_attr($link->link_rss) : ''); ?>" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="link_notes">邮箱（原名：Notes）</label></th>
+            <td><input name="link_notes" class="code" type="text" id="link_notes" maxlength="255" value="<?php echo (isset($link->link_notes) ? esc_attr($link->link_notes) : ''); ?>" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="link_rating">Rating</label></th>
+            <td><input name="link_rating" class="code" type="number" id="link_rating" min="0" step="1" value="<?php echo (isset($link->link_rating) ? esc_attr($link->link_rating) : '0'); ?>" /></td>
+        </tr>
+    </table>
+    <?php
+}
+
 
 /*                                          02终了                             */
 
@@ -1534,8 +1702,8 @@ function apip_desc_tag()
         $keywords = single_tag_title('', false);
         $banrobot = true;
     } else {
-?>
-        <meta name="robots" content="noindex, nofollow" />
+    ?>
+        <meta name=" robots" content="noindex, nofollow" />
     <?php
         return;
     }
@@ -2976,7 +3144,7 @@ function apip_upload_image()
  * 备注: 表是临时表
  */
 /*
-SELECT `posts`.`ID` AS `ID`,`posts`.`post_date` AS `post_date`,`posts`.`post_title` AS `post_title`,CONCAT(MONTH(`posts`.`post_date`),'-',DAYOFMONTH(`posts`.`post_date`)) AS `tdate`
+SELECT `posts`.`ID` AS `ID`,`posts`.`post_date` AS `post_date`,`posts`.`post_title` AS `post_title`,CONCAT(MONTH(`posts`.`post_date`),'-',DAYFMONTH(`posts`.`post_date`)) AS `tdate`
 FROM `posts`
 WHERE (1 AND (`posts`.`post_type` = 'post')
 AND (`posts`.`post_status` = 'publish')
