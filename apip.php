@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.3
+ * Version:     1.43.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -506,10 +506,14 @@ function my_current_screen(mixed $screen): mixed
 register_activation_hook(__FILE__, 'apip_disable_embeds_remove_rewrite_rules');
 register_deactivation_hook(__FILE__, 'apip_disable_embeds_flush_rewrite_rules');
 
-add_action('init', 'apip_init_actions', 999);
+add_action('init', 'apip_init_actions', 9999);
+
 /**
- * 初始化动作
- * @return void
+ * @brief   初始化动作
+ * @return  void
+ * @since   0.0.1
+ * @version 1.43.4 移除GoogleSitemapGeneratorLoader的ping搜索引擎的动作
+ * @date    2026-10-21
  */
 function apip_init_actions()
 {
@@ -549,8 +553,19 @@ function apip_init_actions()
     remove_filter('wp_privacy_personal_data_exporters', 'wp_register_user_personal_data_exporter', 1);
     remove_filter('wp_privacy_personal_data_erasers', 'wp_register_comment_personal_data_eraser');
 
+    //GoogleSitemapGeneratorLoader 的ping动作不要了
+    remove_action('sm_ping', array('GoogleSitemapGeneratorLoader', 'call_send_ping'), 10);
+    remove_action('sm_ping_daily', array('GoogleSitemapGeneratorLoader', 'call_send_ping_daily'), 10);
+    remove_action('transition_post_status', array('GoogleSitemapGeneratorLoader', 'schedule_ping_on_status_change'), 9999);
+    wp_clear_scheduled_hook('sm_ping_daily');
+    wp_clear_scheduled_hook('sm_ping');
     wp_clear_scheduled_hook('recovery_mode_clean_expired_keys');
     wp_clear_scheduled_hook('wp_privacy_delete_old_export_files');
+    delete_transient('sm_ping_post_id');
+
+    //移除系统的publish时，xmlrpc、trackback、pingback动作。
+    remove_action('publish_post', '_publish_post_hook', 5);
+    wp_clear_scheduled_hook('do_pings');
 
     add_filter('use_default_gallery_style', '__return_false'); //不使用默认gallery
     add_filter('xmlrpc_enabled', '__return_false'); //不使用xmlrpc
@@ -646,6 +661,30 @@ function apip_admin_init(): void
     //9.6 图片上传
     add_action('wp_ajax_apip_upload_image', 'apip_upload_image');
     add_action('wp_ajax_nopriv_apip_upload_image', 'apip_upload_image');
+
+    //9.7 维护历史链接
+    /*
+    $is_history_link_checked = get_option('apip_history_link_checked', false);
+    if (false  === $is_history_link_checked) {
+        global $wpdb;
+        $exception_emails = ['2b@pewae.com', get_option('admin_email')];
+        $exception_email_str = implode(', ', $exception_emails);
+        $sql = "SELECT c.comment_author_email, c.comment_author_url, c.comment_date_gmt FROM {$wpdb->comments} c"
+            . " INNER JOIN ( SELECT MAX(comment_ID) AS comment_ID "
+            . " FROM wp_ddif_comments "
+            . " WHERE `comment_date_gmt` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR)"
+            . " AND `{$wpdb->comments}`.`comment_author_email` NOT IN ({$exception_email_str}) "
+            . " AND `{$wpdb->comments}`.`comment_author_url` <>'' "
+            . " GROUP BY comment_author_email "
+            . ") t "
+            . " ON c.comment_ID = t.comment_ID;";
+        $wpdb->prepare($sql);
+        if (!wp_next_scheduled('apip_schedule_replace_old_comment_url') && !wp_installing()) {
+            wp_schedule_event(time(), 'hourly', 'apip_schedule_replace_old_comment_url');
+        }
+        add_action('apip_schedule_replace_old_comment_url', 'apip_do_replace_old_comment_url');
+    }
+    */
 
 
     //0.24 debug时忽略wordpress.org的update检查.
@@ -758,6 +797,7 @@ $options
     9.4                                 后台显示今日待追加天气的post
     9.5                                 后台维护option表
     9.6                                 后台上传图片功能
+    9.7                                 自动维护超过1年没留言的链接
 99.     local_widget_enable             自定义小工具
     99.1    local_definition_count      自定义widget条目数
 */
@@ -3136,6 +3176,85 @@ function apip_upload_image()
     }
     wp_send_json_success();
     die();
+}
+
+//9.7 定期维护长期不留言的链接
+function my_comment_url(string $url, string $comment_ID)
+{
+    if ("" === $url) {
+        return $url;
+    }
+    if (! $this_comment = get_comment($comment_ID)) {
+        return $url;
+    }
+    $this_comment_time = strtotime($this_comment->comment_date_gmt . ' GMT');
+    $current_time = current_time('timestamp', true);
+    if ($this_comment_time < ($current_time - YEAR_IN_SECONDS)) { // 超过1年
+        $history_comments = get_comments(array('author_email' => $this_comment->comment_author_email, 'status' => 'approve', 'number' => 1, 'orderby' => 'comment_date_gmt', 'order' => 'DESC', 'comment__not_in' => array($comment_ID),));
+        $recent_comment = ! empty($history_comments) ? $history_comments[0] : null;
+        //此人最后一次留言 
+        if (!$recent_comment || strtotime($recent_comment->comment_date_gmt . ' GMT') < ($current_time - YEAR_IN_SECONDS)) {
+            add_comment_meta($comment_ID, '_comment_url_scheduled_replace', "", true);
+            return "";
+        } else { //替换成此人最后一次留言的网址
+            if ($url !== $recent_comment->comment_author_url) {
+                $url = $recent_comment->comment_author_url;
+                if (!wp_http_validate_url($url)) {
+                    $url = "";
+                }
+                add_comment_meta($comment_ID, '_comment_url_scheduled_replace', $url, true);
+            }
+        }
+    }
+    return $url;
+}
+
+add_filter('admin_init', 'init_my_schdules');
+
+
+function init_my_schdules()
+{
+    add_action('my_schedule_replace_old_comment_url', 'my_do_replace_old_comment_url');
+    if (!wp_next_scheduled('my_schedule_replace_old_comment_url') && !wp_installing()) {
+        wp_schedule_event(time(), 'monthly', 'my_schedule_replace_old_comment_url');
+    }
+}
+
+
+function my_do_replace_old_comment_url()
+{
+    $comments = get_comments(['meta_key' => '_comment_url_scheduled_replace', 'status' => 'approve']);
+    foreach ($comments as $comment) {
+        $url = get_comment_meta(
+            $comment->comment_ID,
+            '_comment_url_scheduled_replace',
+            true
+        );
+
+
+        if (
+            $url === '' ||
+            wp_http_validate_url($url)
+        ) {
+            wp_update_comment(array(
+                'comment_ID'         => $comment->comment_ID,
+                'comment_author_url' => $url,
+            ));
+        }
+        delete_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace');
+    }
+}
+
+function apip_do_replace_old_comment_url()
+{
+    $comments = get_comments(['meta_key' => '_comment_url_scheduled_replace', 'status' => 'approve']);
+    foreach ($comments as $comment) {
+        $url = get_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace', true);
+        if ($url === '' || wp_http_validate_url($url)) {
+            wp_update_comment(array('comment_ID' => $comment->comment_ID, 'comment_author_url' => $url,));
+        }
+        delete_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace');
+    }
 }
 
 /**
