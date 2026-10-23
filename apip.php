@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.5
+ * Version:     1.43.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -515,7 +515,8 @@ add_action('init', 'apip_init_actions', 9999);
  * @return  void
  * @since   0.0.1
  * @version 1.43.4 移除GoogleSitemapGeneratorLoader的ping搜索引擎的动作
- * @date    2026-10-21
+ * @version 1.43.6 移除privicy personal data相关
+ * @date    2026-10-23
  */
 function apip_init_actions()
 {
@@ -565,6 +566,12 @@ function apip_init_actions()
     wp_clear_scheduled_hook('wp_privacy_delete_old_export_files');
     delete_transient('sm_ping_post_id');
 
+    remove_action('init', 'wp_schedule_personal_data_cleanup_requests');
+    remove_action('init', 'wp_schedule_delete_old_privacy_export_files');
+    wp_clear_scheduled_hook( 'wp_privacy_delete_old_export_files' );
+    wp_clear_scheduled_hook( 'wp_privacy_personal_data_cleanup_requests' );
+    remove_action( 'wp_privacy_personal_data_cleanup_requests', 'wp_privacy_personal_data_cleanup_requests' );
+    remove_action( 'wp_privacy_delete_old_export_files', 'wp_privacy_delete_old_export_files' );
     //移除系统的publish时，xmlrpc、trackback、pingback动作。
     remove_action('publish_post', '_publish_post_hook', 5);
     wp_clear_scheduled_hook('do_pings');
