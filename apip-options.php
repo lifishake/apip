@@ -78,6 +78,7 @@ function apip_get_option()
         "apip_fancybox_categories" => "",
         "apip_fancybox_tags" => "",
         "apip_fancybox_ids" => "",
+        "comment_url_last_check_time" => "2000-01-01",
     );
     $options = get_option('apip_settings');
     $options = wp_parse_args($options, $default_apip_options);
@@ -264,6 +265,13 @@ function sanitize_apip_custom_styles($input)
 01. 改进的功能摘要
 
 */
+/**
+ * @brief   描绘后台界面的各种函数注册
+ * @return void
+ * @since   0.0.1
+ * @version 1.43.5      增加清理旧url按钮
+ * @date    2026-10-21
+ */
 function apip_settings_init()
 {
     register_setting('apip_option_tab', 'apip_settings', array('sanitize_callback' => 'sanitize_apip_options'));
@@ -386,6 +394,14 @@ function apip_settings_init()
         'apip_uploader_options_field_render',
         'apip_uploader_tab',
         'apip_uploader_section'
+    );
+
+    add_settings_field(
+        'check_comment_url_options',
+        '维护后台过期留言的url',
+        'apip_check_comment_url_options_field_render',
+        'apip_cleaner_tab',
+        'apip_cleaner_section'
     );
 
     add_settings_field(
@@ -711,6 +727,11 @@ function apip_local_widgets_render()
 <?php
 }
 
+/**
+ * @brief 描绘文件上传控件功能
+ * @return void
+ * @since 1.12.0
+ */
 function apip_uploader_options_field_render()
 {
     $options = apip_get_option();
@@ -851,6 +872,25 @@ function apip_test_field_render()
 {
 ?>
     <span>WP->is_ssl = <?php echo is_ssl() ? 'YES' : 'NO'; ?> "wp_http_supports( array( 'ssl' ) )" = <?php echo wp_http_supports(array('ssl')) ? 'YES' : 'NO'; ?> </span>
+<?php
+}
+
+/**
+ * @brief   描绘清理留言comment_url页面项目
+ * @return  void
+ * @since   1.43.5
+ * @version 1.43.5 初版
+ * @date    2026-10-21
+ */
+function apip_check_comment_url_options_field_render()
+{
+    $options = apip_get_option();
+    $current_time_str = gmdate('Y-m-d');
+    $nonce = wp_create_nonce('check_comment_url' . $current_time_str);
+?>
+    <span> 清理过期留言中的comment_url：</span>
+    <label>最终更新时间：</label><input type='text' name='apip_settings[comment_url_last_check_time]' value='<?php echo $options['comment_url_last_check_time']; ?>' readonly />
+    <button class='button' type='button' id='check_comment_url_button' wpnonce='<?php echo $nonce; ?>'>清理</button>
 <?php
 }
 

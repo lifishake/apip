@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.4
+ * Version:     1.43.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -240,6 +240,8 @@ function apip_init(): void
     add_filter('comment_class', 'apip_remove_author_class', 10, 5);
     //0.12 禁用古腾堡
     add_filter('use_block_editor_for_post', '__return_false');
+    add_filter( 'gutenberg_use_widgets_block_editor', '__return_false' );
+    add_filter( 'use_widgets_block_editor', '__return_false' );
     remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
     //0.13 替换human_time_diff函数中的英文单词
     add_filter('human_time_diff', 'apip_replaced_human_time_diff', 10, 1);
@@ -663,6 +665,7 @@ function apip_admin_init(): void
     add_action('wp_ajax_nopriv_apip_upload_image', 'apip_upload_image');
 
     //9.7 维护历史链接
+    add_action('wp_ajax_apip_admin_check_comments_url', 'apip_admin_check_comments_url');
     /*
     $is_history_link_checked = get_option('apip_history_link_checked', false);
     if (false  === $is_history_link_checked) {
@@ -3134,6 +3137,9 @@ function apip_db_maintain()
 //9.6 上传图片的ajax处理
 function apip_upload_image()
 {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error();
+    }
     if (!wp_verify_nonce($_POST['nonce'], 'gallery-upload')) {
         wp_send_json_error('invalid nonce.');
         die();
@@ -3179,6 +3185,200 @@ function apip_upload_image()
 }
 
 //9.7 定期维护长期不留言的链接
+/**
+ * @brief   清理长期不留言者的url，避免导向非法网址
+ * @mention 这是第一部分，ajax回调的入口
+ * @return  void
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5      初版
+ * @data    2026-10-21
+ */
+function apip_admin_check_comments_url()
+{
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error();
+    }
+    $date_str = gmdate('Y-m-d');
+    $errors = new WP_Error();
+    if (!wp_verify_nonce($_POST['nonce'], 'check_comment_url' . $date_str)) {
+        $errors->add('bad_nonce', 'bad nonce', $date_str);
+        wp_send_json_error($errors);
+        die();
+    }
+    //1.
+    global $wpdb;
+    $recorded = apip_get_new_commenter_mail_list();
+    $exceptions = apip_find_unlinked_commenters($recorded);
+    apip_empty_history_comments_url($exceptions);
+}
+
+/**
+ * 置空一年内没有留言过的邮箱地址的url
+ * @param array $exceptions
+ * @return void
+ */
+function apip_empty_history_comments_url($exceptions)
+{
+    global $wpdb;
+    $admin_email = get_option('admin_email');
+    if (!empty($admin_email)) {
+        $exceptions[] = $admin_email;
+    }
+    $exceptions[] = 'wapuu@wordpress.example';
+    $not_in_str = "'" . implode(', ', $exceptions) . "'";
+    $prepare_str = "UPDATE $wpdb->comments SET `comment_author_url` = '' ";
+    $prepare_str .=   " WHERE `$wpdb->comments`.`comment_date_gmt` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) ";
+    $prepare_str .=   " AND `comment_author_email` NOT IN (%s) ";
+    $prepare_str .=   " AND `comment_author_url` <>'' ";
+    $prepare_str .=   " AND `comment_approved` = 1 ";
+    $prepare_str .=   " AND `comment_type` = 'comment' ";
+    $prepare_str .=   " AND `user_id` = 0 ";
+    $sql = $wpdb->prepare($prepare_str, $not_in_str);
+    $wpdb->query($sql);
+}
+
+/**
+ * @brief   将未登记的邮箱和地址插入links，只在按下按钮的时候执行
+ * @param   array $linked_mails
+ * @return  array
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5      初版
+ * @data    2026-10-21
+ */
+function apip_find_unlinked_commenters($linked_mails)
+{
+    global $wpdb;
+    $notins = apip_get_new_commenter_mail_list();
+    $admin_email = get_option('admin_email');
+    if (!empty($admin_email)) {
+        $notins[] = $admin_email;
+    }
+    $notins[] = 'wapuu@wordpress.example';
+    $not_in_str = "'" . implode(', ', $notins) . "'";
+    $prepare_str = "SELECT c.comment_author, c.comment_author_email, c.comment_author_url, c.comment_date_gmt FROM $wpdb->comments c INNER JOIN (";
+    $prepare_str .=   " SELECT MAX(comment_ID) AS comment_ID ";
+    $prepare_str .=   " FROM $wpdb->comments ";
+    $prepare_str .=   " WHERE `$wpdb->comments`.`comment_date_gmt` > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) ";
+    $prepare_str .=   " AND `$wpdb->comments`.`comment_author_email` NOT IN (%s) ";
+    $prepare_str .=   " AND `$wpdb->comments`.`comment_author_url` <>'' ";
+    $prepare_str .=   " AND `$wpdb->comments`.`comment_approved` = 1 ";
+    $prepare_str .=   " AND `$wpdb->comments`.`comment_type` = 'comment' ";
+    $prepare_str .=   " AND `$wpdb->comments`.`user_id` = 0 ";
+    $prepare_str .=   " GROUP BY `$wpdb->comments`.comment_author_email ";
+    $prepare_str .=   " ) t  ";
+    $prepare_str .= " ON c.comment_ID = t.comment_ID";
+    $sql = $wpdb->prepare($prepare_str, $not_in_str);
+    $results = $wpdb->get_results($sql);
+    if (false === $results) {
+        return $linked_mails;
+    }
+    foreach ($results as $comment) {
+        if (in_array($comment->comment_author_email, $linked_mails, true)) {
+            continue;
+        } else {
+            $arg = [
+                'link_name' => $comment->comment_author,
+                'link_url' => $comment->comment_author_url,
+                'link_notes' => $comment->comment_author_email,
+                'link_updated' => $comment->comment_date_gmt
+            ];
+            apip_update_or_insert_link_from_comment($arg);
+            $linked_mails[] = $comment->comment_author_email;
+        }
+    }
+    return $linked_mails;
+}
+
+/**
+ * Summary of   插入或更新links表，并且更新旧comments
+ * @param array $commentdata
+ * @return void
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5      初版
+ * @data    2026-10-22
+ */
+function apip_update_or_insert_link_from_comment($commentdata)
+{
+    if (
+        !is_array($commentdata) ||
+        !isset($commentdata['link_notes']) || empty($commentdata['link_notes']) ||
+        !isset($commentdata['link_url']) || empty($commentdata['link_url'])
+    ) {
+        return;
+    }
+    global $wpdb;
+    $prepare = " SELECT MAX(`link_updated`) FROM $wpdb->links ";
+    $prepare .= " WHERE `link_notes` = %s ";
+    $sql = $wpdb->prepare($prepare, $commentdata['link_notes']);
+    $has_rec = $wpdb->get_col($sql);
+    $update_time_str = isset($commentdata['link_updated']) && !empty($commentdata['link_updated']) ? $commentdata['link_updated'] : gmdate('Y-m-d H:i:s');
+    $need_update_history_comments = false;
+    if (empty($has_rec)) {
+        //没有记录，要插入
+        $insert_data = [
+            'link_url' => $commentdata['link_url'],
+            'link_name' => $commentdata['link_name'],
+            'link_image' => '',
+            'link_target' => '_blank',
+            'link_description' => '',
+            'link_visible' => 'N',
+            'link_owner' => 1,
+            'link_rating' => 0,
+            'link_updated' => $update_time_str,
+            'link_relation' => 'bystanders',
+            'link_notes' => $commentdata['link_notes'],
+            'link_rss' => '',
+        ];
+        if (false !== $wpdb->insert($wpdb->links, $insert_data, ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s'])) {
+            $need_update_history_comments = true;
+            $link_id = $wpdb->insert_id;
+            $link_category = array(get_option('default_link_category'));
+            wp_set_link_cats($link_id, $link_category);
+        }
+    } else {
+        if (
+            strtotime($update_time_str) - strtotime($has_rec[0]) > MONTH_IN_SECONDS
+        ) {
+            //要更新
+            $update_data = [
+                'link_url' => $commentdata['link_url'],
+                'link_name' => $commentdata['link_name'],
+                'link_updated' => $update_time_str,
+            ];
+            if (false !== $wpdb->update($wpdb->links, $update_data, ['link_notes' => $commentdata['link_notes']])) {
+                $need_update_history_comments = true;
+            }
+        } else {
+            //留言时间在link维护时间一个月内，不用做
+        }
+    }
+    if ($need_update_history_comments) {
+        $wpdb->update($wpdb->comments, ['comment_author' => $commentdata['link_name'], 'comment_author_url' => $commentdata['link_url']], ['comment_author_email' => $commentdata['link_notes']]);
+    }
+}
+
+/**
+ * @brief   从wp_lists获取一年内有更新的mail 列表。
+ * @return array
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5  初版
+ */
+function apip_get_new_commenter_mail_list()
+{
+    global $wpdb;
+    $sql = " SELECT `link_notes` FROM $wpdb->links ";
+    $sql .= " WHERE `link_updated` >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) ";
+    $sql .= " AND `link_notes` <> '' ";
+    $sql .= " ORDER BY `link_updated` ASC ";
+    $ret = $wpdb->get_col($sql);
+
+    return $ret;
+}
+
 function my_comment_url(string $url, string $comment_ID)
 {
     if ("" === $url) {

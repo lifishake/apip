@@ -9,6 +9,11 @@ class APIP_Widget_Related extends WP_Widget {
         parent::__construct( 'APIP_Widget_Related', 'APIP相关文章', $widget_ops );
     }
 
+    /**
+     * Summary of form
+     * @param mixed $instance
+     * @return void
+     */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP相关文章', 'exclude' => '', 'taxonomy' => 'post_tag', 'post_type' => 'post', 'related_count' => '5' ) );
         $title = $instance['title'];
@@ -137,6 +142,11 @@ class APIP_Widget_Sameday_Post extends WP_Widget {
         parent::__construct( 'APIP_Widget_Sameday_Post', 'APIP历史文章', $widget_ops );
     }
 
+    /**
+     * Summary of form
+     * @param mixed $instance
+     * @return void
+     */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array( 'title' => 'APIP历史文章', 'numbers' => '5', 'padtonum' => 'false' ) );
         $title = $instance['title'];
@@ -214,6 +224,11 @@ class APIP_Widget_Recent extends WP_Widget {
         parent::__construct( 'APIP_Widget_Recent', '最近更新', $widget_ops );
     }
 
+    /**
+     * Summary of form
+     * @param mixed $instance
+     * @return void
+     */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array( 'title' => 'Recent Modify', 'numbers' => '5' ) );
         $title = $instance['title'];
@@ -328,6 +343,11 @@ class APIP_Widget_Meta extends WP_Widget {
         return $instance;
     }
 
+    /**
+     * Summary of form
+     * @param mixed $instance
+     * @return void
+     */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
         $title = strip_tags($instance['title']);
@@ -401,7 +421,11 @@ class APIP_Widget_Hook_List extends WP_Widget {
         $instance['hooks'] = sanitize_text_field( $new_instance['hooks'] );
         return $instance;
     }
-
+    /**
+     * Summary of form
+     * @param mixed $instance
+     * @return void
+     */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array( 'title' => '', 'hooks' => 'the_content,wp_enqueue_scripts,wp_head,wp_footer' ) );
         $title = sanitize_text_field( $instance['title'] );
