@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.6
+ * Version:     1.43.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -515,7 +515,7 @@ add_action('init', 'apip_init_actions', 9999);
  * @return  void
  * @since   0.0.1
  * @version 1.43.4 移除GoogleSitemapGeneratorLoader的ping搜索引擎的动作
- * @version 1.43.6 移除privicy personal data相关
+ * @version 1.43.7 移除privicy personal data相关
  * @date    2026-10-23
  */
 function apip_init_actions()
@@ -572,8 +572,13 @@ function apip_init_actions()
     wp_clear_scheduled_hook( 'wp_privacy_personal_data_cleanup_requests' );
     remove_action( 'wp_privacy_personal_data_cleanup_requests', 'wp_privacy_personal_data_cleanup_requests' );
     remove_action( 'wp_privacy_delete_old_export_files', 'wp_privacy_delete_old_export_files' );
-    //移除系统的publish时，xmlrpc、trackback、pingback动作。
+    // 个人站点不需要定期更新用户计数
+    remove_action( 'init', 'wp_schedule_update_user_counts' );
+    remove_action( 'admin_init', 'wp_schedule_update_user_counts' );
+	wp_clear_scheduled_hook( 'wp_update_user_counts' );
     remove_action('publish_post', '_publish_post_hook', 5);
+    //移除系统的publish时，xmlrpc、trackback、pingback动作。
+
     wp_clear_scheduled_hook('do_pings');
 
     add_filter('use_default_gallery_style', '__return_false'); //不使用默认gallery
@@ -1277,6 +1282,13 @@ function apip_remove_admin_help()
     get_current_screen()->remove_help_tabs();
 }
 
+/**
+ * @brief 禁止edit_lock
+ * @group 0.23
+ * @since 0.7.1
+ * @version 1.43.7      别人也用heartbeat，不能禁止
+ * @date 2026-10-23
+ */
 //0.23 禁止edit_lock
 //来源:https://wordpress.stackexchange.com/questions/120179/how-to-disable-the-post-lock-edit-lock
 function apip_remove_post_locked()
@@ -1296,7 +1308,8 @@ function apip_remove_post_locked()
     if (in_array($current_post_type, $post_types_arr)) {
         add_filter('show_post_locked_dialog', '__return_false');
         add_filter('wp_check_post_lock_window', '__return_false');
-        wp_deregister_script('heartbeat');
+        add_filter( 'wp_check_post_lock', '__return_false' );
+        //wp_deregister_script('heartbeat');
     }
 }
 add_action('load-edit.php', 'apip_remove_post_locked');
@@ -1487,7 +1500,7 @@ function convert_to_internal_links(string $content)
         foreach ($matches[2] as $val) {
             if (strpos($val, home_url()) === false) {
                 $rep = $matches[1][0] . $val . $matches[3][0];
-                $new = '"' . home_url() . '/gaan/' . base64_encode($val) . '" target="_blank"';
+                $new = '"' . home_url() . '/gayn/' . base64_encode($val) . '" target="_blank"';
                 $content = str_replace("$rep", "$new", $content);
             }
         }
@@ -1511,7 +1524,7 @@ function apip_comment_url(string $url, string $comment_ID)
     }
     $domain = str_replace(array("http://", "https://", "//"), "", home_url());
     if (strpos($url, $domain) === false) {
-        $new = home_url() . '/gaan/' . base64_encode($url);
+        $new = home_url() . '/gayn/' . base64_encode($url);
         return $new;
     } else {
         return $url;
@@ -1524,7 +1537,7 @@ function apip_comment_url(string $url, string $comment_ID)
  */
 function apip_e2i_redirect()
 {
-    $baseurl = 'gaan';
+    $baseurl = 'gayn';
     if (is_ssl()) {
         $prefix = 'https://';
     } else {
