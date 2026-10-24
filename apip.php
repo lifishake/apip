@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.8
+ * Version:     1.43.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -249,6 +249,9 @@ function apip_init(): void
     add_filter('the_content_feed', 'apip_code_highlight', 199, 1);
     //0.15 移除后台界面的WP版本升级提示 -->因为会引起downgrade失败,所以改为有配置项的2.11
     //0.16 修改AdminBar
+    add_action('add_admin_bar_menus', function() {
+        remove_action( 'admin_bar_menu', 'wp_admin_bar_command_palette_menu', 55 );
+    }, 10);
     add_action('wp_before_admin_bar_render', 'apip_admin_bar', 199);
     //0.17 针对苹果旧设备的访问，减少404
     add_filter('site_icon_meta_tags', 'apip_add_apple_touch_icon');
@@ -946,9 +949,12 @@ function apip_scripts()
     }
 }
 /**
- * 统一处理后台相关的脚本
- * @vrsion 1.20.0
- * @return void
+ * @brief    统一处理后台相关的脚本
+ * @since    1.20.0
+ * @note     1.43.9      2026-10-24      禁用后台Ctrl+K调出命令行 \n
+ * @version: 1.43.9
+ * @return   void
+ * @date     2026-10-24
  */
 function apip_admin_scripts(): void
 {
@@ -959,6 +965,8 @@ function apip_admin_scripts(): void
     wp_enqueue_style('apip-style-admin', APIP_PLUGIN_URL . 'css/apip-admin.css', array(), APIP_ADMIN_CSS_VER);
     wp_enqueue_script('apip-color-thief', APIP_PLUGIN_URL . 'js/color-thief.js', array(), APIP_ADMIN_JS_VER, true);
     wp_enqueue_script('apip-js-admin', APIP_PLUGIN_URL . 'js/apip-admin.js', array('wp-color-picker'), APIP_ADMIN_JS_VER, true);
+    wp_dequeue_script('wp-commands');
+    wp_dequeue_style('wp-commands');
 
     //wp_localize_script('apip-js-admin','yandexkey',$apip_options['yandex_translate_key']);
     //20200416 原0.6功能,移除OpenSans字体
@@ -3478,9 +3486,10 @@ function apip_do_replace_old_comment_url()
 }
 
 /**
- * 作用: 后台显示还有多少的天气需要更新--具体函数
- * 来源: 自创
- * 备注: 表是临时表
+ * @brief   后台显示还有多少的天气需要更新--具体函数
+ * @since   0.1.6
+ * @version 1.43.9
+ * @date    2026-10-24
  */
 /*
 SELECT `posts`.`ID` AS `ID`,`posts`.`post_date` AS `post_date`,`posts`.`post_title` AS `post_title`,CONCAT(MONTH(`posts`.`post_date`),'-',DAYFMONTH(`posts`.`post_date`)) AS `tdate`
@@ -3495,6 +3504,9 @@ ORDER BY MONTH(`posts`.`post_date`), DAYOFMONTH(`posts`.`post_date`),`posts`.`po
 */
 function apip_today_weather_widget()
 {
+    if (!apip_is_table_exists('v_weather_tbd')) {
+        apip_plugin_activation();
+    }
     echo '<div id="apip-today-weather-widget">';
     global $wpdb;
     $sql = "SELECT ID FROM " . $wpdb->prefix . "v_weather_tbd ";
