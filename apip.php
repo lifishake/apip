@@ -559,6 +559,11 @@ function apip_init_actions()
     remove_filter('wp_privacy_personal_data_exporters', 'wp_register_user_personal_data_exporter', 1);
     remove_filter('wp_privacy_personal_data_erasers', 'wp_register_comment_personal_data_eraser');
 
+    remove_action( 'application_password_failed_authentication', 'rest_application_password_collect_status' );
+    remove_action( 'application_password_did_authenticate', 'rest_application_password_collect_status');
+    remove_filter( 'rest_authentication_errors', 'rest_application_password_check_errors', 90 );
+    remove_filter( 'rest_authentication_errors', 'rest_cookie_check_errors', 100 );
+
     //GoogleSitemapGeneratorLoader 的ping动作不要了
     remove_action('sm_ping', array('GoogleSitemapGeneratorLoader', 'call_send_ping'), 10);
     remove_action('sm_ping_daily', array('GoogleSitemapGeneratorLoader', 'call_send_ping_daily'), 10);
