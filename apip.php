@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.43.9
+ * Version:     1.44.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -549,6 +549,7 @@ function apip_init_actions()
     remove_action('init', 'rest_api_init');
     remove_action('parse_request', 'rest_api_loaded');
     remove_action('do_pings', 'do_all_pings', 10);
+    add_filter('wp_should_disable_pings_for_environment','__return_true');
     remove_filter('the_content', 'capital_P_dangit', 11);
     remove_filter('the_title', 'capital_P_dangit', 11);
     remove_filter('wp_title', 'capital_P_dangit', 11);
@@ -576,6 +577,7 @@ function apip_init_actions()
 
     remove_action('init', 'wp_schedule_personal_data_cleanup_requests');
     remove_action('init', 'wp_schedule_delete_old_privacy_export_files');
+    remove_action('init', '_register_theme_block_patterns');
     wp_clear_scheduled_hook( 'wp_privacy_delete_old_export_files' );
     wp_clear_scheduled_hook( 'wp_privacy_personal_data_cleanup_requests' );
     remove_action( 'wp_privacy_personal_data_cleanup_requests', 'wp_privacy_personal_data_cleanup_requests' );
@@ -594,6 +596,9 @@ function apip_init_actions()
     add_filter('feed_links_show_comments_feed', '__return_false'); //不输出comments的rss,4.4以上
     add_filter('rest_enabled', '__return_false'); //禁用REST API,4.4以上
     add_filter('rest_jsonp_enabled', '__return_false'); //禁用REST API,4.4以上
+
+    //9.7 初始化计划列表，目前只有9.7
+    init_apip_schdules();
 
     ////0A.2
     ////禁用4.4以后的embed功能
@@ -686,6 +691,8 @@ function apip_admin_init(): void
 
     //9.7 维护历史链接
     add_action('wp_ajax_apip_admin_check_comments_url', 'apip_admin_check_comments_url');
+    add_action('transition_comment_status', 'apip_operate_new_commenter_links', 10,3);
+    add_action('comment_post', 'apip_operate_theme_commenter_links', 10, 3);
     /*
     $is_history_link_checked = get_option('apip_history_link_checked', false);
     if (false  === $is_history_link_checked) {
@@ -1654,7 +1661,7 @@ function apip_remake_edit_link_form($link)
     remove_meta_box('linktargetdiv', null, 'normal');
     remove_meta_box('linkxfndiv', null, 'normal');
     remove_meta_box('linkadvanceddiv', null, 'normal');
-    add_meta_box('linkreldiv', '关系', 'apip_link_relations_meta_box', null, 'normal', 'core');
+    add_meta_box('linkreldiv', '关系', 'apip_link_rels_meta_box', null, 'normal', 'core');
     add_meta_box('linkmorediv', '更多', 'apip_link_more_meta_box', null, 'normal', 'core');
 }
 
@@ -1665,7 +1672,7 @@ function apip_remake_edit_link_form($link)
  * @date 2026-10-16
  * @version 1.43.2 初版
  */
-function apip_link_relations_meta_box($link)
+function apip_link_rels_meta_box($link)
 {
     $valid_selections = ["", "neighbor", "friend", "bystanders"];
 ?>
@@ -3249,6 +3256,9 @@ function apip_admin_check_comments_url()
 /**
  * 置空一年内没有留言过的邮箱地址的url
  * @param array $exceptions
+ * @group 功能9.7
+ * @since 1.43.6
+ * @version 1.43.6  初版
  * @return void
  */
 function apip_empty_history_comments_url($exceptions)
@@ -3259,7 +3269,7 @@ function apip_empty_history_comments_url($exceptions)
         $exceptions[] = $admin_email;
     }
     $exceptions[] = 'wapuu@wordpress.example';
-    $not_in_str = "'" . implode(', ', $exceptions) . "'";
+    $not_in_str = "'" . implode('\', ', $exceptions) . "'";
     $prepare_str = "UPDATE $wpdb->comments SET `comment_author_url` = '' ";
     $prepare_str .=   " WHERE `$wpdb->comments`.`comment_date_gmt` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) ";
     $prepare_str .=   " AND `comment_author_email` NOT IN (%s) ";
@@ -3269,6 +3279,11 @@ function apip_empty_history_comments_url($exceptions)
     $prepare_str .=   " AND `user_id` = 0 ";
     $sql = $wpdb->prepare($prepare_str, $not_in_str);
     $wpdb->query($sql);
+    $option = get_option('apip_settings');
+    if (!$option) {
+        $options['comment_url_last_check_time'] = gmdate('Y-m-d');
+        update_option('apip_settings', $options, true);
+    }
 }
 
 /**
@@ -3278,7 +3293,7 @@ function apip_empty_history_comments_url($exceptions)
  * @group   功能9.7
  * @since   1.43.5
  * @version 1.43.5      初版
- * @data    2026-10-21
+ * @date    2026-10-21
  */
 function apip_find_unlinked_commenters($linked_mails)
 {
@@ -3289,7 +3304,7 @@ function apip_find_unlinked_commenters($linked_mails)
         $notins[] = $admin_email;
     }
     $notins[] = 'wapuu@wordpress.example';
-    $not_in_str = "'" . implode(', ', $notins) . "'";
+    $not_in_str = "'" . implode('\', ', $notins) . "'";
     $prepare_str = "SELECT c.comment_author, c.comment_author_email, c.comment_author_url, c.comment_date_gmt FROM $wpdb->comments c INNER JOIN (";
     $prepare_str .=   " SELECT MAX(comment_ID) AS comment_ID ";
     $prepare_str .=   " FROM $wpdb->comments ";
@@ -3325,13 +3340,77 @@ function apip_find_unlinked_commenters($linked_mails)
 }
 
 /**
+ * @brief 更新link表，钩子入口
+ * @param string $new_status
+ * @param string $old_status
+ * @param mixed $comment
+ * @return void
+ * @group 功能9.7
+ * @since 1.44.0
+ * @version 1.44.0  初版
+ * @date 2026-11-01
+ */
+function apip_operate_new_commenter_links($new_status, $old_status, $comment) {
+    if (absint($comment->user_id) != 0) {
+        //admin回复，todo
+    } else if ('approved' === $new_status) {
+        //首次留言者
+        apip_update_commenter_link_status($comment);
+    }
+}
+
+/**
+ * @brief   更新链接
+ * @param int $comment_ID
+ * @param int $approved
+ * @param array $commentdata
+ * @return void
+ */
+function apip_operate_theme_commenter_links($comment_ID, $approved, $commentdata) {
+    if (isset($commentdata['user_id']) && $commentdata['user_id'] != 0) {
+
+    } else {
+        if (!$approved || !isset($commentdata['comment_author_url']) || empty($commentdata['comment_author_url'])) {
+            return;
+        }
+        $arg = [
+                'link_name' => $commentdata['comment_author'],
+                'link_url' => $commentdata['comment_author_url'],
+                'link_notes' => $commentdata['comment_author_email'],
+                'link_updated' =>$commentdata['comment_date_gmt']
+            ];
+        apip_update_or_insert_link_from_comment($arg);
+    }
+    
+}
+
+/**
+ * @brief 更新link表，如有必要更新旧link
+ * @param mixed $comment
+ * @return void
+ * @group 功能9.7
+ * @since 1.44.0
+ * @version 1.44.0  初版
+ * @date 2026-11-01
+ */
+function apip_update_commenter_link_status($comment) {
+    $arg = [
+                'link_name' => $comment->comment_author,
+                'link_url' => $comment->comment_author_url,
+                'link_notes' => $comment->comment_author_email,
+                'link_updated' => $comment->comment_date_gmt
+            ];
+    apip_update_or_insert_link_from_comment($arg);
+}
+
+/**
  * Summary of   插入或更新links表，并且更新旧comments
  * @param array $commentdata
  * @return void
  * @group   功能9.7
  * @since   1.43.5
  * @version 1.43.5      初版
- * @data    2026-10-22
+ * @date    2026-10-22
  */
 function apip_update_or_insert_link_from_comment($commentdata)
 {
@@ -3349,7 +3428,7 @@ function apip_update_or_insert_link_from_comment($commentdata)
     $has_rec = $wpdb->get_col($sql);
     $update_time_str = isset($commentdata['link_updated']) && !empty($commentdata['link_updated']) ? $commentdata['link_updated'] : gmdate('Y-m-d H:i:s');
     $need_update_history_comments = false;
-    if (empty($has_rec)) {
+    if (empty($has_rec)||!$has_rec[0]) {
         //没有记录，要插入
         $insert_data = [
             'link_url' => $commentdata['link_url'],
@@ -3361,7 +3440,7 @@ function apip_update_or_insert_link_from_comment($commentdata)
             'link_owner' => 1,
             'link_rating' => 0,
             'link_updated' => $update_time_str,
-            'link_relation' => 'bystanders',
+            'link_rel' => 'bystanders',
             'link_notes' => $commentdata['link_notes'],
             'link_rss' => '',
         ];
@@ -3399,6 +3478,7 @@ function apip_update_or_insert_link_from_comment($commentdata)
  * @group   功能9.7
  * @since   1.43.5
  * @version 1.43.5  初版
+ * @date    2026-11-02
  */
 function apip_get_new_commenter_mail_list()
 {
@@ -3406,88 +3486,50 @@ function apip_get_new_commenter_mail_list()
     $sql = " SELECT `link_notes` FROM $wpdb->links ";
     $sql .= " WHERE `link_updated` >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) ";
     $sql .= " AND `link_notes` <> '' ";
+    $sql .= " OR `link_rel` = 'neighbor' " ;
     $sql .= " ORDER BY `link_updated` ASC ";
     $ret = $wpdb->get_col($sql);
 
     return $ret;
 }
 
-function my_comment_url(string $url, string $comment_ID)
+//add_filter('admin_init', 'init_apip_schdules');
+
+/**
+ * @brief   初始化计划表
+ * @return void
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5  初版
+ * @date    2026-11-02
+ */
+function init_apip_schdules()
 {
-    if ("" === $url) {
-        return $url;
-    }
-    if (! $this_comment = get_comment($comment_ID)) {
-        return $url;
-    }
-    $this_comment_time = strtotime($this_comment->comment_date_gmt . ' GMT');
-    $current_time = current_time('timestamp', true);
-    if ($this_comment_time < ($current_time - YEAR_IN_SECONDS)) { // 超过1年
-        $history_comments = get_comments(array('author_email' => $this_comment->comment_author_email, 'status' => 'approve', 'number' => 1, 'orderby' => 'comment_date_gmt', 'order' => 'DESC', 'comment__not_in' => array($comment_ID),));
-        $recent_comment = ! empty($history_comments) ? $history_comments[0] : null;
-        //此人最后一次留言 
-        if (!$recent_comment || strtotime($recent_comment->comment_date_gmt . ' GMT') < ($current_time - YEAR_IN_SECONDS)) {
-            add_comment_meta($comment_ID, '_comment_url_scheduled_replace', "", true);
-            return "";
-        } else { //替换成此人最后一次留言的网址
-            if ($url !== $recent_comment->comment_author_url) {
-                $url = $recent_comment->comment_author_url;
-                if (!wp_http_validate_url($url)) {
-                    $url = "";
-                }
-                add_comment_meta($comment_ID, '_comment_url_scheduled_replace', $url, true);
-            }
-        }
-    }
-    return $url;
-}
-
-add_filter('admin_init', 'init_my_schdules');
-
-
-function init_my_schdules()
-{
-    add_action('my_schedule_replace_old_comment_url', 'my_do_replace_old_comment_url');
-    if (!wp_next_scheduled('my_schedule_replace_old_comment_url') && !wp_installing()) {
-        wp_schedule_event(time(), 'monthly', 'my_schedule_replace_old_comment_url');
+    add_action('apip_schedule_replace_old_comment_url', 'apip_do_replace_old_comment_url');
+    if (!wp_next_scheduled('apip_schedule_replace_old_comment_url') && !wp_installing()) {
+        wp_schedule_event(time(), 'monthly', 'apip_schedule_replace_old_comment_url');
     }
 }
 
-
-function my_do_replace_old_comment_url()
-{
-    $comments = get_comments(['meta_key' => '_comment_url_scheduled_replace', 'status' => 'approve']);
-    foreach ($comments as $comment) {
-        $url = get_comment_meta(
-            $comment->comment_ID,
-            '_comment_url_scheduled_replace',
-            true
-        );
-
-
-        if (
-            $url === '' ||
-            wp_http_validate_url($url)
-        ) {
-            wp_update_comment(array(
-                'comment_ID'         => $comment->comment_ID,
-                'comment_author_url' => $url,
-            ));
-        }
-        delete_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace');
-    }
-}
-
+/**
+ * @brief 定期删链接，并删link
+ * @return void
+ * @group   功能9.7
+ * @since   1.43.5
+ * @version 1.43.5  初版
+ * @date    2026-11-02
+ */
 function apip_do_replace_old_comment_url()
 {
-    $comments = get_comments(['meta_key' => '_comment_url_scheduled_replace', 'status' => 'approve']);
-    foreach ($comments as $comment) {
-        $url = get_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace', true);
-        if ($url === '' || wp_http_validate_url($url)) {
-            wp_update_comment(array('comment_ID' => $comment->comment_ID, 'comment_author_url' => $url,));
-        }
-        delete_comment_meta($comment->comment_ID, '_comment_url_scheduled_replace');
-    }
+    $exceptions = apip_get_new_commenter_mail_list();
+    apip_empty_history_comments_url($exceptions);
+    $not_in_str = "'" . implode('\', ', $exceptions) . "'";
+    global $wpdb;
+    $prepare_str = " DELETE FROM $wpdb->links ";
+    $prepare_str .=   " WHERE `$wpdb->links`.`link_notes` NOT IN (%s) ";
+    $sql = $wpdb->prepare($prepare_str, $not_in_str);
+    $wpdb->query($sql);
+
 }
 
 /**
