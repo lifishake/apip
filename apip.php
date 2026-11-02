@@ -3280,7 +3280,7 @@ function apip_empty_history_comments_url($exceptions)
     $sql = $wpdb->prepare($prepare_str, $not_in_str);
     $wpdb->query($sql);
     $option = get_option('apip_settings');
-    if (!$option) {
+    if ($option) {
         $options['comment_url_last_check_time'] = gmdate('Y-m-d');
         update_option('apip_settings', $options, true);
     }
