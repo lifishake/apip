@@ -230,7 +230,7 @@ jQuery(document).ready(function ($) {
   }); //$("#image_upload_btn").click
 
   $("#check_comment_url_button").click(function () {
-    const datebar = $(this).parent()?.prev()?.[0] ?? null;
+    const datebar = document.querySelector('input[name="apip_settings[comment_url_last_check_time]"]');
     const wpnonce = this.getAttribute("wpnonce");
     const fd = new FormData();
     fd.append("nonce", wpnonce);
@@ -242,10 +242,10 @@ jQuery(document).ready(function ($) {
       contentType: false,
       processData: false,
       success: function (response) {
-        if (response.success) {
+        if (!response.success) {
           datebar.textContent = "1970-01-01";
         } else {
-          datebar.textContent = response.data;
+          datebar.textContent = response.updated;
         }
       },
   });

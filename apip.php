@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.1
+ * Version:     1.44.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -3256,7 +3256,8 @@ function apip_upload_image()
  * @group   功能9.7
  * @since   1.43.5
  * @version 1.43.5      初版
- * @data    2026-10-21
+ * @version 1.44.2      增加ajax返回值
+ * @data    2026-11-03
  */
 function apip_admin_check_comments_url()
 {
@@ -3274,7 +3275,10 @@ function apip_admin_check_comments_url()
     global $wpdb;
     $recorded = apip_get_new_commenter_mail_list();
     $exceptions = apip_find_unlinked_commenters($recorded);
-    apip_empty_history_comments_url($exceptions);
+    $ret = apip_empty_history_comments_url($exceptions);
+    if (!empty($ret)) {
+        wp_send_json(['success'=>1, 'updated' =>$ret]);
+    }
 }
 
 /**
@@ -3283,11 +3287,12 @@ function apip_admin_check_comments_url()
  * @group 功能9.7
  * @since 1.43.6
  * @version 1.43.6  初版
- * @return void
+ * @return string
  */
 function apip_empty_history_comments_url($exceptions)
 {
     global $wpdb;
+    $ret = '';
     $admin_email = get_option('admin_email');
     if (!empty($admin_email)) {
         $exceptions[] = $admin_email;
@@ -3307,7 +3312,9 @@ function apip_empty_history_comments_url($exceptions)
     if ($option) {
         $option['comment_url_last_check_time'] = gmdate('Y-m-d');
         update_option('apip_settings', $option, true);
+        $ret = $option['comment_url_last_check_time'];
     }
+    return $ret;
 }
 
 /**
@@ -3389,10 +3396,26 @@ function apip_operate_new_commenter_links($new_status, $old_status, $comment) {
  * @param int $approved
  * @param array $commentdata
  * @return void
+ * @note    1.43.5  初版
+ * @version 1.44.2  增加回复字数统计
+ * @date    2026-11-03
  */
 function apip_operate_theme_commenter_links($comment_ID, $approved, $commentdata) {
     if (isset($commentdata['user_id']) && $commentdata['user_id'] != 0) {
-
+        if ( $commentdata['comment_parent'] ) {
+            $parent = get_comment($commentdata['comment_parent']);
+	        if ($parent && $parent->comment_author_email) {
+                global $wpdb;
+                $prepare = "UPDATE $wpdb->links 
+                SET link_rating = link_rating + %d
+                WHERE link_notes = %s";
+                $sql = $wpdb->prepare(
+                    $prepare,
+                    mb_strlen($commentdata['comment_content'], 'UTF-8'),
+                    $parent->comment_author_email);
+                $wpdb->query($sql);
+            }
+        }
     } else {
         if (!$approved || !isset($commentdata['comment_author_url']) || empty($commentdata['comment_author_url'])) {
             return;
