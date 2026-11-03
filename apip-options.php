@@ -79,6 +79,7 @@ function apip_get_option()
         "apip_fancybox_tags" => "",
         "apip_fancybox_ids" => "",
         "comment_url_last_check_time" => "2000-01-01",
+        "disable_core_events" => '0', //2.12
     );
     $options = get_option('apip_settings');
     $options = wp_parse_args($options, $default_apip_options);
@@ -159,7 +160,8 @@ function sanitize_apip_options($input)
             'social_share_twitter' === $key ||
             'social_share_sina' === $key ||
             'social_share_facebook' === $key ||
-            'apip_commentquiz_enable' === $key
+            'apip_commentquiz_enable' === $key ||
+            'disable_core_events' === $key
         ) {
             $input[$key] = sanitize_apip_option_bool($value);
         } elseif (
@@ -555,6 +557,9 @@ function apip_advanced_writer_settings_render()
         value='1' /><br />
     <span> 使用原生的link manager：</span>
     <input type='checkbox' name='apip_settings[enable_link_manager]' <?php checked($options['enable_link_manager'], 1); ?>
+        value='1' /><br />
+    <span> 暂时停止core events：</span>
+    <input type='checkbox' name='apip_settings[disable_core_events]' <?php checked($options['disable_core_events'], 1); ?>
         value='1' /><br />
 <?php
 }
