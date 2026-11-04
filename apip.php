@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.2
+ * Version:     1.44.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -275,7 +275,6 @@ function apip_init(): void
         remove_action('admin_init', '_maybe_update_core');
         remove_action('admin_init', '_maybe_update_plugins');
         remove_action('admin_init', '_maybe_update_themes');
-        remove_action('init', 'wp_schedule_update_checks');
         add_filter('translations_api', '__return_empty_array');
         // add_filter('install_plugins_table_api_args_favorites', '__return_false');
         // add_filter('install_plugins_table_api_args_featured', '__return_false');
@@ -385,6 +384,7 @@ function apip_init(): void
 
     //2.13 暂停原生的events
     if (apip_option_check('disable_core_events')) {
+        remove_action('init', 'wp_schedule_update_checks');
         remove_action('wp_version_check','wp_version_check');
         wp_clear_scheduled_hook('wp_version_check');
         remove_action( 'wp_update_plugins','wp_update_plugins');
