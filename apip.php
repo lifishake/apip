@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.3
+ * Version:     1.44.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -3457,8 +3457,9 @@ function apip_update_commenter_link_status($comment) {
  * @group   功能9.7
  * @since   1.43.5
  * @note    1.43.5      初版
- * @version 1.44.1      如果一个月内有记录，更新link时间
- * @date    2026-11-02
+ * @note    1.44.1      如果一个月内有记录，更新link时间
+ * @version 1.44.4      
+ * @date    2026-11-04
  */
 function apip_update_or_insert_link_from_comment($commentdata)
 {
@@ -3473,10 +3474,10 @@ function apip_update_or_insert_link_from_comment($commentdata)
     $prepare = " SELECT link_url, link_name, MAX(`link_updated`) AS updated FROM $wpdb->links ";
     $prepare .= " WHERE `link_notes` = %s ";
     $sql = $wpdb->prepare($prepare, $commentdata['link_notes']);
-    $has_rec = $wpdb->get_results($sql, ARRAY_A);
+    $has_rec = $wpdb->get_results($sql);
     $update_time_str = isset($commentdata['link_updated']) && !empty($commentdata['link_updated']) ? $commentdata['link_updated'] : gmdate('Y-m-d H:i:s');
     $need_update_history_comments = false;
-    if (empty($has_rec)) {
+    if (null === $has_rec || empty($has_rec[0]->link_name)) {
         //没有记录，要插入
         $insert_data = [
             'link_url' => $commentdata['link_url'],
@@ -3500,9 +3501,9 @@ function apip_update_or_insert_link_from_comment($commentdata)
         }
     } else {
         if (
-            strtotime($update_time_str) - strtotime($has_rec[0]['updated']) > MONTH_IN_SECONDS ||
-            $has_rec[0]['link_url'] != $commentdata['link_url'] ||
-            $has_rec[0]['link_name'] != $commentdata['link_name']
+            strtotime($update_time_str) - strtotime($has_rec[0]->updated) > MONTH_IN_SECONDS ||
+            $has_rec[0]->link_url != $commentdata['link_url'] ||
+            $has_rec[0]->link_name != $commentdata['link_name']
         ) {
             //要更新
             $update_data = [
