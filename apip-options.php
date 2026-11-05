@@ -244,7 +244,7 @@ function sanitize_apip_custom_styles($input)
             if (!empty($totalcontent) && !empty($totalname)) {
                 $output_name = md5($totalname);
                 $output_url = APIP_PLUGIN_URL . 'local_fonts/' . $output_name . '.css';
-                $output_name = APIP_PLUGIN_DIR . '/local_fonts/' . $output_name . '.css';
+                $output_name = APIP_PLUGIN_DIR . 'local_fonts/' . $output_name . '.css';
                 if (file_exists($output_name)) {
                     @unlink($output_name);
                 }

@@ -2446,7 +2446,7 @@ function apip_get_object_id($o)
 function apip_list_local_fonts($original = array())
 {
     $ret = array();
-    $base_dir = APIP_PLUGIN_DIR . '/local_fonts/';
+    $base_dir = APIP_PLUGIN_DIR . 'local_fonts/';
     $base_dir = wp_normalize_path($base_dir);
     $base_url = APIP_PLUGIN_URL . 'local_fonts/';
     $css_folders = glob($base_dir . '*/', GLOB_ONLYDIR);

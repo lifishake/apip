@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.7
+ * Version:     1.44.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -305,7 +305,7 @@ function apip_init(): void
         if ($for_comments)
             load_template(ABSPATH . WPINC . '/feed-rss2-comments.php');
         else
-            load_template(APIP_PLUGIN_DIR . '/ext/apip-rss2.php');
+            load_template(APIP_PLUGIN_DIR . 'ext/apip-rss2.php');
         //load_template(get_stylesheet_directory() . '/my-rss2.php');
     }, 10);
 
@@ -508,7 +508,7 @@ function apip_init(): void
 
     /** 99 */
     if (apip_option_check('local_widget_enable')) {
-        require APIP_PLUGIN_DIR . '/apip-widgets.php';
+        require APIP_PLUGIN_DIR . 'apip-widgets.php';
     }
 }
 /**
@@ -1115,8 +1115,8 @@ function apip_remove_default_risk_files(WP_Upgrader $upgrader_object, array $opt
     if ('update' === $options['action'] && 'core' === $options['type']) {
         global $wp_filesystem;
         $wp_dir = trailingslashit($wp_filesystem->abspath());
-        @$wp_filesystem->copy(APIP_PLUGIN_DIR . '/ext/wp-go-die.php', $wp_dir . 'wp-comments-post.php', true);
-        @$wp_filesystem->copy(APIP_PLUGIN_DIR . '/ext/wp-go-die.php', $wp_dir . 'xmlrpc.php', true);
+        @$wp_filesystem->copy(APIP_PLUGIN_DIR . 'ext/wp-go-die.php', $wp_dir . 'wp-comments-post.php', true);
+        @$wp_filesystem->copy(APIP_PLUGIN_DIR . 'ext/wp-go-die.php', $wp_dir . 'xmlrpc.php', true);
     }
 }
 
