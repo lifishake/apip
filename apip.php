@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.6
+ * Version:     1.44.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -103,12 +103,12 @@ function apip_plugin_deactivation(): void {}
  * 配置画面
  */
 if (is_admin()) {
-    require_once(APIP_PLUGIN_DIR . '/apip-options.php');
+    require_once(APIP_PLUGIN_DIR . 'apip-options.php');
 }
 /**
  * 包含自定义的函数
  */
-require(APIP_PLUGIN_DIR . '/apip-func.php');
+require(APIP_PLUGIN_DIR . 'apip-func.php');
 
 if (file_exists(APIP_PLUGIN_DIR . 'private.php')) {
     require_once(APIP_PLUGIN_DIR . 'private.php');
