@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.4
+ * Version:     1.44.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1297,12 +1297,26 @@ function apip_slug_unicode(string $strSlug): string
 
 //0.19 给短代码擦屁股
 //来源：https://www.wpexplorer.com/clean-up-wordpress-shortcode-formatting/
-
-function apip_fix_shortcodes(string $content): string
+/**
+ * @brief 在bddb前后增加空行
+ * @param string $content
+ * @return string
+ * @since 1.20.3
+ * @version 1.44.5
+ * @date 2026-11-05
+ */
+function apip_fix_shortcodes($content)
 {
+    /*
     $content = preg_replace(
         '/(?<!\n)(\[bddbr\b[^\]]*\/\])(?!\n\n)/i',
         "\n$1\n\n",
+        $content
+    );
+    */
+    $content = preg_replace(
+        '/(\[bddbr\b[^\]]*\/\])/i',
+        "\r\n$1\r\n\r\n",
         $content
     );
     return $content;
