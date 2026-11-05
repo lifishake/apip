@@ -111,7 +111,7 @@ if (is_admin()) {
 require(APIP_PLUGIN_DIR . 'apip-func.php');
 
 if (file_exists(APIP_PLUGIN_DIR . 'private.php')) {
-    require_once(APIP_PLUGIN_DIR . 'private.php');
+    require(APIP_PLUGIN_DIR . 'private.php');
 }
 
 /**
@@ -1580,7 +1580,7 @@ function convert_to_internal_links($content)
                     }
                 }
                 $processor->set_attribute( 'target', '_blank' );
-                $new = is_ssl()?'https://':'http://'. $domain. '/gayn/' . $converted;
+                $new = 'https://'. $domain. '/gayn/' . $converted;
                 $processor->set_attribute('href', $new);
                 // 可选：加上安全属性
                 $rel = $processor->get_attribute( 'rel' ) ?: '';
