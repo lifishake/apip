@@ -1575,7 +1575,7 @@ function convert_to_internal_links($content)
                 $converted = base64_encode($href);
                 if (function_exists('yh_encrypt')) {
                     $converted = yh_encrypt($href);
-                    if (false === $converted) {
+                    if (false === $converted || empty($converted)) {
                         $converted = base64_encode($href);
                     }
                 }
