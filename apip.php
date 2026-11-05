@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.5
+ * Version:     1.44.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1551,26 +1551,59 @@ function remove_page_search(WP_Query $query)
  * 来源: 灵尘子
  * URL: https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html
  */
-function convert_to_internal_links(string $content)
+/**
+ * @brief 将content中的内容中的外链改成假内链
+ * @param string|bool $content
+ * @return string|bool
+ * @since  1.20.0
+ * @version 1.44.6      修改加密算法
+ * @date 2026-11-05
+ * @mention WordPress 6.2+
+ */
+function convert_to_internal_links($content)
 {
-    preg_match_all('/\shref=(\'|\")(http[^\'\"#]*?)(\'|\")([\s]?)/', $content, $matches);
-    if ($matches) {
-        foreach ($matches[2] as $val) {
-            if (strpos($val, home_url()) === false) {
-                $rep = $matches[1][0] . $val . $matches[3][0];
-                $new = '"' . home_url() . '/gayn/' . base64_encode($val) . '" target="_blank"';
-                $content = str_replace("$rep", "$new", $content);
+    $home = home_url();
+    $domain = str_replace(array("http://", "https://", "//"), "", $home);
+    if ( class_exists( 'WP_HTML_Tag_Processor' ) ) {
+        $processor = new WP_HTML_Tag_Processor( $content );
+        while ( $processor->next_tag( 'A' ) ) {
+            $href = $processor->get_attribute( 'href' );
+            if ( ! $href ) {
+                continue;
+            }
+            if ( $home && strpos($href, $domain) === false ) {
+                $converted = base64_encode($href);
+                if (function_exists('yh_encrypt')) {
+                    $converted = yh_encrypt($href);
+                    if (false === $converted) {
+                        $converted = base64_encode($href);
+                    }
+                }
+                $processor->set_attribute( 'target', '_blank' );
+                $new = is_ssl()?'https://':'http://'. $domain. '/gayn/' . $converted;
+                $processor->set_attribute('href', $new);
+                // 可选：加上安全属性
+                $rel = $processor->get_attribute( 'rel' ) ?: '';
+                $processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
+            } else {
+                $href = str_replace(array("http://", "https://"), "//", $href);
+                $processor->set_attribute('href', $href);
             }
         }
+        return $processor->get_updated_html();
+    } else {
+        return $content;
     }
-    return $content;
 }
 
 /**
- * Summary of apip_comment_url
+ * @brief 将链接变成内部链接
  * @param string $url
  * @param string $comment_ID
  * @return string
+ * @since  1.20.0
+ * @version 1.44.6      修改加密算法
+ * @date 2026-11-05
  */
 function apip_comment_url(string $url, string $comment_ID)
 {
@@ -1582,7 +1615,11 @@ function apip_comment_url(string $url, string $comment_ID)
     }
     $domain = str_replace(array("http://", "https://", "//"), "", home_url());
     if (strpos($url, $domain) === false) {
-        $new = home_url() . '/gayn/' . base64_encode($url);
+        if (function_exists('yh_encrypt')) {
+            $new = home_url() . '/gayn/' . yh_encrypt($url);
+        } else {
+            $new = home_url() . '/gayn/' . base64_encode($url);
+        }
         return $new;
     } else {
         return $url;
@@ -1590,8 +1627,12 @@ function apip_comment_url(string $url, string $comment_ID)
 }
 
 /**
- * Summary of apip_e2i_redirect
+ * @brief 外部跳转前解密
  * @return void
+ * @since  1.20.0
+ * @version 1.44.6      修改解密算法
+ * @date 2026-11-05
+ * @mention WordPress 6.2+
  */
 function apip_e2i_redirect()
 {
@@ -1609,7 +1650,11 @@ function apip_e2i_redirect()
     if (substr($hop_key, -1) == '/')
         $hop_key = substr($hop_key, 0, -1);
     if (!empty($hop_key)) {
-        $url = base64_decode($hop_key);
+        if (function_exists('yh_decrypt')) {
+            $url = yh_decrypt($hop_key);
+        } else {
+            $url = base64_decode($hop_key);
+        }
         wp_redirect($url, 302);
         exit;
     }
@@ -3719,12 +3764,7 @@ function apip_template_redirect(): void
     apip_redirect_author();
 
     //0.19 autop与shortcode冲突问题
-
-    //if (function_exists('yh_redo_wpautop') && yh_redo_wpautop()) {
-    //    ;//do nothing
-    //} else {
     add_filter('the_content', 'apip_fix_shortcodes', 8);
-    //}
 
     //2.7搜索结果只有一条时直接跳入
     if (apip_option_check('redirect_if_single')) {

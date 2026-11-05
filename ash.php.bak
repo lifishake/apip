@@ -1859,6 +1859,51 @@ function bddb_array_child_value_to_str($data, $key, $name_key = "name", $unknown
     return $ret;
 }
 
+/**
+ * @brief 强行在短代码的前后各加一个换行
+ * @date 2026-05-07
+ * @version 0.0.5
+ * @since 0.0.4
+ * @see yh_redo_wpautop()
+ * @group apip-0.19
+ */
+function yh_add_br_before_autop ($content) {
+	$content = str_replace("[", "\n[", $content);
+	$content = str_replace("]", "]\n", $content);
+    //mysup特殊处理，不需要加换行
+    $content = preg_replace(["/\r?\n(?=\[mysup[^\]]+\/\]\r?\n)/", "/(\[mysup[^\]]+\/\])\r?\n/"], [ "", "$1"], $content);
+	return $content;
+}
+
+/**
+ * @brief 正确处理shortcode与autop的关系
+ * @date 2026-08-12
+ * @version 0.0.6
+ * @since 0.0.1
+ * @see apip_fix_shortcodes()
+ * @group apip-0.19
+ */
+function yh_redo_wpautop () {
+    //后台
+    if (is_admin() && !wp_doing_ajax()) {
+        return false;
+    }
+    //single
+    if ( !is_singular()) {
+        return false;
+    }
+    //搞半天只要对付写shortcode不爱在前后加换行的毛病就好了。
+    add_filter('the_content', 'yh_add_br_before_autop', 8);
+    $need_tags = array('reading_record' /* 阅读记录 */, 'movie_watching_record' /* 观影记录 */, 'youji' /*游记*/) ;
+    $need_cates = array('appreciations'/* 批与评 */, 'relisten_moring_songs'/* 晨钟暮聆 */, 'nightlygames'/* 每夜一游 */, 'relisten_moring_songs'/* 晨钟暮聆 */);
+    if (has_category($need_cates) || has_tag($need_tags)) {
+        remove_filter('the_content', 'wp_make_content_images_responsive');
+        add_filter( 'the_content', 'wp_make_content_images_responsive', 13);
+        return true;
+    }
+    return false;
+}
+
  ?>
 
  
