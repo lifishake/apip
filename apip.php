@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.8
+ * Version:     1.44.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -787,7 +787,7 @@ $options
     0.16                                强化AdminBar
     0.17                                针对苹果旧设备的访问，减少404
     0.18                                汉字标题自动转utf8字符
-    0.19                                autop与shortcode冲突问题
+    0.19                                autop与shortcode冲突问题  ×已转移到apip
     0.20                                改用户profile不需要邮件确认
     0.21                                设置chrome的标签颜色
     0.22                                移除后台画面的help
@@ -1292,34 +1292,6 @@ function apip_slug_unicode(string $strSlug): string
     }
     $strRet = rtrim($strRet, "-");
     return $strRet;
-}
-
-
-//0.19 给短代码擦屁股
-//来源：https://www.wpexplorer.com/clean-up-wordpress-shortcode-formatting/
-/**
- * @brief 在bddb前后增加空行
- * @param string $content
- * @return string
- * @since 1.20.3
- * @version 1.44.5
- * @date 2026-11-05
- */
-function apip_fix_shortcodes($content)
-{
-    /*
-    $content = preg_replace(
-        '/(?<!\n)(\[bddbr\b[^\]]*\/\])(?!\n\n)/i',
-        "\n$1\n\n",
-        $content
-    );
-    */
-    $content = preg_replace(
-        '/(\[bddbr\b[^\]]*\/\])/i',
-        "\r\n$1\r\n\r\n",
-        $content
-    );
-    return $content;
 }
 
 //0.21 设置chrome内核浏览器的tab颜色
@@ -3751,20 +3723,18 @@ function apip_filter_filter()
 /*        一些共用功能的整合                                                   */
 /******************************************************************************/
 /**
- *  WP钩子：template_redirect
- *  整合日：20200416
- *  涉及功能：0.10 作者页跳转到404
- *           0.19 autop与shortcode冲突问题
- *           2.7  搜索结果只有一条时直接跳入
- *           2.10 外链转内链
+ * @brief WP钩子：template_redirect
+ * @return void
+ * @since   0.7.1
+ * @version 1.44.9
+ * @group   0.10-作者页跳转到404\n
+ * @group   2.7  搜索结果只有一条时直接跳入\n
+ * @group   2.10 外链转内链
+ * @date    2026-11-06
  */
-function apip_template_redirect(): void
-{
+function apip_template_redirect() {
     //0.10 作者页跳转到404
     apip_redirect_author();
-
-    //0.19 autop与shortcode冲突问题
-    add_filter('the_content', 'apip_fix_shortcodes', 8);
 
     //2.7搜索结果只有一条时直接跳入
     if (apip_option_check('redirect_if_single')) {
