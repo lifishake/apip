@@ -315,8 +315,9 @@ function apip_init(): void
     });
 
     //0.29
-    add_action('edit_link', 'apip_update_link_time');
-    add_action('add_link', 'apip_update_link_time');
+    //7.9
+    add_action('edit_link', 'apip_update_commenter_url');
+    add_action('add_link', 'apip_update_commenter_url');
 
 
     /** 01 */
@@ -797,7 +798,7 @@ $options
     0.26                                屏蔽reset password链接
     0.27                                移除feed中的不良链接
     0.28                                增加wp_remote_get时的伪装头
-    0.29                                编辑link时更新时间的补丁
+    0.29                                编辑link时更新时间的补丁    ×已删除 WordPress 6.6以后自己修改了这个bug
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1358,16 +1359,16 @@ function _debug_ignore_wp_request(array $allcaps, array $caps, array $args)
     return $allcaps;
 }
 
-//0.29 link manager编辑或插入时的update_time时间补丁
 /**
- * @brief   link manager编辑或插入时的update_time时间补丁
+ * @brief   手动编辑用户链接时更新用户链接
  * @param   int $link_id
  * @return  int
  * @since   1.43.1
- * @version 1.43.1  初版
- * @date    2026-10-14
+ * @note    1.43.1  初版
+ * @version 1.45.0  意义发生转变，不再更新时间，而是维护字数。
+ * @date    2026-11-06
  */
-function apip_update_link_time($link_id)
+function apip_update_commenter_url($link_id)
 {
     global $wpdb;
     $exist = get_bookmark($link_id);
@@ -3551,7 +3552,8 @@ function apip_update_or_insert_link_from_comment($commentdata)
                 'link_updated' => $update_time_str,
             ];
             if (false !== $wpdb->update($wpdb->links, $update_data, ['link_notes' => $commentdata['link_notes']])) {
-                //
+                //为了弥补之前的过失，暂时都更新，保留一年。2026-11。
+                $need_update_history_comments = true;
             }
         }
     }
