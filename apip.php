@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.2
+ * Version:     1.45.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -3541,8 +3541,8 @@ function apip_update_commenter_link_status($comment) {
  * @since   1.43.5
  * @note    1.43.5      初版
  * @note    1.44.1      如果一个月内有记录，更新link时间
- * @version 1.44.4      
- * @date    2026-11-04
+ * @version 1.50.3      gmt时间改成本地时间
+ * @date    2026-11-07
  */
 function apip_update_or_insert_link_from_comment($commentdata)
 {
@@ -3558,7 +3558,7 @@ function apip_update_or_insert_link_from_comment($commentdata)
     $prepare .= " WHERE `link_notes` = %s ";
     $sql = $wpdb->prepare($prepare, $commentdata['link_notes']);
     $has_rec = $wpdb->get_results($sql);
-    $update_time_str = isset($commentdata['link_updated']) && !empty($commentdata['link_updated']) ? $commentdata['link_updated'] : gmdate('Y-m-d H:i:s');
+    $update_time_str = isset($commentdata['link_updated']) && !empty($commentdata['link_updated']) ? $commentdata['link_updated'] : date('Y-m-d H:i:s');
     $need_update_history_comments = false;
     if (null === $has_rec || empty($has_rec[0]->link_name)) {
         //没有记录，要插入
