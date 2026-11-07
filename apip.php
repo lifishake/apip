@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.44.9
+ * Version:     1.45.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -379,6 +379,7 @@ function apip_init(): void
         remove_filter('pre_link_rss', 'esc_url_raw');
         add_filter('manage_link-manager_columns', 'apip_linkmanager_column_header');
         add_filter('manage_link-manager_sortable_columns', 'apip_linkmanager_column_sortable');
+        add_filter( 'get_bookmarks','apip_sort_table_by_updated', 10, 2);
         add_action('manage_link_custom_column', 'apip_link_custom_columns', 10, 2);
         add_action('add_meta_boxes_link', 'apip_remake_edit_link_form');
     }
@@ -1366,6 +1367,7 @@ function _debug_ignore_wp_request(array $allcaps, array $caps, array $args)
  * @since   1.43.1
  * @note    1.43.1  初版
  * @version 1.45.0  意义发生转变，不再更新时间，而是维护字数。
+ * @version 1.45.1  允许将localhost保存成空url
  * @date    2026-11-06
  */
 function apip_update_commenter_url($link_id)
@@ -1373,8 +1375,10 @@ function apip_update_commenter_url($link_id)
     global $wpdb;
     $exist = get_bookmark($link_id);
     if (null !== $exist) {
+        $domain = str_replace(array("http://", "https://", "//"), "", home_url());
+        $url = (false === strpos($exist->link_url, $domain)) ? $exist->link_url : '';
         $wpdb->update($wpdb->comments, 
-        ['comment_author' => wp_unslash($exist->link_name), 'comment_author_url' => $exist->link_url],
+        ['comment_author' => wp_unslash($exist->link_name), 'comment_author_url' => $url],
         ['comment_author_email' => $exist->link_notes]);
     }
     return 0;
@@ -1673,6 +1677,39 @@ function apip_linkmanager_column_sortable($columns)
         'rating'  => 'rating',
         'updated' => 'updated',
     );
+}
+
+/**
+ * @brief 表格默认用updated排序
+ * @param mixed $bookmarks
+ * @param mixed $args
+ * @return mixed
+ * @since   1.45.1
+ * @version 1.45.1  初版
+ * @date    2026-11-07
+ */
+function apip_sort_table_by_updated( $bookmarks, $args ) {
+    // 只在后台生效
+    if ( ! is_admin() ) {
+        return $bookmarks;
+    }
+
+    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+    if ( ! $screen || $screen->id !== 'link-manager' ) {
+        return $bookmarks;
+    }
+
+    // 用户已经点击某个列排序时，不要覆盖
+    if ( ! empty( $_GET['orderby'] ) ) {
+        return $bookmarks;
+    }
+
+    // 按 link_updated 降序
+    usort( $bookmarks, function( $a, $b ) {
+        return strcmp( $b->link_updated, $a->link_updated );
+    });
+
+    return $bookmarks;
 }
 
 /**
