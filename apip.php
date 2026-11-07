@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.1
+ * Version:     1.45.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1366,20 +1366,27 @@ function _debug_ignore_wp_request(array $allcaps, array $caps, array $args)
  * @return  int
  * @since   1.43.1
  * @note    1.43.1  初版
- * @version 1.45.0  意义发生转变，不再更新时间，而是维护字数。
- * @version 1.45.1  允许将localhost保存成空url
- * @date    2026-11-06
+ * @note    1.45.0  意义发生转变，不再更新时间，而是维护字数。
+ * @note    1.45.1  允许将localhost保存成空url
+ * @version 1.45.2  输入日期时手动编辑日期
+ * @date    2026-11-07
  */
 function apip_update_commenter_url($link_id)
 {
-    global $wpdb;
     $exist = get_bookmark($link_id);
     if (null !== $exist) {
+        global $wpdb;
         $domain = str_replace(array("http://", "https://", "//"), "", home_url());
         $url = (false === strpos($exist->link_url, $domain)) ? $exist->link_url : '';
         $wpdb->update($wpdb->comments, 
         ['comment_author' => wp_unslash($exist->link_name), 'comment_author_url' => $url],
         ['comment_author_email' => $exist->link_notes]);
+        if(apip_is_ymd_date($_POST['link_updated'])) {
+            $update_data = [
+                'link_updated' => $_POST['link_updated']." 15:30:00",
+            ];
+            $wpdb->update($wpdb->links, $update_data, ['link_id' => $link_id]);
+        }
     }
     return 0;
 }
@@ -1797,8 +1804,11 @@ function apip_link_rels_meta_box($link)
  * @brief 重画link manager上的更多box
  * @param stdClass $link
  * @return void
- * @date 2026-10-19
- * @version 1.43.3 初版
+ * @group   7.9
+ * @date    2026-11-07
+ * @since   1.43.3
+ * @note    1.43.3 初版
+ * @version 1.50.2 增加update。如果输入日期就更新到（旧）日期，否则不变。
  * 
  */
 function apip_link_more_meta_box($link)
@@ -1806,20 +1816,24 @@ function apip_link_more_meta_box($link)
 ?>
     <table class="links-table" cellpadding="0">
         <tr>
-            <th scope="row"><label for="link_image">未使用（Image Address）</label></th>
-            <td><input type="text" name="link_image" class="code" id="link_image" maxlength="255" value="<?php echo (isset($link->link_image) ? esc_attr($link->link_image) : ''); ?>" /></td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="rss_uri">未使用（RSS Address'）</label></th>
-            <td><input name="link_rss" class="code" type="text" id="rss_uri" maxlength="255" value="<?php echo (isset($link->link_rss) ? esc_attr($link->link_rss) : ''); ?>" /></td>
-        </tr>
-        <tr>
             <th scope="row"><label for="link_notes">邮箱（原名：Notes）</label></th>
             <td><input name="link_notes" class="code" type="text" id="link_notes" maxlength="255" value="<?php echo (isset($link->link_notes) ? esc_attr($link->link_notes) : ''); ?>" /></td>
         </tr>
         <tr>
             <th scope="row"><label for="link_rating">Rating</label></th>
             <td><input name="link_rating" class="code" type="number" id="link_rating" min="0" step="1" value="<?php echo (isset($link->link_rating) ? esc_attr($link->link_rating) : '0'); ?>" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="link_updated">更新日期</label></th>
+            <td><input name="link_updated" class="code" type="text" id="link_updated" maxlength="100" value="" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="link_image">未使用（Image Address）</label></th>
+            <td><input type="text" name="link_image" class="code" id="link_image" maxlength="255" value="<?php echo (isset($link->link_image) ? esc_attr($link->link_image) : ''); ?>" /></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="rss_uri">未使用（RSS Address'）</label></th>
+            <td><input name="link_rss" class="code" type="text" id="rss_uri" maxlength="255" value="<?php echo (isset($link->link_rss) ? esc_attr($link->link_rss) : ''); ?>" /></td>
         </tr>
     </table>
     <?php

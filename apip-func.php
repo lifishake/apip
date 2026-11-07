@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file    apip-func.php
+ * @brief   外部函数接口，内部也可以用。
+ * @version 1.45.2
+ * @date    2026-11-07
+ */
+
 define('APIP_FRONTEND_CSS_VER', '20260930');
 define('APIP_FRONTEND_JS_VER', '20260930');
 define('APIP_ADMIN_CSS_VER', '20251130');
@@ -2566,12 +2573,24 @@ function apip_is_support_fancybox()
  * @since       1.42.5
  * @date        2026-9-30
  */
-function apip_enable_fancybox_if_possible()
-{
+function apip_enable_fancybox_if_possible() {
     if (!apip_is_support_fancybox()) {
         return;
     }
     wp_enqueue_script('apip-fancybox-js', APIP_PLUGIN_URL . 'fancybox/fancybox.umd.js', array(), '6.1.7', true);
     wp_enqueue_script('apip-fancybox-init', APIP_PLUGIN_URL . 'fancybox/fancybox-init.js', array('apip-fancybox-js'), APIP_FRONTEND_JS_VER, true);
     wp_enqueue_style('apip-fancybox-css', APIP_PLUGIN_URL . 'fancybox/fancybox.css', array(), APIP_FRONTEND_CSS_VER);
+}
+
+/**
+ * 判断是不是ymd日期字符串
+ * @param string $date
+ * @return bool
+ * @version     1.45.2
+ * @since       1.45.2
+ * @date        2026-11-07
+ */
+function apip_is_ymd_date( $date ) {
+    $d = DateTime::createFromFormat( 'Y-m-d', $date );
+    return $d && $d->format( 'Y-m-d' ) === $date;
 }
