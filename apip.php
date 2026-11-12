@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.4
+ * Version:     1.45.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -399,7 +399,7 @@ function apip_init(): void
         remove_action('wp_scheduled_delete', 'wp_scheduled_delete');
         wp_clear_scheduled_hook('wp_scheduled_delete');
         //site health
-        remove_action('wp_site_health_scheduled_check','wp_cron_scheduled_check');
+        remove_action('wp_site_health_scheduled_check', array( 'WP_Site_Health', 'wp_cron_scheduled_check' ));
         remove_action( 'site_health_tab_content', array( 'WP_Site_Health', 'show_site_health_tab' ) );
         wp_clear_scheduled_hook('wp_site_health_scheduled_check');
         //wp_scheduled_auto_draft_delete
