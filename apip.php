@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.5
+ * Version:     1.45.6
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -402,9 +402,13 @@ function apip_init(): void
         remove_action('wp_site_health_scheduled_check', array( 'WP_Site_Health', 'wp_cron_scheduled_check' ));
         remove_action( 'site_health_tab_content', array( 'WP_Site_Health', 'show_site_health_tab' ) );
         wp_clear_scheduled_hook('wp_site_health_scheduled_check');
+        wp_unschedule_hook('wp_site_health_scheduled_check');
+        add_filter('pre_get_scheduled_event', 'apip_fake_site_health_scheduled_event', 10, 4);
         //wp_scheduled_auto_draft_delete
         remove_action('wp_scheduled_auto_draft_delete', 'wp_delete_auto_drafts');
         wp_clear_scheduled_hook('wp_scheduled_auto_draft_delete');
+    } else {
+        remove_filter('pre_get_scheduled_event', 'apip_fake_site_health_scheduled_event');
     }
 
     /** 03 */
@@ -1773,6 +1777,31 @@ function apip_remake_edit_link_form($link)
     remove_meta_box('linkadvanceddiv', null, 'normal');
     add_meta_box('linkreldiv', '关系', 'apip_link_rels_meta_box', null, 'normal', 'core');
     add_meta_box('linkmorediv', '更多', 'apip_link_more_meta_box', null, 'normal', 'core');
+}
+
+//2.13
+/**
+ * @brief   让site_health_scheduled_event返回空event
+ * @param   object|null $pre
+ * @param   string      $hook
+ * @param   array       $args
+ * @param   int         $timestamp
+ * @return  mixed
+ * @since   1.45.6
+ * @version 1.45.6      初版
+ * @date    2026-11-12
+ * 
+ *  */
+function apip_fake_site_health_scheduled_event($pre, $hook, $args, $timestamp) {
+    if ('wp_site_health_scheduled_check' === $hook) {
+        return (object)[
+            'hook'      => 'wp_site_health_scheduled_check',
+            'timestamp' => time() + ( 6 * MONTH_IN_SECONDS ), 
+            'schedule'  => 'weekly',
+            'args'      => [],
+        ];
+    }
+    return $pre;
 }
 
 /**
