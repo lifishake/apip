@@ -1554,8 +1554,9 @@ function remove_page_search(WP_Query $query)
  * @param string|bool $content
  * @return string|bool
  * @since  1.20.0
- * @version 1.44.6      修改加密算法
- * @date 2026-11-05
+ * @note    1.44.6      修改加密算法
+ * @version 1.45.6      增加noindex
+ * @date 2026-11-13
  * @mention WordPress 6.2+
  */
 function convert_to_internal_links($content)
@@ -1582,7 +1583,8 @@ function convert_to_internal_links($content)
                 $processor->set_attribute('href', $new);
                 // 可选：加上安全属性
                 $rel = $processor->get_attribute( 'rel' ) ?: '';
-                $processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
+                $processor->set_attribute( 'rel', trim( $rel . ' noopener noindex nofollow' ) );
+                //$processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
             } else {
                 $href = str_replace(array("http://", "https://"), "//", $href);
                 $processor->set_attribute('href', $href);
