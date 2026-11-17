@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.7
+ * Version:     1.45.8
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1584,7 +1584,15 @@ function convert_to_internal_links($content)
                 $processor->set_attribute('href', $new);
                 // 可选：加上安全属性
                 $rel = $processor->get_attribute( 'rel' ) ?: '';
-                $processor->set_attribute( 'rel', trim( $rel . ' noopener noindex nofollow' ) );
+                $rels = preg_split( '/\s+/', trim( $rel ), -1, PREG_SPLIT_NO_EMPTY );
+
+                // 去掉我们要重新添加的值
+                $rels = array_diff( $rels, [ 'nofollow', 'noopener' ] );
+
+                // 重新加上
+                $rels[] = 'noopener';
+                $rels[] = 'nofollow';
+                $processor->set_attribute( 'rel', implode( ' ', $rels ) );
                 //$processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
             } else {
                 $href = str_replace(array("http://", "https://"), "//", $href);
