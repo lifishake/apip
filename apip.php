@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.8
+ * Version:     1.46.0
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -319,6 +319,9 @@ function apip_init(): void
     //7.9
     add_action('edit_link', 'apip_update_commenter_url');
     add_action('add_link', 'apip_update_commenter_url');
+
+    //0.30
+    add_filter( 'wp_robots', 'apip_robots_noindex' );
 
 
     /** 01 */
@@ -815,6 +818,7 @@ $options
     0.27                                移除feed中的不良链接
     0.28                                增加wp_remote_get时的伪装头
     0.29                                编辑link时更新时间的补丁    ×已删除 WordPress 6.6以后自己修改了这个bug
+    0.30                                archive页面不允许robots记录
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1406,6 +1410,23 @@ function apip_update_commenter_url($link_id)
     return 0;
 }
 
+//0.30 不让robot记录archive页面
+/**
+ * @brief 不让robot记录archive页面
+ * @param array $robots
+ * @return array
+ * @since 1.46.0
+ * @version 1.46.0  初版
+ * @date  2026-11-17
+ */
+function apip_robots_noindex($robots) {
+    if (is_archive()) {
+        $robots['noindex'] = true;
+    }
+    return $robots;
+}
+
+
 /*                                          00终了                             */
 
 /******************************************************************************/
@@ -1556,7 +1577,8 @@ function remove_page_search(WP_Query $query)
  * @return string|bool
  * @since  1.20.0
  * @note    1.44.6      修改加密算法
- * @version 1.45.6      增加noindex
+ * @note    1.45.6      增加noindex
+ * @version 1.46.0      去掉重复的nofollow
  * @date 2026-11-13
  * @mention WordPress 6.2+
  */
@@ -1587,11 +1609,12 @@ function convert_to_internal_links($content)
                 $rels = preg_split( '/\s+/', trim( $rel ), -1, PREG_SPLIT_NO_EMPTY );
 
                 // 去掉我们要重新添加的值
-                $rels = array_diff( $rels, [ 'nofollow', 'noopener' ] );
+                $rels = array_diff( $rels, [ 'nofollow', 'noopener', 'noindex' ] );
 
                 // 重新加上
                 $rels[] = 'noopener';
                 $rels[] = 'nofollow';
+                $rels[] = 'noindex';
                 $processor->set_attribute( 'rel', implode( ' ', $rels ) );
                 //$processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
             } else {
@@ -1639,8 +1662,9 @@ function apip_comment_url(string $url, string $comment_ID)
  * @brief 外部跳转前解密
  * @return void
  * @since  1.20.0
- * @version 1.44.6      修改解密算法
- * @date 2026-11-05
+ * @note 1.44.6      修改解密算法
+ * @version 1.46.0      增加noindex
+ * @date 2026-11-17
  * @mention WordPress 6.2+
  */
 function apip_e2i_redirect()
@@ -1664,8 +1688,13 @@ function apip_e2i_redirect()
         } else {
             $url = base64_decode($hop_key);
         }
-        wp_redirect($url, 302);
-        exit;
+        if ($url) {
+            header( 'X-Robots-Tag: noindex', true );
+            wp_redirect($url, 302);
+            exit;
+        } else {
+            wp_die();
+        }
     }
 }
 
