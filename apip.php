@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.0
+ * Version:     1.46.1
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1578,7 +1578,7 @@ function remove_page_search(WP_Query $query)
  * @since  1.20.0
  * @note    1.44.6      修改加密算法
  * @note    1.45.6      增加noindex
- * @version 1.46.0      去掉重复的nofollow
+ * @version 1.46.1      去掉重复的nofollow
  * @date 2026-11-13
  * @mention WordPress 6.2+
  */
@@ -1593,7 +1593,15 @@ function convert_to_internal_links($content)
             if ( ! $href ) {
                 continue;
             }
-            if ( $home && strpos($href, $domain) === false ) {
+            $host = wp_parse_url( $href, PHP_URL_HOST );
+
+            if ( empty( $host ) ) {
+                // 相对链接，视为内链
+            } elseif ( strtolower( $host ) === strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) ) ) {
+                // 站内绝对链接
+                $href = str_replace(array("http://", "https://", "//", $domain), "", $href);
+                $processor->set_attribute('href', $href);
+            } else {
                 $converted = base64_encode($href);
                 if (function_exists('yh_encrypt')) {
                     $converted = yh_encrypt($href);
@@ -1617,9 +1625,6 @@ function convert_to_internal_links($content)
                 $rels[] = 'noindex';
                 $processor->set_attribute( 'rel', implode( ' ', $rels ) );
                 //$processor->set_attribute( 'rel', trim( $rel . ' noopener noreferrer' ) );
-            } else {
-                $href = str_replace(array("http://", "https://"), "//", $href);
-                $processor->set_attribute('href', $href);
             }
         }
         return $processor->get_updated_html();
