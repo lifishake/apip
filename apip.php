@@ -1691,10 +1691,14 @@ function apip_e2i_redirect()
         if ($url) {
             header( 'X-Robots-Tag: noindex', true );
             wp_redirect($url, 302);
-            exit;
         } else {
-            wp_die();
+            global $wp_query;
+            $wp_query->set_404();
+            status_header(404);
+            nocache_headers();
+            include get_404_template();
         }
+        exit;
     }
 }
 
