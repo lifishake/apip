@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.45.6
+ * Version:     1.45.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -245,6 +245,7 @@ function apip_init(): void
     remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
     remove_action('wp_enqueue_scripts','wp_enqueue_global_styles');
     remove_action('wp_head', 'wp_print_font_faces', 50);
+    remove_action( 'init', 'register_block_core_block' );
 
     //0.13 替换human_time_diff函数中的英文单词
     add_filter('human_time_diff', 'apip_replaced_human_time_diff', 10, 1);
