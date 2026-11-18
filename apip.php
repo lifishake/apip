@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.1
+ * Version:     1.46.2
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -322,6 +322,9 @@ function apip_init(): void
 
     //0.30
     add_filter( 'wp_robots', 'apip_robots_noindex' );
+
+    //0.31
+    add_filter('wp_sitemaps_add_provider', 'apip_custom_sitemap_output', 10, 2);
 
 
     /** 01 */
@@ -686,8 +689,11 @@ function apip_init_actions()
 function apip_header_actions(): void {}
 
 /**
- * 后台初始化
+ * @brief 后台初始化
+ * @since 0.1.0
+ * @version 1.46.2
  * @return void
+ * @date 2026-11-18
  */
 function apip_admin_init(): void
 {
@@ -760,6 +766,9 @@ function apip_admin_init(): void
     remove_action('admin_enqueue_scripts', 'wp_enqueue_global_styles');
     remove_action('login_enqueue_scripts','wp_enqueue_global_styles');
 
+    remove_action('wp_ajax_heartbeat', 'wp_ajax_heartbeat');
+    remove_action('wp_ajax_nopriv_heartbeat', 'wp_ajax_nopriv_heartbeat');
+
     //0.24 debug时忽略wordpress.org的update检查.
     if (apip_is_debug_mode()) {
         remove_action('upgrader_process_complete', 'wp_update_plugins');
@@ -819,6 +828,7 @@ $options
     0.28                                增加wp_remote_get时的伪装头
     0.29                                编辑link时更新时间的补丁    ×已删除 WordPress 6.6以后自己修改了这个bug
     0.30                                archive页面不允许robots记录
+    0.31                                不在sitemap中显示user和categoires、tags
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -1033,6 +1043,14 @@ function apip_admin_scripts(): void
     //0.5 后台追加的快捷按钮
     //20250220增加快捷键的方法在6.0之后发生了变化
     wp_enqueue_script('apip-js-quicktags', APIP_PLUGIN_URL . 'js/apip-quicktags.js', array('jquery', 'quicktags'), APIP_ADMIN_JS_VER, true);
+
+    //0.12 古腾堡块编辑相关余孽
+    wp_dequeue_script('wp-preferences');
+    wp_deregister_script('wp-preferences');
+    wp_dequeue_script('wp-preferences-persistence');
+    wp_deregister_script('wp-preferences-persistence');
+    wp_dequeue_script('heartbeat');
+    wp_deregister_script('heartbeat');
 }
 
 //0.2
@@ -1426,6 +1444,22 @@ function apip_robots_noindex($robots) {
     return $robots;
 }
 
+//0.31 不在sitemap中显示user和categoires、tags
+/**
+ * @brief 不在sitemap中显示user和categoires、tags
+ * @param WP_Sitemaps_Provider $provider
+ * @param string $name
+ * @return WP_Sitemaps_Provider|false
+ * @since 1.46.2
+ * @version 1.46.2 初版
+ * @data 2026-11-18
+ */
+function apip_custom_sitemap_output($provider, $name) {
+    if ('users' === $name || 'taxonomies' === $name) {
+        return false;
+    }
+    return $provider;
+}
 
 /*                                          00终了                             */
 
