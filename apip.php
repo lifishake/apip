@@ -1051,6 +1051,8 @@ function apip_admin_scripts(): void
     wp_deregister_script('wp-preferences-persistence');
     wp_dequeue_script('heartbeat');
     wp_deregister_script('heartbeat');
+    wp_dequeue_script( 'wp-api-fetch' );
+    wp_deregister_script( 'wp-api-fetch' );
 }
 
 //0.2
