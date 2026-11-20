@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.2
+ * Version:     1.46.3
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -122,15 +122,39 @@ if (file_exists(APIP_PLUGIN_DIR . 'private.php')) {
  */
 function apip_option_check(string $key, $val = 1): bool
 {
+    if (!$key) {
+        return false;
+    }
     global $apip_options;
     if (empty($apip_options)) {
         $apip_options = get_option('apip_settings');
     }
     //array_key_exists
-    if (isset($apip_options[$key]) && intval($apip_options[$key]) == intval($val)) {
+    if (isset($apip_options[$key]) && 
+        intval($apip_options[$key]) == intval($val)) {
         return true;
     }
     return false;
+}
+/**
+ * @brief 获取配置项的值
+ * @param string $key
+ * @param string $default
+ * @since       1.46.3
+ * @version     1.46.3  2026-11-19  初版
+ * @return  string
+ * @date    2026-11-19
+ */
+function apip_option_get_string(string $key, $default='') {
+    if (!$key) {
+        return $default;
+    }
+    global $apip_options;
+    if (empty($apip_options)) {
+        $apip_options = get_option('apip_settings');
+    }
+    $ret = $apip_options[$key] ?? $default;
+    return $ret;
 }
 
 /**
@@ -246,6 +270,7 @@ function apip_init(): void
     remove_action('wp_enqueue_scripts','wp_enqueue_global_styles');
     remove_action('wp_head', 'wp_print_font_faces', 50);
     remove_action( 'init', 'register_block_core_block' );
+    add_filter('wp_auth_check_load', '__return_false');
 
     //0.13 替换human_time_diff函数中的英文单词
     add_filter('human_time_diff', 'apip_replaced_human_time_diff', 10, 1);
@@ -323,9 +348,11 @@ function apip_init(): void
     //0.30
     add_filter( 'wp_robots', 'apip_robots_noindex' );
 
-    //0.31
-    add_filter('wp_sitemaps_add_provider', 'apip_custom_sitemap_output', 10, 2);
+    //0.31 新方法屏蔽所有谷歌字体
+    add_filter('gettext_with_context', 'apip_disable_google_fonts', 10, 4);
 
+    //0.32 移除AI接口
+    add_action('admin_menu', 'apip_remove_menu');
 
     /** 01 */
     //颜色目前没有函数
@@ -516,11 +543,17 @@ function apip_init(): void
 
     //8.10 特色图主颜色按钮
     //必须在admin_init以前
-    add_action('admin_menu', 'apip_optimize_boxes');
+    add_action('add_meta_boxes', 'apip_optimize_edit_boxes');
 
     //8.12 我的引文
     add_shortcode('mysup', 'apip_sup_detail');
     add_filter('the_content', 'apip_make_sup_anchors', 101);
+
+    //8.14 sitemap相关
+    add_filter('wp_sitemaps_add_provider', 'apip_custom_sitemap_output', 10, 2);
+    add_filter('wp_sitemaps_taxonomies', 'apip_remove_sitemap_post_tags');
+    add_filter('wp_sitemaps_posts_query_args', 'apip_add_posts_excludes_sitemap', 10, 2);
+    add_filter('wp_sitemaps_taxonomies_query_args', 'apip_add_taxonomies_excludes_sitemap', 10, 2);
 
     // Add to the admin_init action hook
     //add_filter('current_screen', 'my_current_screen' );
@@ -725,8 +758,9 @@ function apip_admin_init(): void
     add_action('restrict_manage_posts', 'apip_add_post_tag_filter_ddl');
 
     //9.4 后台增加显示今天要更新天气的贴。
-    add_action('wp_user_dashboard_setup', 'apip_add_dashboard_widget');
-    add_action('wp_dashboard_setup', 'apip_add_dashboard_widget');
+    //0.33 移除Quick Draft和News
+    add_action('wp_user_dashboard_setup', 'apip_sanitize_dashboard_widget');
+    add_action('wp_dashboard_setup', 'apip_sanitize_dashboard_widget');
 
     //9.5 后台维护option表
     add_action('wp_ajax_apip_db_maintain', 'apip_db_maintain');
@@ -828,7 +862,9 @@ $options
     0.28                                增加wp_remote_get时的伪装头
     0.29                                编辑link时更新时间的补丁    ×已删除 WordPress 6.6以后自己修改了这个bug
     0.30                                archive页面不允许robots记录
-    0.31                                不在sitemap中显示user和categoires、tags
+    0.31                                6.2以后屏蔽google font的方法。
+    0.32                                7.1以后移除AI接口
+    0.33                                移除默认的box
 01.     颜色选项
 02.     高级编辑选项
     2.1     save_revisions_disable      阻止自动版本                ×已删除
@@ -875,6 +911,7 @@ $options
     8.11    apip_adjust_modified_date_update 在后台update区域增加不更新gmt的checkbox
     8.12    mysup                       方便使用的引文
     8.13                                手动将标题转换成英文的按钮，与8.9共用metabox
+    8.14    apip_sitemap_exclude_categories  优化原生sitemap
 09.     后台维护相关
     9.1                                 后台taglist增加private和draft计数列
     9.2                                 post tag的slug转成utf-8
@@ -892,14 +929,15 @@ $options
 /******************************************************************************/
 //0.1+
 /**
- * @brief: 集中加载插件所需要的js和css
+ * @brief   集中加载插件所需要的js和css
  * @fn
- * @since:  1.0.0
- * @note:   1.0.0       2015-12-11      original\n
- *          1.41.0      2026-02-11      统一修改几个js的版本号，改为用宏。\n
- *          1.42.1      2026-06-10      合并并且精简了weather-icons.min.css。\n
- * @version: 1.42.1
- * @date: 2026-06-10
+ * @since   1.0.0
+ * @note    1.0.0       2015-12-11      original\n
+ * @note    1.41.0      2026-02-11      统一修改几个js的版本号，改为用宏。
+ * @note    1.42.1      2026-06-10      合并并且精简了weather-icons.min.css。\n
+ * @version 1.46.3      2026-11-19      修改多个tag拆分时没有trim导致不识别的bug
+ * @date    2026-11-19
+ * @see     apip_init()
  */
 function apip_scripts()
 {
@@ -992,7 +1030,7 @@ function apip_scripts()
     //8.1
     $agm = array();
     if (isset($apip_options['available_codehighlight_tags']) && trim($apip_options['available_codehighlight_tags']) !== "") {
-        $agm = explode(",", $apip_options['available_codehighlight_tags']);
+        $agm = array_map('trim', explode(",", $apip_options['available_codehighlight_tags']));
     } else {
         $agm[] = "testcode";
     }
@@ -1045,14 +1083,22 @@ function apip_admin_scripts(): void
     wp_enqueue_script('apip-js-quicktags', APIP_PLUGIN_URL . 'js/apip-quicktags.js', array('jquery', 'quicktags'), APIP_ADMIN_JS_VER, true);
 
     //0.12 古腾堡块编辑相关余孽
-    wp_dequeue_script('wp-preferences');
-    wp_deregister_script('wp-preferences');
-    wp_dequeue_script('wp-preferences-persistence');
-    wp_deregister_script('wp-preferences-persistence');
-    wp_dequeue_script('heartbeat');
-    wp_deregister_script('heartbeat');
-    wp_dequeue_script( 'wp-api-fetch' );
-    wp_deregister_script( 'wp-api-fetch' );
+    $scripts_to_stub = array(
+        'wp-core-commands',
+        'wp-commands',
+        'wp-preferences',
+        'wp-preferences-persistence',
+        'heartbeat',
+        'wp-api-fetch',
+        'wp-core-data',
+    );
+
+    foreach ( $scripts_to_stub as $handle ) {
+        wp_dequeue_script( $handle );
+        wp_deregister_script( $handle );
+        wp_register_script( $handle, false );
+    }
+
 }
 
 //0.2
@@ -1446,21 +1492,41 @@ function apip_robots_noindex($robots) {
     return $robots;
 }
 
-//0.31 不在sitemap中显示user和categoires、tags
+//0.31 新版屏蔽google字体
 /**
- * @brief 不在sitemap中显示user和categoires、tags
- * @param WP_Sitemaps_Provider $provider
- * @param string $name
- * @return WP_Sitemaps_Provider|false
- * @since 1.46.2
- * @version 1.46.2 初版
- * @data 2026-11-18
+ * @brief   在_x函数里通过钩子屏蔽google字体。当返回off时，就不再关联字体链接了
+ *          设置在gettext_with_context的filter，gettext_with_context会被_x,_ex,_esc_html_x等调用
+ * @param string $translation
+ * @param string $text
+ * @param string $context
+ * @param string $domain
+ * @return string
+ * @group 0.31
+ * @see     apip_init()
+ * @since 1.46.3
+ * @version 1.46.3      2026-11-19  初版
+ * @date 2026-11-19
  */
-function apip_custom_sitemap_output($provider, $name) {
-    if ('users' === $name || 'taxonomies' === $name) {
-        return false;
+function apip_disable_google_fonts($translation, $text, $context, $domain) {
+    if ($context === 'Google Font Name and Variants') {
+        return 'off';
     }
-    return $provider;
+    return $translation;
+}
+
+//0.32
+/**
+ * @brief       移除菜单里的Connector，admin_menu的回调
+ * @return      void
+ * @group       0.32
+ * @see         admin_menu
+ * @see         apip_init()
+ * @since       1.46.3
+ * @version     1.46.3      2021-11-20      初版
+ * @date        2026-11-20
+ */
+function apip_remove_menu() {
+    remove_submenu_page( 'options-general.php', 'options-connectors.php' );
 }
 
 /*                                          00终了                             */
@@ -2219,9 +2285,12 @@ function apip_disable_emojis_remove_dns_prefetch(array $urls, string $relation_t
 /******************************************************************************/
 //5.1
 /**
- * 作用: 替换广告留言
- * 来源: 自产
- * URL:
+ * @brief   替换广告留言
+ * @param   array $comment
+ * @return  array
+ * @since   0.8.0
+ * @version 1.46.3      2026-11-19  修改explode的结果没加trim的bug
+ * @date    2026-11-19
  */
 function hm_check_user(array $comment)
 {
@@ -2232,7 +2301,7 @@ function hm_check_user(array $comment)
     $str_include = $apip_options['blocked_commenters'];
     $str_replacement = "癞皮狗";
     $show_random = 'false';
-    $forbiddens = explode(',', $str_include);
+    $forbiddens = array_map('trim', explode(',', $str_include));
     //20260407 增加全英文假gmail的spam屏蔽
     $block = false;
     $email = isset($comment['comment_author_email']) ? strtolower(trim($comment['comment_author_email'])) : '';
@@ -2493,6 +2562,14 @@ function apip_build_cat_html(object $cat, int $is_child = 0)
 
     return $html;
 }
+
+/**
+ * @brief  生成自定义的archive页面
+ * @return void
+ * @since  0.5.0
+ * @version 1.46.3  2026-11-19  修改explode带空格的问题
+ * @date    2026-11-19
+ */
 function apip_archive_page()
 {
     global $wpdb;
@@ -2518,7 +2595,7 @@ function apip_archive_page()
             "<a class=\"achp-sig\" href=\"#\" title=\"{$monthFormat}\"><span class=\"achp-symbol suffix\">[+]</span></a>" .
             "<a href=\"{$monthLink}\" title=\"{$monthFormat}\">{$monthFormat}({$result->count})</a>";
         $month_str .= "<ul class = \"achp-child apip-no-disp\">";
-        $includes = explode(",", $result->posts);
+        $includes = array_map('trim', explode(",", $result->posts));
         $getpostsargs = array();
         $getpostsargs['posts_per_page'] = -1;
         $getpostsargs['orderby'] = 'date';
@@ -2758,7 +2835,7 @@ function apip_keep_query()
         if (empty($old_tax) || !isset($_COOKIE['tax_ids']) || empty($_COOKIE['tax_ids'])) {
             return;
         }
-        $arr_taxes = explode(',', $_COOKIE['tax_ids']);
+        $arr_taxes = array_map('trim', explode(',', $_COOKIE['tax_ids']));
         if (FALSE === array_search($ID, $arr_taxes)) {
             setcookie('last_tax', '', 0);
             setcookie('tax_ids', '', 0);
@@ -3154,24 +3231,41 @@ function apip_commentquiz_save(int $post_id, $post, $update)
 8.9 将标题转成16进制的按钮
  */
 /*
-apip_optimize_boxes 函数在admin_menu的钩子里调用。
+apip_optimize_edit_boxes 函数在admin_menu的钩子里调用。
 这是官方文档上提供的方法，另有人主张在add_meta_box的钩子里调，事实证明只要在admin_menu里调用就可以
 */
-function apip_optimize_boxes()
+/**
+ * @brief  在编辑画面上，去掉不使用的boxes，增加自己的boxes
+ * @param  string   $post_types
+ * @return void
+ * @group   8.7
+ * @group   8.9
+ * @group   8.10
+ * @group   8.13
+ * @see     add_meta_box
+ * @since   0.7.5
+ * @version 1.46.3     2026-11-20       从apip_optimize_boxes改名成apip_optimize_edit_boxes，调用时机从admin_menu改成add_meta_box
+ * @date    2026-11-30
+ */
+function apip_optimize_edit_boxes($post_types)
 {
+    //移除connector接口
+    //remove_submenu_page( 'options-general.php', 'options-connectors.php' );
     //第二个参数必须传‘post’，否则不好用。虽然注册的时候都是null。这些东西的注册在edit-form-advanced.php中。
-    $post_types = get_post_types(array('public' => true));
     remove_meta_box('authordiv', $post_types, 'normal'); //移除[author]，顺道。
     remove_meta_box('trackbacksdiv', $post_types, 'normal'); //移除[trackback]，顺道。
     remove_meta_box('postexcerpt', $post_types, 'normal'); //移除[excerpt]，顺道。
     remove_meta_box('postcustom', $post_types, 'normal'); //移除[custom fields]，顺道。
     remove_meta_box('slugdiv', $post_types, 'normal'); //移除原生的[slug]，再扩展一个新的，因为原生的没提供钩子。在edit框后面增加一个按钮。
-    //8.7
-    add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', 'post', 'normal', 'core');
+
+    if ("post" === $post_types) {
+        //8.7
+        add_meta_box('apipweatherdiv', 'Weather', 'apip_weather_meta_box', $post_types, 'normal', 'core');
+        //8.10
+        add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', $post_types, 'normal', 'core');
+    }
     //8.9, 8.13
     add_meta_box('apipslugdiv', 'Slug to XX', 'apip_title_hex_meta_box', $post_types, 'normal', 'core');
-    //8.10
-    add_meta_box('apipcolorthiefdiv', 'Color thief', 'apip_colorthief_meta_box', 'post', 'normal', 'core');
 }
 function apip_title_hex_meta_box(WP_Post $post)
 {
@@ -3286,6 +3380,126 @@ function apip_make_sup_anchors(string $content)
     return $content . $output;
 }
 
+//8.14 sitemap相关功能
+/**
+ * @brief       将包含category `slug1, slug2`的字符串转换成[id1, id2]的数组
+ * @param string $exclude_cats 包含slug和逗号的字符串
+ * @return int[]
+ * @group   8.14
+ * @since   1.46.3          2026-11-20      初版
+ * @date    2026-11-20
+ */
+function apip_convert_category_slug_str_to_ids($exclude_cats) {
+    $exclude_cat_slugs = apip_explode($exclude_cats);
+    $exclude_cat_ids = [];
+    foreach ($exclude_cat_slugs as $exclude_slug) {
+        $term = get_term_by( 'slug', $exclude_slug, 'category' );
+        if ( $term ) {
+            $exclude_cat_ids[] = $term->term_id;
+        }
+    }
+    return $exclude_cat_ids;
+}
+
+/**
+ * @brief 不在sitemap中显示user和categoires、tags
+ * @param   WP_Sitemaps_Provider $provider
+ * @param   string $name
+ * @return  WP_Sitemaps_Provider|false
+ * @group   8.14
+ * @since   1.46.2
+ * @version 1.46.2 2026-11-18 初版
+ * @date 2026-11-18
+ */
+function apip_custom_sitemap_output($provider, $name) {
+    if ('users' === $name) {
+        //不输出users
+        return false;
+    }
+    return $provider;
+}
+
+/**
+ * @brief   将tag排除出sitemap，wp_sitemaps_taxonomies 的回调
+ * @param   array $taxonomies
+ * @return  array
+ * @group   8.14
+ * @see     apip_init()
+ * @see     wp_sitemaps_taxonomies
+ * @since   1.46.3
+ * @version 1.46.3      2026-11-19  初版
+ * @date    2026-11-19
+ * 
+ */
+function apip_remove_sitemap_post_tags($taxonomies) {
+    if (is_array($taxonomies)) {
+        if(isset($taxonomies['post_tag'])) {
+            unset($taxonomies['post_tag']);
+        }
+        if (isset($taxonomies['post_format'])){
+            unset($taxonomies['post_format']);
+        }
+    }
+    return $taxonomies;
+}
+
+/**
+ * @brief   生成sitemap时排除指定的categories和post ids
+ * @param   array $args
+ * @param   string $post_type       'post'/'page'
+ * @return  array
+ * @group   8.14
+ * @see     wp_sitemaps_posts_query_args
+ * @see     apip_init()
+ * @since   1.46.3
+ * @version 1.46.3      2026-11-19  初版
+ * @date    2026-11-19
+ * 
+ */
+function apip_add_posts_excludes_sitemap($args, $post_type) {
+    $exclude_cats = apip_option_get_string('apip_sitemap_exclude_categories');
+    $exclude_post_ids = apip_option_get_string('apip_sitemap_exclude_post_ids');
+    if ($exclude_post_ids) {
+        $exist_exclude_posts = isset($args['post__not_in']) ? (array) $args['post__not_in'] : [];
+        $args['post__not_in'] = array_unique(array_merge($exist_exclude_posts, apip_explode($exclude_post_ids)));
+    }
+    if ("page" === $post_type) {
+        //page的时候没必要增加category的判断
+        return $args;
+    }
+    if ($exclude_cats) {
+        $exist_exclude_cats = isset($args['category__not_in']) ? (array) $args['category__not_in'] : [];
+        $args['category__not_in'] = array_unique(array_merge(apip_convert_category_slug_str_to_ids($exclude_cats), $exist_exclude_cats));
+    }
+    return $args;
+}
+
+/**
+ * @brief   生成sitemap时排除指定的categories
+ * @param   array $args
+ * @param   string $taxonomy       'category'
+ * @return  array
+ * @group   8.14
+ * @see     wp_sitemaps_posts_query_args
+ * @see     apip_init()
+ * @since   1.46.3
+ * @version 1.46.3      2026-11-19  初版
+ * @date    2026-11-19
+ * 
+ */
+function apip_add_taxonomies_excludes_sitemap($args, $taxonomy) {
+    if ('category' !== $taxonomy) {
+        return $args;
+    }
+    $exclude_cats = apip_option_get_string('apip_sitemap_exclude_categories');
+    if ($exclude_cats) {
+        $exist_exclude_cats = isset($args['exclude']) ? (array) $args['exclude'] : [];
+        $args['exclude'] = array_unique(array_merge(apip_convert_category_slug_str_to_ids($exclude_cats), $exist_exclude_cats));
+    }
+    return $args;
+}
+
+
 /*                                          08终了                             */
 
 /******************************************************************************/
@@ -3386,9 +3600,28 @@ function apip_add_post_tag_filter_ddl(string $post_type)
 }
 
 //9.4 后台显示还有多少的天气需要更新
-function apip_add_dashboard_widget()
-{
+/**
+ * @brief  主面板上的动作，被wp_dashboard_setup、wp_user_dashboard_setup的filter调用
+ * @return void
+ * @group   9.4
+ * @group   0.33
+ * @see     wp_dashboard_setup
+ * @see     wp_user_dashboard_setup
+ * @see     apip_init
+ * @since   0.7.0
+ * @version 1.46.3      2026-11-20      apip_add_dashboard_widget 改名成 apip_sanitize_dashboard_widget，不仅追加天气，还删除系统默认
+ * @date    2026-11-20
+ */
+function apip_sanitize_dashboard_widget() {
     wp_add_dashboard_widget('dashboard_apip_today_weather', 'APIP Weather today', 'apip_today_weather_widget');
+    //0.33 移除默认box
+    remove_meta_box('dashboard_primary', 'dashboard', 'side');     // WordPress Events and News
+    remove_meta_box('dashboard_primary', 'dashboard', 'normal');     // WordPress Events and News
+    remove_meta_box('dashboard_quick_press', 'dashboard', 'side'); // Quick Draft
+    remove_meta_box('dashboard_primary', 'dashboard', 'normal');     // WordPress Events and News
+    remove_meta_box('dashboard_site_health', 'dashboard', 'side'); // Site Health
+    remove_meta_box('dashboard_site_health', 'dashboard', 'normal'); // Site Health
+    remove_action('welcome_panel', 'wp_welcome_panel'); // welcome
 }
 
 //9.5 维护页面的ajax处理

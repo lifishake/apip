@@ -3,9 +3,10 @@
 /**
  * @brief 简陋,由工具做成,少量修改
  * @li 工具URL: http://wpsettingsapi.jeroensormani.com/
- * @version 1.41.1
- * @version 1.42.5		增加fancybox的配置项和配置函数
- * @date 2026-09-30
+ * @note    1.41.1
+ * @note    1.42.5		增加fancybox的配置项和配置函数
+ * @version 1.46.3
+ * @date 2026-11-19
  */
 
 add_action('admin_menu', 'apip_add_admin_menu');
@@ -26,11 +27,14 @@ function apip_get_custom_style()
     return $styles;
 }
 
-/*
-取得的选项与默认值合并。注意如果追加新功能要维护默认值。
-*/
-function apip_get_option()
-{
+/**
+ * @brief   取得的选项与默认值合并。注意如果追加新功能要维护默认值。
+ * @return  array
+ * @since   0.0.1
+ * @version 1.46.3  追加sitemap排除的categories和post id
+ * @date    2026-11-19
+ */
+function apip_get_option() {
     $default_apip_options = array(
         "link_color" => "#1A5F99",
         "font_color" => "#0A161F",
@@ -80,6 +84,8 @@ function apip_get_option()
         "apip_fancybox_ids" => "",
         "comment_url_last_check_time" => "2000-01-01",
         "disable_core_events" => '0', //2.12
+        "apip_sitemap_exclude_categories" => "",
+        "apip_sitemap_exclude_post_ids" => "",
     );
     $options = get_option('apip_settings');
     $options = wp_parse_args($options, $default_apip_options);
@@ -117,8 +123,9 @@ function apip_add_admin_menu()
  * @param	array	$input	多个apip选项
  * @public
  * @since	0.0.1
- * @version	1.41.1
- * @date 2026-02-25
+ * @note	1.41.1
+ * @version 1.46.3  增加sitemap exclude categories
+ * @date    2026-11-19
  */
 function sanitize_apip_options($input)
 {
@@ -183,10 +190,11 @@ function sanitize_apip_options($input)
             'available_codehighlight_tags' === $key ||
             "apip_fancybox_categories" === $key ||
             "apip_fancybox_tags" === $key ||
-            "apip_fancybox_ids" === $key
+            "apip_fancybox_ids" === $key ||
+            "apip_sitemap_exclude_categories" === $key ||
+            "apip_sitemap_exclude_post_ids" === $key
         ) {
-            $array_temp = explode(',', $value);
-            $str_temp = implode(', ', $array_temp);
+            $str_temp = apip_sanitize_array_string($value);
             $input[$key] = sanitize_text_field($str_temp);
         }
     }
@@ -707,14 +715,24 @@ function apip_heavy_tools_render()
     <br />
     <textarea rows='4' cols='40'
         name='apip_settings[apip_fancybox_categories]'><?php echo htmlspecialchars(stripslashes($options['apip_fancybox_categories'])); ?></textarea>
-    <span> 图片fancybox支持-tags</span>
+    <span> 图片fancybox支持-tags：</span>
     <br />
     <textarea rows='4' cols='40'
         name='apip_settings[apip_fancybox_tags]'><?php echo htmlspecialchars(stripslashes($options['apip_fancybox_tags'])); ?></textarea>
-    <span> 图片fancybox支持-ids</span>
+    <span> 图片fancybox支持-ids：</span>
     <br />
     <textarea rows='4' cols='40'
         name='apip_settings[apip_fancybox_ids]'><?php echo htmlspecialchars(stripslashes($options['apip_fancybox_ids'])); ?></textarea>
+    <br />
+    <span> sitemap排除的categories（slug_1, slug_2）：</span>
+    <br />
+    <textarea rows='4' cols='40'
+        name='apip_settings[apip_sitemap_exclude_categories]'><?php echo htmlspecialchars(stripslashes($options['apip_sitemap_exclude_categories'])); ?></textarea>
+    <br />
+    <span> sitemap排除的posts（123, 456）：</span>
+    <br />
+    <textarea rows='4' cols='40'
+        name='apip_settings[apip_sitemap_exclude_post_ids]'><?php echo htmlspecialchars(stripslashes($options['apip_sitemap_exclude_post_ids'])); ?></textarea>
 <?php
 }
 

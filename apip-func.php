@@ -2594,3 +2594,35 @@ function apip_is_ymd_date( $date ) {
     $d = DateTime::createFromFormat( 'Y-m-d', $date );
     return $d && $d->format( 'Y-m-d' ) === $date;
 }
+
+/**
+ * @brief   拆分输入的字符串成数组
+ * @param   string  $value
+ * @param   string  $needle
+ * @return  array
+ * @since   1.46.3
+ * @version 1.46.3  初版
+ * @date    2026-11-19
+ */
+function apip_explode($value, $needle = ',') {
+    $arr_temp = array_unique(explode($needle, wp_unslash($value)), SORT_STRING);
+    $arr_temp = array_filter(array_map('trim', $arr_temp), 'strlen');
+    return $arr_temp;
+}
+
+/**
+ * @brief   整理输入的数组字符串
+ * @param   string  $value
+ * @param   string  $needle
+ * @return  string
+ * @since   1.46.3
+ * @version 1.46.3  初版
+ * @date    2026-11-19
+ */
+function apip_sanitize_array_string($value, $needle = ',') {
+    $arr_temp = apip_explode($value, $needle);
+    if (empty($arr_temp)) {
+        return '';
+    }
+    return implode($needle.' ', $arr_temp);
+}
