@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.3
+ * Version:     1.46.4
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -16,6 +16,7 @@ define('APIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APIP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APIP_GALLERY_URL', home_url('/', is_ssl() ? 'https' : 'http') . 'wp-content/gallery/');
 define('APIP_GALLERY_DIR', ABSPATH . 'wp-content/gallery/');
+define('APIP_JUMP_PAGE', '/yawn.html');
 register_activation_hook(__FILE__, 'apip_plugin_activation');
 register_deactivation_hook(__FILE__, 'apip_plugin_deactivation');
 register_uninstall_hook(__FILE__, 'apip_plugin_deactivation');
@@ -1669,19 +1670,16 @@ function remove_page_search(WP_Query $query)
 
 //2.10
 /**
- * 作用: 外链加密并在新页面打开，内链保持不变
- * 来源: 灵尘子
- * URL: https://www.lingchenzi.com/2019/01/wordpress-waibulianjie-neilian-base64.html
- */
-/**
- * @brief 将content中的内容中的外链改成假内链
- * @param string|bool $content
- * @return string|bool
- * @since  1.20.0
+ * @brief   将content中的内容中的外链改成假内链，内链不加密
+ * @param   string|bool $content
+ * @return  string|bool
+ * @group   2.10
+ * @since   1.20.0
  * @note    1.44.6      修改加密算法
  * @note    1.45.6      增加noindex
- * @version 1.46.1      去掉重复的nofollow
- * @date 2026-11-13
+ * @note    1.46.1      去掉重复的nofollow
+ * @version 1.46.4      2026-11-23      从直接的链接形式改成go.html+参数的形式
+ * @date    2026-11-23
  * @mention WordPress 6.2+
  */
 function convert_to_internal_links($content)
@@ -1712,7 +1710,7 @@ function convert_to_internal_links($content)
                     }
                 }
                 $processor->set_attribute( 'target', '_blank' );
-                $new = 'https://'. $domain. '/gayn/' . $converted;
+                $new = home_url(APIP_JUMP_PAGE).'?state=' . $converted;
                 $processor->set_attribute('href', $new);
                 // 可选：加上安全属性
                 $rel = $processor->get_attribute( 'rel' ) ?: '';
@@ -1740,9 +1738,12 @@ function convert_to_internal_links($content)
  * @param string $url
  * @param string $comment_ID
  * @return string
- * @since  1.20.0
- * @version 1.44.6      修改加密算法
- * @date 2026-11-05
+ * @group   7.2
+ * @group   2.10
+ * @since   1.20.0
+ * @note    1.44.3  2016-11-05  修改加密算法
+ * @version 1.44.6  2016-11-23  跳转页改名
+ * @date    2026-11-23
  */
 function apip_comment_url(string $url, string $comment_ID)
 {
@@ -1755,9 +1756,9 @@ function apip_comment_url(string $url, string $comment_ID)
     $domain = str_replace(array("http://", "https://", "//"), "", home_url());
     if (strpos($url, $domain) === false) {
         if (function_exists('yh_encrypt')) {
-            $new = home_url() . '/gayn/' . yh_encrypt($url);
+            $new = home_url(APIP_JUMP_PAGE) .'?state='. yh_encrypt($url);
         } else {
-            $new = home_url() . '/gayn/' . base64_encode($url);
+            $new = home_url(APIP_JUMP_PAGE) .'?state='. base64_encode($url);
         }
         return $new;
     } else {
@@ -1766,58 +1767,37 @@ function apip_comment_url(string $url, string $comment_ID)
 }
 
 /**
- * @brief 外部跳转前解密
- * @return void
- * @since  1.20.0
- * @note 1.44.6      修改解密算法
- * @version 1.46.0      增加noindex
- * @date 2026-11-17
- * @mention WordPress 6.2+
+ * @brief   外部跳转前解密
+ * @return  void
+ * @group   2.10
+ * @since   1.20.0
+ * @note    1.44.6      修改解密算法
+ * @note    1.46.0      2026-11-17  增加noindex
+ * @version 1.46.4      2026-11-23  将处理移动到插件的跳转php中
+ * @date    2026-11-23
  */
-function apip_e2i_redirect()
-{
-    $baseurl = 'gayn';
-    if (is_ssl()) {
-        $prefix = 'https://';
-    } else {
-        $prefix = 'http://';
-    }
-    $request = $prefix . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    $hop_base = trailingslashit(trailingslashit(home_url()) . $baseurl); //删除末尾的 斜杠/ 符号
-    if (substr($request, 0, strlen($hop_base)) != $hop_base)
-        return; //内链
-    $hop_key = str_ireplace($hop_base, '', $request);
-    if (substr($hop_key, -1) == '/')
-        $hop_key = substr($hop_key, 0, -1);
-    if (!empty($hop_key)) {
-        if (function_exists('yh_decrypt')) {
-            $url = yh_decrypt($hop_key);
-        } else {
-            $url = base64_decode($hop_key);
-        }
-        if ($url) {
-            header( 'X-Robots-Tag: noindex', true );
-            wp_redirect($url, 302);
-        } else {
-            global $wp_query;
-            $wp_query->set_404();
-            status_header(404);
-            nocache_headers();
-            include get_404_template();
-        }
+function apip_e2i_redirect() {
+    // 获取当前访问的路径（不含查询参数）
+    $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+    // 匹配跳转页
+    if (preg_match('#'.APIP_JUMP_PAGE.'?$#i', $request_path)) {
+        // 覆盖 WordPress 默认可能产生的 404 状态码
+        status_header(200);
+        include APIP_PLUGIN_DIR . 'ext/jmp.php';
         exit;
     }
 }
 
 /**
- * @brief 给link manager的浏览页增加列
- * @param array $columns
- * @return array
+ * @brief   给link manager的浏览页增加列
+ * @param   array $columns
+ * @return  array
+ * @group   2.12
+ * @version 1.43.3  2026-10-19  初版
  * @date 2026-10-19
- * @version 1.43.3 初版
  */
-function apip_linkmanager_column_header($columns)
-{
+function apip_linkmanager_column_header($columns) {
     return array(
         'cb'         => '<input type="checkbox" />',
         'name'       => '友链名',
@@ -1833,14 +1813,14 @@ function apip_linkmanager_column_header($columns)
 }
 
 /**
- * @brief 给link manager 新增加的列增加排序功能
- * @param array $columns
- * @return array
- * @date 2026-10-19
- * @version 1.43.3 初版
+ * @brief   给link manager 新增加的列增加排序功能
+ * @param   array $columns
+ * @return  array
+ * @group   2.12
+ * @version 1.43.3  2026-10-19  初版
+ * @date    2026-10-19
  */
-function apip_linkmanager_column_sortable($columns)
-{
+function apip_linkmanager_column_sortable($columns) {
     return array(
         'name'    => 'name',
         'mail'    => 'mail',
@@ -1852,12 +1832,13 @@ function apip_linkmanager_column_sortable($columns)
 }
 
 /**
- * @brief 表格默认用updated排序
- * @param mixed $bookmarks
- * @param mixed $args
- * @return mixed
+ * @brief   表格默认用updated排序
+ * @param   mixed $bookmarks
+ * @param   mixed $args
+ * @return  mixed
+ * @group   2.12
  * @since   1.45.1
- * @version 1.45.1  初版
+ * @version 1.45.1  2026-11-07  初版
  * @date    2026-11-07
  */
 function apip_sort_table_by_updated( $bookmarks, $args ) {
@@ -1885,15 +1866,16 @@ function apip_sort_table_by_updated( $bookmarks, $args ) {
 }
 
 /**
- * @brief 显示增加的列
- * @param string $column_header_name
- * @param mixed $link_id
- * @return void
- * @date 2026-10-19
- * @version 1.43.3 初版
+ * @brief   显示增加的列
+ * @param   string  $column_header_name
+ * @param   mixed   $link_id
+ * @return  void
+ * @group   2.12
+ * @since   1.43.3
+ * @version 1.43.3 2026-10-19   初版
+ * @date    2026-10-19
  */
-function apip_link_custom_columns($column_header_name, $link_id)
-{
+function apip_link_custom_columns($column_header_name, $link_id) {
     $column_name = '';
     if ('mail' === $column_header_name) {
         $column_name = 'link_notes';
@@ -1909,14 +1891,15 @@ function apip_link_custom_columns($column_header_name, $link_id)
 
 //2.12
 /**
- * @brief 重画link 编辑画面的box
- * @param stdClass $link
- * @return void
- * @date 2026-10-16
- * @version 1.43.2 初版
+ * @brief   重画link 编辑画面的box
+ * @param   stdClass    $link
+ * @return  void
+ * @group   2.12
+ * @since   1.43.2
+ * @version 1.43.2  2026-10-16  初版
+ * @date    2026-10-16
  */
-function apip_remake_edit_link_form($link)
-{
+function apip_remake_edit_link_form($link) {
     //下面是原顺序
     //add_meta_box('linksubmitdiv', __('Save'), 'link_submit_meta_box', null, 'side', 'core');
     //add_meta_box('linkcategorydiv', __('Categories'), 'link_categories_meta_box', null, 'normal', 'core');
@@ -1938,8 +1921,9 @@ function apip_remake_edit_link_form($link)
  * @param   array       $args
  * @param   int         $timestamp
  * @return  mixed
+ * @group   2.12
  * @since   1.45.6
- * @version 1.45.6      初版
+ * @version 1.45.6      2026-11-12  初版
  * @date    2026-11-12
  * 
  *  */
@@ -1956,14 +1940,14 @@ function apip_fake_site_health_scheduled_event($pre, $hook, $args, $timestamp) {
 }
 
 /**
- * @brief 重画link manager上的关系box
- * @param stdClass $link
- * @return void
- * @date 2026-10-16
- * @version 1.43.2 初版
+ * @brief   重画link manager上的关系box
+ * @param   stdClass $link
+ * @return  void
+ * @group   2.12
+ * @version 1.43.2  2026-10-16  初版
+ * @date    2026-10-16
  */
-function apip_link_rels_meta_box($link)
-{
+function apip_link_rels_meta_box($link) {
     $valid_selections = ["", "neighbor", "friend", "bystanders"];
 ?>
     <table class="links-table">
@@ -1991,14 +1975,14 @@ function apip_link_rels_meta_box($link)
 }
 
 /**
- * @brief 重画link manager上的更多box
- * @param stdClass $link
- * @return void
+ * @brief   重画link manager上的更多box
+ * @param   stdClass $link
+ * @return  void
  * @group   7.9
- * @date    2026-11-07
  * @since   1.43.3
- * @note    1.43.3 初版
- * @version 1.50.2 增加update。如果输入日期就更新到（旧）日期，否则不变。
+ * @note    1.43.3 2026-10-23   初版
+ * @version 1.50.2 2026-11-07   增加update。如果输入日期就更新到（旧）日期，否则不变。
+ * @date    2026-11-07
  * 
  */
 function apip_link_more_meta_box($link)
@@ -2481,21 +2465,29 @@ function apip_tagcloud_page($params = array())
     $ret .= '</ul>';
     return $ret;
 }
+
 //7.2自定义友情链接页
 /**
  * 作用: 取出一定时间内被博主回复最多的留言者
  * 来源: 自产
  * URL:
  */
-function apip_link_page()
-{
+
+/**
+ * @brief   自定义友情链接页
+ * @return  void
+ * @since   0.5.2
+ * @version 1.44.6      2026-11-23      尝试对于友链不加密
+ * @date    2026-11-23
+ */
+function apip_link_page() {
+    remove_filter('the_content', 'convert_to_internal_links');
     $links = apip_get_links();
     $ret = '<ul class = "apip-links">';
     foreach ($links as $link) {
         $parm = sprintf(
-            '<li><div class="commenter-link vcard">%1$s</div><a href="%2$s" target="_blank" class="url">%3$s</a></li>',
-            get_avatar($link->comment_author_email, 64),
-            apip_option_check('redirect_external_link') ? apip_comment_url($link->comment_author_url, 0) : $link->comment_author_url,
+            '<li><a href="%1$s" target="_blank" class="url">%2$s</a></li>',
+            $link->comment_author_url,
             $link->comment_author
         );
         $ret .= $parm;
@@ -2503,6 +2495,7 @@ function apip_link_page()
     $ret .= '</ul>';
     echo $ret;
 }
+
 //7.3自定义归档页
 /**
  * 作用: JQuery效果的归档页

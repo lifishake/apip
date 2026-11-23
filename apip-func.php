@@ -3,8 +3,8 @@
 /**
  * @file    apip-func.php
  * @brief   外部函数接口，内部也可以用。
- * @version 1.45.2
- * @date    2026-11-07
+ * @version 1.46.4
+ * @date    2026-11-23
  */
 
 define('APIP_FRONTEND_CSS_VER', '20260930');
@@ -2156,39 +2156,6 @@ function apip_get_post_navagation($args = array())
     } else {
         the_post_navigation($args);
         return;
-    }
-}
-
-/**
- * @brief       移除某个类的filter方法
- * @param string $tag
- * @param mixed $class
- * @param mixed $method
- * @link http://wordpress.stackexchange.com/questions/57079/how-to-remove-a-filter-that-is-an-anonymous-object
- * @return void
- */
-function apip_remove_anonymous_object_hook($tag, $class, $method)
-{
-    $filters = $GLOBALS['wp_filter'][$tag];
-
-    if (empty($filters)) {
-        return;
-    }
-    foreach ($filters as $priority => $filter) {
-        foreach ($filter as $identifier => $function) {
-            if (
-                is_array($function)
-                and is_a($function['function'][0], $class)
-                and $method === $function['function'][1]
-            ) {
-                //action也可以用remove_filter删除。
-                remove_filter(
-                    $tag,
-                    array($function['function'][0], $method),
-                    $priority
-                );
-            }
-        }
     }
 }
 
