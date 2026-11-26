@@ -4,7 +4,9 @@
  * @brief   跳转到外链画面
  * @group   2.10
  * @since   1.46.4
- * @version 1.46.4      2026-11-23
+ * @note    1.46.4      2026-11-23      初版
+ * @version 1.46.8      2026-11-26      增加对referer的判断
+ * @date    2026-11-26
  */
 
 header('X-Robots-Tag: noindex, nofollow', true);
@@ -15,6 +17,11 @@ $referer_host = $referer !== '' ? strtolower((string) parse_url($referer, PHP_UR
 
 // 如果没有 Referer（如直接地址栏粘贴、书签打开）或来源域名与当前站点不一致
 if ($current_host === '' || $referer_host === '' || $referer_host !== $current_host) {
+    header('HTTP/2.0 403 Forbidden');
+    exit;
+}
+
+if (0 === url_to_postid($referer)) {
     header('HTTP/2.0 403 Forbidden');
     exit;
 }
