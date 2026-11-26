@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.4
+ * Version:     1.46.5
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2836,56 +2836,145 @@ function apip_keep_query()
         }
     }
 }
-//8.4 邮件回复
+
 /**
- * 作用: comment有reply时,通过邮件通知留言发布者.
- * 来源: Comment Email Reply
- * URL:  http://kilozwo.de/wordpress-comment-email-reply-plugin
+ * @brief 邮件回复主函数
+ * @param   mixed       $comment_id
+ * @param   WP_Comment  $comment_object
+ * @return  void
+ * @group   8.4
+ * @since   0.6.2
+ * @rel     http://kilozwo.de/wordpress-comment-email-reply-plugin
+ * @version 1.46.5      2026-11-26  修改了风格和布局，改用tab
+ * @date    1.46.5
  */
-function apip_comment_inserted($comment_id, WP_Comment $comment_object)
-{
-    if ($comment_object->comment_parent > 0) {
-        global $apip_options;
-        $comment_parent = get_comment($comment_object->comment_parent);
-        if (
-            $comment_parent->comment_author_email === $comment_object->comment_author_email &&
-            $comment_parent->comment_author_email !== get_bloginfo('admin_email')
-        ) {
-            return;
-        }
-        /*$color_border = isset( $apip_options['border_color'] ) ? $apip_options['border_color'] : "#8a8988";
-        $color_link = isset( $apip_options['link_color'] ) ? $apip_options['link_color'] : "#1a5f99";
-        $color_font = isset( $apip_options['font_color'] ) ? $apip_options['font_color'] : "#0a161f";
-        $color_bg = isset( $apip_options['bg_color'] ) ? $apip_options['bg_color'] : "#ece5df";*/
-        $color_border = "#EDEFED";
-        $color_link = "#660000";
-        $color_font = "#000200";
-        $color_bg = "#F7FCF8";
-        $bg_head = '<div style="border:3px solid ' . $color_border . '; border-radius: 5px; margin: 1em 2em; background:' . $color_bg . '; font-size:14px;"><div style=" margin:0 auto; padding: 15px; margin: 15px; color: ' . $color_font . '; ">';
-        $content_border_head = '<p style="padding: 5px 20px; margin: 5px 15px 20px; border-bottom: 2px dashed ' . $color_border . '; border-radius: 5px;">';
-        $a_style = 'color:' . $color_link . '; text-decoration: none;';
-        $random_posts = apip_random_post(get_the_ID(), 1);
-        $random_link = get_bloginfo('url');
-        foreach ($random_posts as $random_post):
-            $random_link = get_permalink($random_post->ID);
-        endforeach;
-        $mailcontent = "<p style=\"display:none\">{$comment_object->comment_content}</p>";
-        $mailcontent .= '<p>亲爱的 <b style=" font-weight:800; padding:0 3px ;">' . $comment_parent->comment_author . '</b>， 您的留言：</p>';
-        $mailcontent .= $content_border_head . $comment_parent->comment_content . '</p><p>有了新回复：</p>';
-        $mailcontent .= $content_border_head . $comment_object->comment_content . '</p>';
-        $mailcontent .= sprintf('<p>欢迎<a style="%4$s" href="%1$s" >继续参与讨论</a>或者<a style="%4$s" href="%2$s">随便逛逛</a>。<a style="%4$s" href="%3$s">「破襪子」</a>期待您再次赏光。</p>', get_comment_link($comment_object->comment_ID), $random_link, get_bloginfo('url'), $a_style);
-        $mailcontent = $bg_head . $mailcontent . '</div></div>';
+function apip_comment_inserted($comment_id, WP_Comment $comment_object) {
+    if ($comment_object->comment_parent <= 0) {
+        return;
+    }
+    $comment_parent = get_comment($comment_object->comment_parent);
+    //回复自己不发邮件
+    if (
+        $comment_parent->comment_author_email === $comment_object->comment_author_email &&
+        $comment_parent->comment_author_email !== get_bloginfo('admin_email')
+    ) {
+        return;
+    }
+    $blog_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+    $style_font_family="font-family:Helvetica,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif;";
+    $color_border = "#e2e2df";
+    $color_background = "#f2f2eb";
+    $color_block_bg = "#fbfbf8";
+    $color_font = "#100f0f";
+    $color_second_font = "#686866";
+    $color_button_bg = $color_font;
+    $color_button_font = $color_background;
+    $style_border_line = "border:1px solid " .$color_border .";";
+    $style_radius_outer = "border-radius:12px;";
+    $style_radius_inner = "border-radius:8px;";
+    $style_font_size_big = "font-size:14px;line-height:1.75;";
+    $style_font_size_small = "font-size:12px;line-height:1.6;";
+    $style_margin_center = "margin:0 auto;";
+    $style_box_shadow = "box-shadow:0 4px 16px #e8e8e5;";
+    $style_intro = "margin:0 0 8px 2px;color:{$color_second_font};" .$style_font_size_small;
+    $style_word_padding = "padding:0 4px;";
+    $style_block_table = "margin:0 0 20px;border-collapse:separate;".$style_box_shadow;
+    $style_block_td =   "padding:16px 18px;word-break:break-word;" 
+                        .$style_font_size_big
+                        .$style_radius_inner
+                        .$style_border_line
+                        ."background:{$color_block_bg};"
+                        ."color:{$color_font};";
+
+    $intro_1 = sprintf(
+        '<div style="%1$s">关于本站话题<a href="%2$s" target= "_blank" style= "color:#995030;font-weight:bold;text-decoration:none; %3$s">《%4$s》</a>的留言：</div>',
+        $style_intro,
+        get_permalink($comment_object->comment_post_ID),
+        $style_word_padding,
+        get_the_title($comment_object->comment_post_ID));
+
+    $commenter_url = $comment_object->user_id ? get_bloginfo('url') : $comment_object->comment_author_url;
+    $commenter_name = $comment_object->user_id ? "博主" : $comment_object->comment_author;
+    $commenter_part = $commenter_url ? 
+                        sprintf('<a href="%1$s" target= "_blank" style= "color:#995030;font-weight:bold;text-decoration:none; %2$s">%3$s</a>',
+                            $commenter_url,
+                            $style_word_padding,
+                            $commenter_name)
+                        : sprintf('<span style="font-weight:bold;%1$s">%2$s</span>',
+                            $style_word_padding,
+                            $commenter_name);
+    $intro_2 = sprintf(
+        '<div style="%1$s">于<i style="%2$s">%3$s</i>被%4$s回复了：</div>',
+        $style_intro,
+        $style_word_padding,
+        get_post_time('y-m-d H:i', false, $comment_object->comment_post_ID),
+        $commenter_part);
+
+    $table_block_1 = sprintf(
+        '<table width= "100%%" cellpadding= "0" cellspacing= "0" border= "0" style= "%1$s"><tr><td style="%2$s">%3$s</td></tr></table>',
+        $style_block_table,
+        $style_block_td,
+        $comment_parent->comment_content);
+
+    $table_block_2 = sprintf(
+        '<table width= "100%%" cellpadding= "0" cellspacing= "0" border= "0" style= "%1$s"><tr><td style="%2$s">%3$s</td></tr></table>',
+        $style_block_table,
+        $style_block_td,
+        $comment_object->comment_content);
+
+    $tr_main = sprintf(
+        '<tr><td style="padding:20px 20px 6px; color:%1$s; %2$s">%3$s%4$s%5$s%6$s</td></tr>',
+        $color_font,
+        $style_font_size_big,
+        $intro_1,
+        $table_block_1,
+        $intro_2,
+        $table_block_2);
+
+    $tr_button = sprintf(
+        '<tr align="center"><td>'
+            .'<div style= "padding:0 8px 8px;">'
+                .'<a href= "%1$s" target= "_blank" '
+                    .'style= "display:inline-block;text-align:center;padding:10px 20px;font-weight:bold;text-decoration:none;width:80px;%2$s %3$s %4$s background:%5$s;color:%6$s;">继续讨论</a>'
+            .'</div>'
+        .'</td></tr>',
+        get_comment_link($comment_object->comment_post_ID),
+        $style_font_size_big,
+        $style_radius_inner,
+        $style_box_shadow,
+        $color_button_bg,
+        $color_button_font);
+
+    $tr_tail = sprintf(
+        '<tr><td style= "padding:16px 20px 20px;text-align:center;%1$s color:%2$s; border-top:1px solid %3$s;">此邮件由系统自动发出，请勿直接回复。</td></tr>',
+        $style_font_size_small,
+        $color_second_font,
+        $color_border);
+
+    $content = sprintf(
+        '<div style="padding:24px 12px;%1$s">'
+            .'<table width= "100%%" cellpadding= "0" cellspacing= "0" border= "0" '
+                .'style= "width:100%%; border-collapse:separate; max-width:760px; padding-top:24px; background:%2$s; %3$s %4$s %5$s %6$s">%7$s%8$s%9$s'
+            .'</table>'
+        .'</div>',
+        $style_font_family,
+        $color_background,
+        $style_margin_center,
+        $style_radius_outer,
+        $style_border_line,
+        $style_box_shadow,
+        $tr_main,
+        $tr_button,
+        $tr_tail);
 
         $headers = 'MIME-Version: 1.0' . "\r\n";
 
         $headers .= 'Content-type: text/html; charset=UTF-8' . "\r\n";
 
-        $headers .= 'From: 破襪子站长 <dazhi.pewae@gmail.com>' . "\r\n";
+        $headers .= "From: {$blog_name}站长 <dazhi.pewae@gmail.com>" . "\r\n";
 
         //$headers .= 'Bcc: lifishake@gmail.com'. "\r\n";
-
-        wp_mail($comment_parent->comment_author_email, '您在『' . get_option('blogname') . '』 的留言有了新回复。', $mailcontent, $headers);
-    }
+        wp_mail($comment_parent->comment_author_email, '您在『' .$blog_name. '』 的留言有了新回复。', $content, $headers);
 }
 
 function apip_is_debug_mode()
