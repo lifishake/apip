@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.6
+ * Version:     1.46.7
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -2846,7 +2846,8 @@ function apip_keep_query()
  * @since   0.6.2
  * @rel     http://kilozwo.de/wordpress-comment-email-reply-plugin
  * @note    1.46.5      2026-11-26  修改了风格和布局，改用tab
- * @version 1.46.6      2026-11-26  紧急修复，取的时间应该是留言时间而不是发帖时间
+ * @note    1.46.6      2026-11-26  紧急修复，取的时间应该是留言时间而不是发帖时间
+ * @version 1.46.7      2026-11-26  紧急修复，取的comment link应该传comment id
  * @date    2026-11-26
  */
 function apip_comment_inserted($comment_id, WP_Comment $comment_object) {
@@ -2939,7 +2940,7 @@ function apip_comment_inserted($comment_id, WP_Comment $comment_object) {
                     .'style= "display:inline-block;text-align:center;padding:10px 20px;font-weight:bold;text-decoration:none;width:80px;%2$s %3$s %4$s background:%5$s;color:%6$s;">继续讨论</a>'
             .'</div>'
         .'</td></tr>',
-        get_comment_link($comment_object->comment_post_ID),
+        get_comment_link($comment_id),
         $style_font_size_big,
         $style_radius_inner,
         $style_box_shadow,
