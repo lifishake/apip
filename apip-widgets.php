@@ -294,7 +294,9 @@ class APIP_Widget_Recent extends WP_Widget {
  *
  * Displays log in/out, RSS feed links, etc.
  *
- * @since 2.8.0
+ * @since   2.8.0
+ * @version 1.47.0      2026-11-27
+ * @date    2026-11-27
  */
 class APIP_Widget_Meta extends WP_Widget {
     public function __construct() {
@@ -318,20 +320,15 @@ class APIP_Widget_Meta extends WP_Widget {
                 'order' => 'ASC',
                 'numberposts' => 5
             ));
-           $spam_count = get_option( 'akismet_spam_count' );
-           $spam_count += 9334 ;
-           $comments_count = wp_count_comments();
+            $firstpost = 0;
+            $days_ago = 365;
            if ( $all_posts )
-            $firstpost = $all_posts[0];
+                $firstpost = $all_posts[0];
            if ( $firstpost ) {
-            $days_ago = round( ( date('U') - get_the_time('U', $firstpost->ID) ) / ( 60*60*24 ) );
+                $days_ago = round( ( date('U') - get_the_time('U', $firstpost->ID) ) / ( 60*60*24 ) );
             } ?>
             <li><?php $count_posts = wp_count_posts(); $published_posts = $count_posts->publish; echo number_format_i18n($published_posts); ?> Posts</li>
-            <!--? php echo number_format_i18n($comments_count->approved); ?-->
-            <!--?php $count_tags = wp_count_terms('post_tag'); echo number_format_i18n($count_tags); ?-->
-            <!--?php echo number_format_i18n($spam_count); ?-->
             <li>Survived for <?php echo number_format_i18n($days_ago); ?> days </li>
-            <li class = "custom-login"><?php wp_loginout(); ?></li>
         </ul>
 <?php
         echo $args['after_widget'];
