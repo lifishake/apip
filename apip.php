@@ -7,7 +7,7 @@
  * Description: Plugins used by pewae
  * Author:      lifishake
  * Author URI:  https://pewae.com
- * Version:     1.46.8
+ * Version:     1.46.9
  * License:     GNU General Public License 3.0+ http://www.gnu.org/licenses/gpl.html
  */
 
@@ -1678,12 +1678,15 @@ function remove_page_search(WP_Query $query)
  * @note    1.44.6      修改加密算法
  * @note    1.45.6      增加noindex
  * @note    1.46.1      去掉重复的nofollow
- * @version 1.46.4      2026-11-23      从直接的链接形式改成go.html+参数的形式
- * @date    2026-11-23
+ * @note    1.46.4      2026-11-23      从直接的链接形式改成go.html+参数的形式
+ * @version 1.46.9      2026-11-27      feed不应该处理
+ * @date    2026-11-27
  * @mention WordPress 6.2+
  */
-function convert_to_internal_links($content)
-{
+function convert_to_internal_links($content) {
+    if(is_feed()) {
+        return $content;
+    }
     $home = home_url();
     $domain = str_replace(array("http://", "https://", "//"), "", $home);
     if ( class_exists( 'WP_HTML_Tag_Processor' ) ) {
